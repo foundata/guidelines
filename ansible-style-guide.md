@@ -92,10 +92,11 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 * have blank lines between
   * two host blocks
-  * two task block
+  * two task blocks
   * host and include blocks
 * use 2 spaces to represent sub-maps when indenting.
-* multi-line maps should start with a `-`.
+* start multi-line maps with a `-`.
+* use a single space separating Jinja2 template markers from variable names or expressions.
 
 Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) for a more in-depth example of proper spacing (and other things).
 
@@ -105,6 +106,36 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 Following the spacing rules produces consistent code that is easy to read.
 
 
+**Good examples:**
+
+```yaml
+---
+- hosts: localhost
+  tasks:
+
+  - name: "Set a variable"
+    set_fact:
+      foo: "{{ bar | default('baz') }}"
+
+  - name: "Set another variable"
+    set_fact:
+      bar: "{{ baz | default('foo') }}"
+```
+
+
+**Bad examples:**
+
+```yaml
+---
+- hosts: localhost
+  tasks:
+  - name: "Set a variable"
+      set_fact:
+          foo: "{{bar|default('baz')}}"
+  - name: "Set another variable"
+      set_fact:
+          bar: "{{baz|default('foo')}}"
+```
 
 
 ## Quoting
