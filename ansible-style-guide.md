@@ -1,10 +1,8 @@
 # Ansible style guide
 
-You should follow the [Best Practices of the Ansible User guide](https://docs.ansible.com/ansible/latest/user_guide/playbooks_best_practices.html) when developing playbooks. However, neither them nor the [Ansible documentation](https://docs.ansible.com/ansible/latest) in general are using a consistent code style nor defining one. This is done by this document.
+You should follow the [Best Practices of the Ansible User guide](https://docs.ansible.com/ansible/latest/user_guide/playbooks_best_practices.html) as well as [Red Hat's Coding Style Good Practices for Ansible](https://github.com/redhat-cop/automation-good-practices/blob/main/coding_style/README.adoc#ansible-guidelines) when developing playbooks. However, neither them nor the [Ansible documentation](https://docs.ansible.com/ansible/latest) in general are using a consistent code style nor defining one. This is done by this document.
 
 Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) for rules shown in code and further clarification. MUST, SHOULD and other key words are used as defined in [RFC 2119](https://tools.ietf.org/html/rfc2119) and [RFC 8174](https://tools.ietf.org/html/rfc8174).
-
-
 
 
 ## Table of contents
@@ -23,8 +21,6 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 * [Author information](#author-information)
 
 
-
-
 ## YAML files
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
@@ -32,7 +28,6 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 **You MUST**
 
 * follow the [YAML 1.2 specification](https://yaml.org/spec/1.2/spec.html).
-* use `.yml` as extension.
 * use two spaces for [indentation](http://yaml.org/spec/1.2/spec.html#id2777534).
 * use Unix line feed (LF, `\n`) for new lines.
 * use [UTF-8 encoding](http://yaml.org/spec/current.html#id2513364).
@@ -41,14 +36,18 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 **You SHOULD**
 
+* use `.yml` as extension for new roles and collections
+  * but stay consistent / keep extensions if `.yaml` is already used in an existing role
 * start your scripts with comments explaining what the script's purpose does including example usage, if necessary.
 * blank lines around the `---`, followed by the rest of the file.
+* check for all [`YAML_FILENAME_EXTENSIONS`](https://docs.ansible.com/ansible/latest/reference_appendices/config.html#yaml-filename-extensions) when looking for files with e.g. `vars_files`, `include_vars`, plugins or comparable functions.
 
 
 **Good examples:**
 
 ```yaml
-# Playbook trying to connect to host, verify a usable python
+# The Playbook tries to connect to host and verifies if there is an
+# existing, usable Python.
 #
 # Example usage:
 #   ansible-playbook -e data="pong" playbook.yml
@@ -59,11 +58,11 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 - hosts: localhost
   tasks:
 
-    - name: "Connect to host, verify a usable python"
+    - name: "Connect to host, verify a usable Python"
       ping:
         data: "{{ ping_return }}"
-
 ```
+
 
 **Bad examples:**
 
@@ -71,7 +70,7 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 ---
 - hosts: localhost
   tasks:
-    - name: "Connect to host, verify a usable python"
+    - name: "Connect to host, verify a usable Python"
       ping:
         data: "{{ ping_return }}"
 ```
@@ -79,13 +78,10 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 **Reasoning:**
 
-
-* YAML 1.2 is out there since 2009 and uses only `true` and `false` for booleans. It excludes a lot of possible edge-case problems. It makes no sense to allow YAML 1.1 anymore.
-* The short extension has to be used due being consistent within the Ansible eco-system, even though [yaml.org](https://yaml.org/faq.html) recommends `.yaml`.
+* YAML 1.2 is out there since 2009 and uses only `true` and `false` for booleans which excludes a lot of possible edge-case problems. It makes no sense to allow YAML 1.1 anymore.
+* The `.yml` extension must be used for consistency. It is predominant in the Ansible eco-system extension, even though [yaml.org](https://yaml.org/faq.html) recommends `.yaml`.
 * Comments at the very beginning of a file makes it to quickly find out the purpose/usage of a script, either by opening the file or using the `head` command.
 * A new line at the end of a file is common Unix best practice as it avoids any terminal prompt misalignment when printing files to e.g STDOUT.
-
-
 
 
 ## Spacing
@@ -125,13 +121,13 @@ Following the spacing rules produces consistent code that is easy to read.
 
 **You SHOULD**
 
-* Prefer double quotes (`"`) over single quotes (`'`). The only time you should use single quotes is when nesting things makes it far easier (for example Jinja map references with other quoting syle).
+* Prefer double quotes (`"`) over single quotes (`'`). The only time you should use single quotes is when nesting things makes it far easier (for example Jinja map references with other quoting style).
 
 
 **You MUST NOT**
 
 * quote non-string types (for example booleans (`true`, `false`) or numbers like `1337`).
-* things referencing the local Ansible environment (for example names of variables we are assigning values to).
+* things referencing the local Ansible environment (for example names of variables one is assigning values to).
 
 Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) for a more in-depth example of proper quoting (and other things).
 
@@ -163,7 +159,6 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
       Node {{ item['node_name'] }} is {{ item['status'] }} and in {{ item['az'] }}
       availability zone and belongs to "{{ item['customer'] }}" customer.
   with_items: nodes
-
 
 
 # don't quote booleans and numbers
@@ -209,13 +204,12 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 **Reasoning:**
 
-* Syntax highlighting usually works far better when stating strings by quoting.
 * Single quotes in YAML are special and do not behave like most programmers expect:
   * Escaping with `\` is *not* possible, instead `''` is used.
   * They to *not* prevent variable interpolation
 * It is easier to troubleshoot malformed strings when they should be properly escaped to have the desired effect.
 * YAML requires that if you start a value with `{{ foo }}` you quote the whole line to distinguish between a value and a YAML dictionary.
-
+* Syntax highlighting usually works far better when stating strings by quoting.
 
 
 
@@ -255,7 +249,7 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 **Reasoning:**
 
-* Ansible itself uses `snake_case` for module names and parameters. As they are influencing a wide range of playooks it makes sense to extend this convention to variable names even if they are technically not limited to it.
+* Ansible itself uses `snake_case` for module names and parameters. As they are influencing a wide range of playbooks it makes sense to extend this convention to variable names even if they are technically not limited to it.
 * Names of plugin and roles must follow the rules of the Python namespace (which does not allow for example minus or dots). See [StackOverflow](https://stackoverflow.com/a/37831973), [Galaxy Issue 775](https://github.com/ansible/galaxy/issues/775) and a [comment from Issue 779](https://github.com/ansible/galaxy/issues/779#issuecomment-401632750) for more information:
   > For that to work, namespaces need to be Python compatible, which means they can’t contain ‘-’.
 * The [Ansible Galaxy documentation on role names](https://galaxy.ansible.com/docs/contributing/creating_role.html#role-names).
@@ -336,7 +330,6 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
     dest: "/etc/fail2ban/filter.d/"
     src: "files/filters/sshd.conf"
   become: true
-
 ```
 
 
@@ -365,7 +358,7 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 **Reasoning:**
 
 * The map syntax is far easier to read and less error prone.
-* Version control diffs are less noisy and more meaningful (for example only new and changed lines are getting touched.)
+* Version control diffs are less noisy and more meaningful as only new and changed parameters are getting highlighted.
 
 
 
@@ -462,7 +455,7 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 **Reasoning:**
 
 * Bracket notation makes it easier do distinguish between keys and attributes or methods of python dictionaries. It usually results in better editor highlighting, too.
-* Bracket notation can be easlily be used with variables as keys.
+* Bracket notation can be easily be used with variables as keys.
 * Dot notation can cause problems because keys can collide with attributes and methods of python dictionaries.
 
 
@@ -626,10 +619,8 @@ Excerpt of the **most important rules**:
 The official rules are based on experience of technical writers. As these are also rules for Ansible developers, they are influencing the whole community. It makes sense to apply them in-house to have a consistent user experience.
 
 
-
-
 ## Author information
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-This guide was written by [Foundata](https://foundata.com) to produce robust, readable and consistent code. It was inspired by [Whitecloud Analytics's Ansible styleguide](https://github.com/whitecloud/ansible-styleguide).
+This guide was written by [foundata](https://foundata.com/) to produce robust, readable and consistent code. It was inspired by [Whitecloud Analytics's Ansible styleguide](https://github.com/whitecloud/ansible-styleguide).
