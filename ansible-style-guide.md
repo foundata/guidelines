@@ -617,7 +617,7 @@ You MUST check your playbooks, roles and other applicable files with [`ansible-l
 
 **Reasoning:**
 
-Ansible Lint is a Ansible Core Team project and widly adopted. You can run it offline and it provides a commandline tool for linting playbooks and helsp you to find lines that could potentially be improved. Following its advice is helping to create consistent code.
+Ansible Lint is a Ansible Core Team project and widely adopted. You can run it offline and it provides a commandline tool for linting playbooks and helps you to find lines that could potentially be improved. Following its advice is helping to create consistent code.
 
 
 
