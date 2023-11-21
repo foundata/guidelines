@@ -22,7 +22,7 @@ An open source license allows reuse of code while retaining copyright. This also
 * **[Apache License 2.0](https://choosealicense.com/licenses/apache-2.0/)**
 * **[MIT License](https://choosealicense.com/licenses/mit/)**
 
-The **main differences between them are what a third party has to do with modifications** or when embedding a work into anther existing project (a "larger work"):
+The **main differences between them are what a third party has to do with modifications** or when embedding a work into another existing project (a "larger work"):
 
 * **GNU General Public License v3.0** is a strong [copyleft](https://en.wikipedia.org/wiki/Copyleft) license:
   * Copyright and license notices must be preserved.
