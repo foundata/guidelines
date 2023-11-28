@@ -3,13 +3,13 @@
 ## Table of contents
 
 * [Disclaimer](#disclaimer)
-* [Reasoning](#reasoning)
 * [Licenses to choose from](#licenses-to-choose-from)
   * [GNU General Public License v3.0 or later](#gnu-general-public-license-v30-or-later)
   * [GNU Affero General Public License v3.0 or later](#gnu-affero-general-public-license-v30-or-later)
   * [GNU Lesser General Public License v3.0 or later](#gnu-lesser-general-public-license-v30-or-later)
   * [Apache License 2.0](#apache-license-20)
   * [MIT License](#mit-license)
+* [Reasoning](#reasoning)
 
 
 
@@ -20,18 +20,6 @@
 
 
 
-## Reasoning
-
-[foundata](https://foundata.com/) is an organization acting within a German legislative framework. So when our team creates creative work (which includes source code), the work is under our exclusive copyright by default. Nobody outside of foundata is allowed to copy, distribute, or modify the work unless a license specifies otherwise. Once the work has third-party contributors, "nobody" even starts including us as each of these third-parties is also a copyright holder.
-
-foundata is driven by open source. A good open source license allows reuse of code while retaining copyright. Using a well-known, [OSI-approved](https://opensource.org/licenses/) licenses also reduces [legal mumbo jumbo](https://en.wikipedia.org/wiki/Mumbo_jumbo_(phrase)) when working with third-parties, helping you to achieve results. Therefore you should **choose one of the [licenses listed in this document](#licenses-to-choose-from) whenever possible. We usually only check whether there are obvious reasons against the publication of source code**, like confidential contracting work for a customer.
-
-[Copyleft](https://en.wikipedia.org/wiki/Copyleft) licenses like GNU (A)GPL 3.0 [or later](https://www.draketo.de/software/gpl-or-later.html) might prevent some organizations from using a project as they do not want to release the source code of their own modifications. Sadly, corporate compliance sometimes even nonsensically prohibits the usage of copyleft projects at all, even if nobody plans to modify anything. We still **prefer copyleft licenses** as long as it fits into the ecosystem of a project as [we do not care about corporate-anti-oss use cases](https://foundata.com/en/blog/2023/use-copyleft-open-source-licenses/).
-
-It is recommended to **include a license header comment in every file** to prevent confusion or errors. Source files sometimes get copied or forked into new projects an third parties might not have a well organized repository bureaucracy. Without a statement about what their license is, moving files into another context might eliminates all trace of that point. Additionally, this helps to manage different licenses in the same project.
-
-
-
 ## Licenses to choose from
 
 The following licenses are well-known and [OSI-approved](https://opensource.org/licenses/). **All of them allow commercial and private use, modification and distribution and instruct that copyright and license notices must be preserved.** The main differences between them are [copyleft](https://en.wikipedia.org/wiki/Copyleft), what a third party has to do with modifications or when embedding a work into another existing project (a "larger work").
@@ -39,6 +27,7 @@ The following licenses are well-known and [OSI-approved](https://opensource.org/
 **We prefer copyleft over permissive licenses. [`GPL-3.0-or-later`](#gnu-general-public-license-v30-or-later) is our default copyleft license and [`Apache-2.0`](#apache-license-20) our default premissive one.**
 
 However, many projects exist in a wider ecosystem with a license preferred by the community, usually aligned with the main project or product if so. Take this into account when choosing a license. Have a look at existing repositories and/or search the web for `<project> licensing requirements` to get an impression. Examples for preferred licenses in a certain ecosystem.
+
 
 
 ### GNU General Public License v3.0 or later
@@ -55,10 +44,18 @@ A **strong [copyleft](https://en.wikipedia.org/wiki/Copyleft)** license:
 
 1. Create a `COPYING` text file the root directory of your project (Unix line feed (LF, `\n`) and UTF-8 encoding).
 2. Copy the [text of the license](https://www.gnu.org/licenses/gpl-3.0.txt) into the `COPYING` file.
-3. Use a license notice in the header comment of each file that follows the following template and replace `YYYY` with the current year:
+3. Add a `Licensing, copyright` section in the `README.md` (or a comparable central place) that follows the following template:
    ```
+   ## Licensing, copyright
+
    Copyright (c) YYYY, foundata GmbH (https://foundata.com)
-   GNU General Public License v3.0 or later
+
+   This project is licensed under GNU General Public License v3.0 or later (SPDX-License-Identifier: `GPL-3.0-or-later`), see [`COPYING`](./COPYING) or https://www.gnu.org/licenses/gpl-3.0.txt for the full text.
+   ```
+   Replace `YYYY` with the year of the first release. Add additional notes as needed.
+4. Use a license notice in the header comment of each file that follows the following template:
+   ```
+   Copyright (c) foundata GmbH (https://foundata.com)
    SPDX-License-Identifier: GPL-3.0-or-later
    ```
 
@@ -92,10 +89,18 @@ A **very strong [copyleft](https://en.wikipedia.org/wiki/Copyleft)** license:
 
 1. Create a `LICENSE` text file the root directory of your project (Unix line feed (LF, `\n`) and UTF-8 encoding).
 2. Copy the [text of the license](https://www.gnu.org/licenses/agpl-3.0.txt) into the `LICENSE` file.
-3. Use a license notice in the header comment of each file that follows the following template and replace `YYYY` with the current year:
+3. Add a `Licensing, copyright` section in the `README.md` (or a comparable central place) that follows the following template:
    ```
+   ## Licensing, copyright
+
    Copyright (c) YYYY, foundata GmbH (https://foundata.com)
-   GNU Affero General Public License v3.0 or later
+
+   This project is licensed under GNU Affero General Public License v3.0 or later (SPDX-License-Identifier: `AGPL-3.0-or-later`), see [`COPYING`](./COPYING) or https://www.gnu.org/licenses/agpl-3.0.txt for the full text.
+   ```
+   Replace `YYYY` with the year of the first release. Add additional notes as needed.
+4. Use a license notice in the header comment of each file that follows the following template:
+   ```
+   Copyright (c) foundata GmbH (https://foundata.com)
    SPDX-License-Identifier: AGPL-3.0-or-later
    ```
 
@@ -110,7 +115,10 @@ A **very strong [copyleft](https://en.wikipedia.org/wiki/Copyleft)** license:
 * [Choose a license: GNU Affero General Public License v3.0](https://choosealicense.com/licenses/agpl-3.0/)
 
 
+
 ### GNU Lesser General Public License v3.0 or later
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
 
 A **[copyleft](https://en.wikipedia.org/wiki/Copyleft)** license, especially useful for libraries to be used in other software:
 
@@ -127,10 +135,18 @@ A **[copyleft](https://en.wikipedia.org/wiki/Copyleft)** license, especially use
 2. Copy the [text of the GNU GPLv3  license](https://www.gnu.org/licenses/gpl-3.0.txt) into the `COPYING` file.
 3. Create an additional `COPYING.LESSER` text file the root directory of your project (Unix line feed (LF, `\n`) and UTF-8 encoding).
 4. Copy the [text of the GNU LGPLv3 license](https://www.gnu.org/licenses/lgpl-3.0.txt) into the `COPYING.LESSER` file.
-5. Use a license notice in the header comment of each file that follows the following template and replace `YYYY` with the current year:
+3. Add a `Licensing, copyright` section in the `README.md` (or a comparable central place) that follows the following template:
    ```
+   ## Licensing, copyright
+
    Copyright (c) YYYY, foundata GmbH (https://foundata.com)
-   GNU Lesser General Public License v3.0 or later
+
+   This project is licensed under GNU Lesser General Public License v3.0 or later or later (SPDX-License-Identifier: `LGPL-3.0-or-later`), see [`COPYING`](./COPYING) or https://www.gnu.org/licenses/agpl-3.0.txt as well as [`COPYING.LESSER`](./COPYING.LESSER) or https://www.gnu.org/licenses/lgpl-3.0.txt for the full text.
+   ```
+   Replace `YYYY` with the year of the first release. Add additional notes as needed.
+6. Use a license notice in the header comment of each file that follows the following template:
+   ```
+   Copyright (c) foundata GmbH (https://foundata.com)
    SPDX-License-Identifier: LGPL-3.0-or-later
    ```
 
@@ -171,7 +187,7 @@ A **permissive** license:
           § 4.4).
 
 
-    I.  foundata
+    I.  foundata GmbH
 
         This resource is based on the work of foundata [1]. If you like it, you
         might buy them a coffee [2].
@@ -180,10 +196,18 @@ A **permissive** license:
         [2] https://buy-me-a.coffee
    ```
    You can add an `identifier-string` at the end of the `[2]` URL to make it transparent why somebody is sending a donating. Add additional organizations, notes and adapt the order if applicable. This is especially true if the project is a fork and the heavy lifting was done by a third party. Have a look an [example file](https://www.apache.org/licenses/example-NOTICE.txt) with good descriptions.
-5. Use a license notice in the header comment of each file that follows the following template and replace `YYYY` with the current year:
+5. Add a `Licensing, copyright` section in the `README.md` (or a comparable central place) that follows the following template:
    ```
+   ## Licensing, copyright
+
    Copyright (c) YYYY, foundata GmbH (https://foundata.com)
-   Apache License, Version 2.0
+
+   This project is licensed under Apache License 2.0 (SPDX-License-Identifier: `Apache-2.0`), see [`LICENSE`](./LICENSE) or https://www.apache.org/licenses/LICENSE-2.0.txt for the full text.
+   ```
+   Replace `YYYY` with the year of the first release. Add additional notes as needed.
+6. Use a license notice in the header comment of each file that follows the following template:
+   ```
+   Copyright (c) foundata GmbH (https://foundata.com)
    SPDX-License-Identifier: Apache-2.0
    ```
 
@@ -215,7 +239,7 @@ A **permissive and simple** license:
 **How to apply**:
 
 1. Create a `LICENSE` text file the root directory of your project (Unix line feed (LF, `\n`) and UTF-8 encoding).
-2. Copy the following text into the `LICENSE` file and replace `YYYY` with the current year:
+2. Copy the following text into the `LICENSE` file and replace `YYYY` with the year of the first release:
    ```
    MIT License
 
@@ -239,10 +263,18 @@ A **permissive and simple** license:
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
    SOFTWARE.
    ```
-3. Use a license notice in the header comment of each file that follows the following template:
+3. Add a `Licensing, copyright` section in the `README.md` (or a comparable central place) that follows the following template:
    ```
+   ## Licensing, copyright
+
    Copyright (c) YYYY, foundata GmbH (https://foundata.com)
-   MIT License
+
+   This project is licensed under MIT License (SPDX-License-Identifier: `MIT`), see [`LICENSE`](./LICENSE) for the full text.
+   ```
+   Replace `YYYY` with the year of the first release. Add additional notes as needed.
+4. Use a license notice in the header comment of each file that follows the following template:
+   ```
+   Copyright (c) foundata GmbH (https://foundata.com)
    SPDX-License-Identifier: MIT
    ```
 
@@ -255,3 +287,15 @@ A **permissive and simple** license:
 **Further reading:**
 
 * [Choose a license: MIT License](https://choosealicense.com/licenses/mit/)
+
+
+
+## Reasoning
+
+[foundata](https://foundata.com/) is an organization acting within a German legislative framework. So when our team creates creative work (which includes source code), the work is under our exclusive copyright by default. Nobody outside of foundata is allowed to copy, distribute, or modify the work unless a license specifies otherwise. Once the work has third-party contributors, "nobody" even starts including us as each of these third-parties is also a copyright holder.
+
+foundata is driven by open source. A good open source license allows reuse of code while retaining copyright. Using a well-known, [OSI-approved](https://opensource.org/licenses/) licenses also reduces [legal mumbo jumbo](https://en.wikipedia.org/wiki/Mumbo_jumbo_(phrase)) when working with third-parties, helping you to achieve results. Therefore you should **choose one of the [licenses listed in this document](#licenses-to-choose-from) whenever possible. We usually only check whether there are obvious reasons against the publication of source code**, like confidential contracting work for a customer.
+
+[Copyleft](https://en.wikipedia.org/wiki/Copyleft) licenses like GNU (A)GPL 3.0 [or later](https://www.draketo.de/software/gpl-or-later.html) might prevent some organizations from using a project as they do not want to release the source code of their own modifications. Sadly, corporate compliance sometimes even nonsensically prohibits the usage of copyleft projects at all, even if nobody plans to modify anything. We still **prefer copyleft licenses** as long as it fits into the ecosystem of a project as [we do not care about corporate-anti-oss use cases](https://foundata.com/en/blog/2023/use-copyleft-open-source-licenses/).
+
+It is recommended to **include a license header comment in every file** to prevent confusion or errors. Source files sometimes get copied or forked into new projects an third parties might not have a well organized repository bureaucracy. Without a statement about what their license is, moving files into another context might eliminates all trace of that point. Additionally, this helps to manage different licenses in the same project. We do not include a copyright year nor links to license texts in the header comments to keep maintenance easy while still being informative. The license of a project stated central place like a project's `README.md` is legally binding even without the header comments and it is easy to update years and URLs in the central place only.
