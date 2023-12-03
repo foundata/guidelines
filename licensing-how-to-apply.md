@@ -2,7 +2,7 @@
 
 This document explains how to apply one or more licenses in your project after [choosing](./licensing-how-to-choose-a-license.md) them.
 
-[foundata](https://foundata.com/)'s projects are usually following the [REUSE specification](https://reuse.software/spec/). It is helpful to [install the `reuse` tool](https://reuse.readthedocs.io/en/latest/readme.html#install), which should be available as package of the same name via your distribution's package manager (e.g. `dnf` or `apt`).
+[foundata](https://foundata.com/)'s projects are usually following the [REUSE specification](https://reuse.software/spec/). It is helpful to [install the `reuse` tool](https://reuse.readthedocs.io/en/latest/readme.html#install), usually be available as package of the same name (e.g. via `dnf` or `apt`).
 
 
 
@@ -10,7 +10,7 @@ This document explains how to apply one or more licenses in your project after [
 
 * [Step 1: Choose the license(s)](#choose-license)
 * [Step 2: Add license text(s)](#add-text)
-* [Step 3: Add a `.reuse/dep5` copyright file](#machine-readable-file)
+* [Step 3: Add a machine readable copyright file](#machine-readable-file)
   * [Multiple licenses](#machine-readable-file-multiple-licenses)
 * [Step 4: Add licensing and copyright information in the `README.md`](#human-info)
   * [Multiple licenses](#human-info-multiple-licenses)
@@ -32,13 +32,13 @@ Read our [guideline on how to choose a license](./licensing-how-to-choose-a-lice
 
 **Our defaults for software projects are:**
 
-* [`GPL-3.0-or-later`](./licensing-how-to-choose-a-license.md#GPL-3.0-or-later) as [copyleft](https://en.wikipedia.org/wiki/Copyleft) license
-* [`Apache-2.0`](./licensing-how-to-choose-a-license.md#Apache-2.0) as premissive license
+* [`GPL-3.0-or-later`](./licensing-how-to-choose-a-license.md#gpl-30-or-later) as [copyleft](https://en.wikipedia.org/wiki/Copyleft) license
+* [`Apache-2.0`](./licensing-how-to-choose-a-license.md#apache-20) as premissive license
 
 **Our defaults for projects with focus on media, design, 3D-printing plans or physical objects are:**
 
-* [`CC-BY-SA-4.0`](./licensing-how-to-choose-a-license.md#CC-BY-SA-4.0) as [copyleft](https://en.wikipedia.org/wiki/Copyleft) license
-* [`CC-BY-4.0`](./licensing-how-to-choose-a-license.md#CC-BY-4.0) as premissive license
+* [`CC-BY-SA-4.0`](./licensing-how-to-choose-a-license.md#cc-by-sa-40) as [copyleft](https://en.wikipedia.org/wiki/Copyleft) license
+* [`CC-BY-4.0`](./licensing-how-to-choose-a-license.md#cc-by-40) as premissive license
 
 
 
@@ -47,7 +47,10 @@ Read our [guideline on how to choose a license](./licensing-how-to-choose-a-lice
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
 1. Create a `LICENSES` directory in your project's root directory. It will contain all the licenses that you use in your project as text files.
-2. Put the license text of each used license as [`<SPDX-License-Identifier>`](https://spdx.org/licenses/)`.txt` in the `LICENSES` directory. You can download them manually from the [REUSE license-list-data repository](https://github.com/spdx/license-list-data/tree/main/text) or by using the `reuse download` command followed by a list of SPDX license identifiers.<br>Examples:
+   ```bash
+   mkdir 'LICENSES'
+   ```
+3. Put the license text of each used license as [`<SPDX-License-Identifier>`](https://spdx.org/licenses/)`.txt` in the `LICENSES` directory.<br><br>You can download them manually from the [REUSE license-list-data repository](https://github.com/spdx/license-list-data/tree/main/text) or by using the `reuse download` command followed by a list of SPDX license identifiers. Examples:
    ```bash
    reuse download GPL-3.0-or-later
    reuse download Apache-2.0
@@ -55,11 +58,14 @@ Read our [guideline on how to choose a license](./licensing-how-to-choose-a-lice
    ```
 
 
-## Step 3: Add a `.reuse/dep5` copyright file<a id="machine-readable-file"></a>
+## Step 3: Add a machine readable copyright file<a id="machine-readable-file"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
 1. Create a `.reuse` directory in your project's root directory.
+   ```bash
+   mkdir '.reuse'
+   ```
 2. Add a UTF-8 encoded text file with Unix line feeds (LF, `\n`) called `dep5` in the `.reuse` directory. Please use the following template to do so:
    ```
    Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
@@ -86,7 +92,7 @@ You can add additional stanzas when using multiple licenses and/or third party c
 
 Add a `Licensing, copyright` section in the `README.md` (or a comparable central place which is easy for humans to notice and read). Please use the following template to do so:
 
-```
+```markdown
 ## Licensing, copyright
 
 Copyright (c) YYYY, foundata GmbH (https://foundata.com)
@@ -98,9 +104,9 @@ Almost all files have a machine readable `SDPX-License-Identifier:` comment deno
 
 Replace `YYYY` with the year of the first release (even if the project was only released internally) and adapt the mentioned license, filenames and links as needed.
 
-Feel free to add additional author information not suitable for the [inline license notice](#add-notice) as additional section:
+Feel free to add additional author information not suitable for the [inline license notice](#license-header) as additional section:
 
-```
+```markdown
 ## Author information
 
 This project was created and is maintained by [foundata](https://foundata.com/). If you like it, you might [buy them a coffee](https://buy-me-a.coffee/).
@@ -116,7 +122,7 @@ Special thanks to:
 
 If you are using multiple licenses in the same project, adapt the wording of the "licensed under" sentence. Please use the following template to do so:
 
-```
+```markdown
 This project is primarily licensed under GNU General Public License v3.0 or later (SPDX-License-Identifier: `GPL-3.0-or-later`), see [`LICENSES/GPL-3.0-or-later.txt`](./LICENSES/GPL-3.0-or-later.txt) for the full text. Parts of the project are licensed differently, see `[.reuse/dep5]` for details.
 ```
 
@@ -200,17 +206,16 @@ Sadly, there are issues when using license header comments:
 
 It is not *needed* to update the copyright year there as it is the legal intention to state the year of the first public release. But it is common to do so anyways and it shows third parties that a project is still alive. We therefore update this data and maintain the copyright year only at [central places like a project's `README.md`](#human-info) to reduce the effort to do so.
 
-Please simply add each year with release or updates separated by comma. You can use a timespan (`year1-year2`) for multiple subsequent years.
+Please simply add each year with a release or updates separated by comma. You can use a timespan (`year1-year2`) for multiple subsequent years.
 
-Example:
+Example: The first release and copyright statement was `Copyright (c) 2013`. There were realeases or updates in several but not all years afterwards:
 
-1. The first release and copyright statement was `Copyright (c) 2013`.
-2. There was a release or update in 2015, so the statement get's updated to `Copyright (c) 2013, 2015`.
-3. There was a release or update in 2018, so the statement get's updated to `Copyright (c) 2013, 2015, 2018`.
-4. There was a release or update in 2019, so the statement get's updated to `Copyright (c) 2013, 2015, 2018, 2019`.
-5. There was a release or update in 2020, so the statement get's updated to `Copyright (c) 2013, 2015, 2018-2020`.
-6. There was a release or update in 2021, so the statement get's updated to `Copyright (c) 2013, 2015, 2018-2021`.
-7. There was a release or update in 2023, so the statement get's updated to `Copyright (c) 2013, 2015, 2018-2021, 2023`.
+* `2015` → `Copyright (c) 2013, 2015`.
+* `2018` → `Copyright (c) 2013, 2015, 2018`.
+* `2019` → `Copyright (c) 2013, 2015, 2018, 2019`.
+* `2020` → `Copyright (c) 2013, 2015, 2018-2020`.
+* `2021` → `Copyright (c) 2013, 2015, 2018-2021`.
+* `2023` → `Copyright (c) 2013, 2015, 2018-2021, 2023`.
 
 
 ## Disclaimer

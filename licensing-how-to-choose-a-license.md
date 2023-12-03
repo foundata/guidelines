@@ -7,12 +7,12 @@
 * [Reasoning](#reasoning)
 * [Licenses to choose from](#licenses-to-choose-from)
   * [GNU General Public License v3.0 or later (`GPL-3.0-or-later`)](#GPL-3.0-or-later)
-  * [GNU Affero General Public License v3.0 or later (`AGPL-3.0-or-later`)](#AGPL-3.0-or-later)
-  * [GNU Lesser General Public License v3.0 or later (`LGPL-3.0-or-later`)](#LGPL-3.0-or-later)
-  * [Apache License 2.0 (`Apache-2.0`)](#Apache-2.0)
-  * [MIT License (`MIT`)](#MIT)
-  * [Creative Commons Attribution Share Alike 4.0 International (`CC-BY-SA-4.0`)](#CC-BY-SA-4.0)
-  * [Creative Commons Attribution 4.0 International (`CC-BY-4.0`)](#CC-BY-4.0)
+  * [GNU Affero General Public License v3.0 or later (`AGPL-3.0-or-later`)](#agpl-30-or-later)
+  * [GNU Lesser General Public License v3.0 or later (`LGPL-3.0-or-later`)](#lgpl-30-or-later)
+  * [Apache License 2.0 (`Apache-2.0`)](#apache-20)
+  * [MIT License (`MIT`)](#mit)
+  * [Creative Commons Attribution Share Alike 4.0 International (`CC-BY-SA-4.0`)](#cc-by-sa-40)
+  * [Creative Commons Attribution 4.0 International (`CC-BY-4.0`)](#cc-by-40)
 * [Disclaimer](#disclaimer)
 
 
@@ -48,7 +48,7 @@ However, many projects exist in a wider ecosystem with a license preferred by th
 
 
 
-### GNU General Public License v3.0 or later (`GPL-3.0-or-later`)<a id="GPL-3.0-or-later"></a>
+### GNU General Public License v3.0 or later (`GPL-3.0-or-later`)<a id="gpl-30-or-later"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
@@ -74,7 +74,7 @@ A **strong [copyleft](https://en.wikipedia.org/wiki/Copyleft)** license:
 
 
 
-### GNU Affero General Public License v3.0 or later (`AGPL-3.0-or-later`)<a id="AGPL-3.0-or-later"></a>
+### GNU Affero General Public License v3.0 or later (`AGPL-3.0-or-later`)<a id="agpl-30-or-later"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
@@ -100,7 +100,7 @@ A **very strong [copyleft](https://en.wikipedia.org/wiki/Copyleft)** license:
 
 
 
-### GNU Lesser General Public License v3.0 or later (`LGPL-3.0-or-later`)<a id="LGPL-3.0-or-later"></a>
+### GNU Lesser General Public License v3.0 or later (`LGPL-3.0-or-later`)<a id="lgpl-30-or-later"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
@@ -130,7 +130,7 @@ A **[copyleft](https://en.wikipedia.org/wiki/Copyleft)** license, especially use
 
 
 
-### Apache License 2.0 (`Apache-2.0`)<a id="Apache-2.0"></a>
+### Apache License 2.0 (`Apache-2.0`)<a id="apache-20"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
@@ -157,7 +157,7 @@ A **permissive** license:
 
 
 
-### MIT License (`MIT`)<a id="MIT"></a>
+### MIT License (`MIT`)<a id="mit"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
@@ -180,7 +180,7 @@ A **permissive and simple** license:
 
 
 
-### Creative Commons Attribution Share Alike 4.0 International (`CC-BY-SA-4.0`)<a id="CC-BY-SA-4.0"></a>
+### Creative Commons Attribution Share Alike 4.0 International (`CC-BY-SA-4.0`)<a id="cc-by-sa-40"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
@@ -207,7 +207,7 @@ A **strong [copyleft](https://en.wikipedia.org/wiki/Copyleft)** license for docu
 
 
 
-### Creative Commons Attribution 4.0 International (`CC-BY-4.0`)<a id="CC-BY-4.0"></a>
+### Creative Commons Attribution 4.0 International (`CC-BY-4.0`)<a id="cc-by-40"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
