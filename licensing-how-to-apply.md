@@ -66,7 +66,11 @@ Read our [guideline on how to choose a license](./licensing-how-to-choose-a-lice
    ```bash
    mkdir '.reuse'
    ```
-2. Add a UTF-8 encoded text file with Unix line feeds (LF, `\n`) called `dep5` in the `.reuse` directory. Please use the following template to do so:
+2. Add a UTF-8 encoded text file with Unix line feeds (LF, `\n`) called `dep5` in the `.reuse` directory.
+   ```bash
+   touch '.reuse/dep5'
+   ```
+   Please use the following template to do so:
    ```
    Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
    Upstream-Name: <name of your project>
@@ -133,11 +137,15 @@ Adapt the mentioned license, filenames and links as needed.
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-[Use `reuse lint`](https://reuse.readthedocs.io/en/stable/usage.html#lint) to confirm the project's compliance to the [REUSE specification](https://reuse.software/spec/). Example:
+[Use `reuse lint`](https://reuse.readthedocs.io/en/stable/usage.html#lint) to confirm the project's compliance to the [REUSE specification](https://reuse.software/spec/):
 
 ```bash
-$ reuse lint
+reuse lint
+```
 
+Example output:
+
+```bash
 # SUMMARY
 
 * Bad licenses: 0
@@ -151,11 +159,16 @@ $ reuse lint
 * files with license information: 16 / 16
 
 Congratulations! Your project is compliant with version 3.0 of the REUSE Specification :-)
+```
 
-$ git commit -m "Add licensing information" -m "This project follows the REUSE specification (https://reuse.software/spec/)."
+Example commit for the changes if everything is fine:
+
+```bash
+git commit -m "Update licensing information" -m "This project follows the REUSE specification (https://reuse.software/spec/)."
 ```
 
 It is a good idea to add `reuse lint` into your project's continuous integration pipeline (if any). [Files in `.gitignore` get automatically excluded](https://reuse.software/faq/#exclude-file) from REUSE compliance testing and [ignoring parts of a file](https://reuse.readthedocs.io/en/latest/usage.html#ignoring-parts-of-a-file) is possible by adding `REUSE-IgnoreStart` and `REUSE-IgnoreEnd`.
+
 
 
 ## Step 6: license header comments (optional)<a id="license-header"></a>
