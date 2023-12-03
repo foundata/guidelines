@@ -22,3 +22,4 @@ This repository collects recommendations and rules [foundata](https://foundata.c
 Resources on how to choose, apply or change a license.
 
 * [How to choose a license (`licensing-how-to-choose-a-license.md`)](./licensing-how-to-choose-a-license.md)
+* [How to apply licenses (`licensing-how-to-apply.md`)](./licensing-how-to-apply.md)
