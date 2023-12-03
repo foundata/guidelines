@@ -23,3 +23,15 @@ Resources on how to choose, apply or change a license.
 
 * [How to choose a license (`licensing-how-to-choose-a-license.md`)](./licensing-how-to-choose-a-license.md)
 * [How to apply licenses (`licensing-how-to-apply.md`)](./licensing-how-to-apply.md)
+
+
+
+## Licensing, copyright
+
+<!--REUSE-IgnoreStart-->
+Copyright (c) 2020, 2023 [foundata GmbH](https://foundata.com/)
+
+This project is licensed under the [Creative Commons Attribution Share Alike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/deed) license, see [`LICENSES/CC-BY-SA-4.0.txt`](./LICENSES/CC-BY-SA-4.0.txt) for the full text.
+
+This project conforms to the [REUSE specification](https://reuse.software/spec/) and provides a human- and machine-readable [copyright file](.reuse/dep5), denoting the respective license(s) of all files. Some files might also provide an additional `SDPX-License-Identifier:` comment.
+<!--REUSE-IgnoreEnd-->

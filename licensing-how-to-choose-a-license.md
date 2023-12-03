@@ -1,5 +1,5 @@
 # Licensing guide: How to choose a license
-
+<!--REUSE-IgnoreStart-->
 
 
 ## Table of contents
@@ -233,3 +233,5 @@ A **permissive** license:
 
 1. **This is not legal advice.** If in doubt: Ask persons in charge and/or a lawyer as some additional rules might apply (like the [Arbeitnehmererfindungsgesetz (ArbnErfG)](https://www.gesetze-im-internet.de/arbnerfg/) mentioned in your employment contract).
 2. After choosing and/or applying a license or in any case of uncertainty, **communicate with persons in charge for a last check before releasing a new project or repository** to the public.
+
+<!--REUSE-IgnoreEnd-->
