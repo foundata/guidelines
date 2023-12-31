@@ -10,7 +10,7 @@ This document explains how to apply one or more licenses in your project after [
 
 * [Step 1: Choose the license(s)](#choose-license)
 * [Step 2: Add license text(s)](#add-text)
-* [Step 3: Add a machine readable copyright file](#machine-readable-file)
+* [Step 3: Add a machine-readable copyright file](#machine-readable-file)
   * [Multiple licenses](#machine-readable-file-multiple-licenses)
 * [Step 4: Add licensing and copyright information in the `README.md`](#human-info)
   * [Multiple licenses](#human-info-multiple-licenses)
@@ -20,6 +20,7 @@ This document explains how to apply one or more licenses in your project after [
   * [Issues](#license-header-issues)
 * [Frequently Asked Questions (FAQ)](#faq)
   * [How to update the copyright year?](#update-copyright-year)
+  * [Why does the license detection of GitHub and others not work?](#broken-repo-hoster-license-detection)
 * [Disclaimer](#disclaimer)
 
 
@@ -58,7 +59,7 @@ Read our [guideline on how to choose a license](./licensing-how-to-choose-a-lice
    ```
 
 
-## Step 3: Add a machine readable copyright file<a id="machine-readable-file"></a>
+## Step 3: Add a machine-readable copyright file<a id="machine-readable-file"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
@@ -103,10 +104,10 @@ Copyright (c) YYYY, foundata GmbH (https://foundata.com)
 
 This project is licensed under GNU General Public License v3.0 or later (SPDX-License-Identifier: `GPL-3.0-or-later`), see [`LICENSES/GPL-3.0-or-later.txt`](./LICENSES/GPL-3.0-or-later.txt) for the full text.
 
-Almost all files have a machine readable `SDPX-License-Identifier:` comment denoting its respective license(s) or an equivalent entry in an accompanying `.license` file. Some files which will not be part of a release (like changelog or build fragments) or documentation usually do not have a license notice. This conforms to the [REUSE specification](https://reuse.software/spec/).
+Almost all files have a machine-readable `SDPX-License-Identifier:` comment denoting its respective license(s) or an equivalent entry in an accompanying `.license` file. Some files which will not be part of a release (like changelog or build fragments) or documentation usually do not have a license notice. This conforms to the [REUSE specification](https://reuse.software/spec/).
 ```
 
-Replace `YYYY` with the year of the first release (even if the project was only released internally) and adapt the mentioned license, filenames and links as needed.
+Replace `YYYY` with the year of the first release or [code contribution](https://reuse.readthedocs.io/en/latest/scripts.html#starting-point-of-the-codebase) and adapt the mentioned license, filenames and links as needed.
 
 Feel free to add additional author information not suitable for the [inline license notice](#license-header) as additional section:
 
@@ -217,7 +218,7 @@ Sadly, there are issues when using license header comments:
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-It is not *needed* to update the copyright year there as it is the legal intention to state the year of the first public release. But it is common to do so anyways and it shows third parties that a project is still alive. We therefore update this data and maintain the copyright year only at [central places like a project's `README.md`](#human-info) to reduce the effort to do so.
+It is not *needed* to update the copyright year as the main legal intention is to state the year of the first public release or code contribution. But it is common to do so anyways and it shows third parties that a project is still alive. We therefore update this data and maintain the copyright year only at [central places like a project's `README.md`](#human-info) to reduce the effort to do so.
 
 Please simply add each year with a release or updates separated by comma. You can use a timespan (`year1-year2`) for multiple subsequent years.
 
@@ -229,6 +230,17 @@ Example: The first release and copyright statement was `Copyright (c) 2013`. The
 * `2020` → `Copyright (c) 2013, 2015, 2018-2020`.
 * `2021` → `Copyright (c) 2013, 2015, 2018-2021`.
 * `2023` → `Copyright (c) 2013, 2015, 2018-2021, 2023`.
+
+
+### Why does the license detection of GitHub and others not work?<a id="broken-repo-hoster-license-detection"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+[GitHub uses Licensee](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/licensing-a-repository#detecting-a-license) to attempt to identify the license of a project and [Licensee does not support the REUSE specification](https://github.com/licensee/licensee/issues/490). A workaround to fix the automatic license detection of GitHub and [others](https://forum.openmod.org/t/reuse-incompatible-to-auto-detection-of-license-s/3590) is to place an *additional* `LICENSE` or `COPYING` file in the root directory of your project. This is [allowed by REUSE](https://reuse.software/faq/#tradition). These files are explicitly [ignored by the toolset](https://github.com/fsfe/reuse-tool/blob/0e111c423ccf927f73a9ae7b39d3f88268b015b9/src/reuse/__init__.py#L66-L77) and do not need an additional `.license` file or header.
+
+Please use this workaround *only* if a single license is used for all of the project's files, so that there can be no misunderstandings or conflicts. Simply ignore GitHub's limited behavior in all other cases. Automatic license heuristics is complicated and will never deliver perfect results (which is one of the reasons solved by REUSE and a good license note in a project's `README.md`).
+
+One note on symlinks to prevent content duplication: You can place a symlink at `LICENSES/<your license>.txt` pointing to the `LICENSE` or `COPYING` file in the project's root directory as `reuse lint` follows them. [Licensee sadly does not even support symlinks](https://github.com/licensee/licensee/pull/42), so a more logical symlink from `LICENSE` or `COPYING` pointing to `LICENSES/<your license>.txt` is not solving the issue. We therefore recommend a real *copy* instead of a symlink to keep things accessible when using the workaround.
 
 
 ## Disclaimer
