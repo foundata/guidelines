@@ -14,10 +14,10 @@ This document explains how to apply one or more licenses in your project after [
   * [Multiple licenses](#machine-readable-file-multiple-licenses)
 * [Step 4: Add licensing and copyright information in the `README.md`](#human-info)
   * [Multiple licenses](#human-info-multiple-licenses)
-* [Step 5: REUSE linting (optional)](#linting)
-* [Step 6: license header comments (optional)](#license-header)
+* [Step 5: license header comments (optional)](#license-header)
   * [Reasoning](#license-header-reasoning)
   * [Issues](#license-header-issues)
+* [Step 6: REUSE linting (optional)](#linting)
 * [Frequently Asked Questions (FAQ)](#faq)
   * [How to update the copyright year?](#update-copyright-year)
   * [Why does the license detection of GitHub and others not work?](#broken-repo-hoster-license-detection)
@@ -134,45 +134,8 @@ This project is primarily licensed under GNU General Public License v3.0 or late
 Adapt the mentioned license, filenames and links as needed.
 
 
-## Step 5: REUSE linting (optional)<a id="linting"></a>
 
-[*⇑ Back to TOC ⇑*](#table-of-contents)
-
-[Use `reuse lint`](https://reuse.readthedocs.io/en/stable/usage.html#lint) to confirm the project's compliance to the [REUSE specification](https://reuse.software/spec/):
-
-```bash
-reuse lint
-```
-
-Example output:
-
-```bash
-# SUMMARY
-
-* Bad licenses: 0
-* Deprecated licenses: 0
-* Licenses without file extension: 0
-* Missing licenses: 0
-* Unused licenses: 0
-* Used licenses: GPL-3.0-or-later
-* Read errors: 0
-* files with copyright information: 16 / 16
-* files with license information: 16 / 16
-
-Congratulations! Your project is compliant with version 3.0 of the REUSE Specification :-)
-```
-
-Example commit for the changes if everything is fine:
-
-```bash
-git commit -m "Update licensing information" -m "This project follows the REUSE specification (https://reuse.software/spec/)."
-```
-
-It is a good idea to add `reuse lint` into your project's continuous integration pipeline (if any). [Files in `.gitignore` get automatically excluded](https://reuse.software/faq/#exclude-file) from REUSE compliance testing and [ignoring parts of a file](https://reuse.readthedocs.io/en/latest/usage.html#ignoring-parts-of-a-file) is possible by adding `REUSE-IgnoreStart` and `REUSE-IgnoreEnd`.
-
-
-
-## Step 6: license header comments (optional)<a id="license-header"></a>
+## Step 5: Add license header comments (optional)<a id="license-header"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
@@ -209,6 +172,44 @@ Sadly, there are issues when using license header comments:
 * It is possible to produce conflicts between the [copyright file](#machine-readable-file) and the license header. You *must* avoid that as the legal order of precedence is unclear.
 * `reuse spdx` adds two `LicenseInfoInFile` keys even if the license is the same
 * `reuse lint` and the whole specification 3.0 [does not define the order of precedence](https://github.com/fsfe/reuse-tool/issues/779) in case of conflicts.
+
+
+
+## Step 6: REUSE linting (optional)<a id="linting"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+[Use `reuse lint`](https://reuse.readthedocs.io/en/stable/usage.html#lint) to confirm the project's compliance to the [REUSE specification](https://reuse.software/spec/):
+
+```bash
+reuse lint
+```
+
+Example output:
+
+```bash
+# SUMMARY
+
+* Bad licenses: 0
+* Deprecated licenses: 0
+* Licenses without file extension: 0
+* Missing licenses: 0
+* Unused licenses: 0
+* Used licenses: GPL-3.0-or-later
+* Read errors: 0
+* files with copyright information: 16 / 16
+* files with license information: 16 / 16
+
+Congratulations! Your project is compliant with version 3.0 of the REUSE Specification :-)
+```
+
+Example commit for the changes if everything is fine:
+
+```bash
+git commit -m "Update licensing information" -m "This project follows the REUSE specification (https://reuse.software/spec/)."
+```
+
+It is a good idea to add `reuse lint` into your project's continuous integration pipeline (if any). [Files in `.gitignore` get automatically excluded](https://reuse.software/faq/#exclude-file) from REUSE compliance testing and [ignoring parts of a file](https://reuse.readthedocs.io/en/latest/usage.html#ignoring-parts-of-a-file) is possible by adding `REUSE-IgnoreStart` and `REUSE-IgnoreEnd`.
 
 
 
