@@ -18,6 +18,7 @@ This document explains how to apply one or more licenses in your project after [
   * [Reasoning](#license-comment-headers-reasoning)
   * [Issues](#license-comment-headers-issues)
 * [Step 6: REUSE linting](#linting)
+* [Step 7: Register as compliant repository (optional)](#reuse-api)
 * [Frequently Asked Questions (FAQ)](#faq)
   * [How to update the copyright year?](#update-copyright-year)
   * [Why does the license detection of GitHub and others not work?](#broken-repo-hoster-license-detection)
@@ -230,6 +231,23 @@ git commit -m "Update licensing information" -m "This project follows the REUSE 
 ```
 
 It is a good idea to add `reuse lint` into your project's continuous integration pipeline (if any). [Files listed in `.gitignore` get automatically excluded](https://reuse.software/faq/#exclude-file) from REUSE compliance testing and [ignoring parts of a file](https://reuse.readthedocs.io/en/latest/usage.html#ignoring-parts-of-a-file) is possible by adding `REUSE-IgnoreStart` and `REUSE-IgnoreEnd`.
+
+
+
+## Step 7: Register as compliant repository (optional)<a id="reuse-api"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+The Free Software Foundation provides an API plus services to continuously check and display compliance with the REUSE guidelines.
+
+See the following for more information:
+
+* https://api.reuse.software/projects
+* https://api.reuse.software/register (please use the `office@` email address for confirmation mails)
+
+They also provide a status badge for your `README.md` like the one showing that [`github.com/foundata/guidelines`](https://github.com/foundata/guidelines) is REUSE compliant:
+
+[![REUSE status](https://api.reuse.software/badge/github.com/foundata/guidelines)](https://api.reuse.software/info/github.com/foundata/guidelines)
 
 
 
