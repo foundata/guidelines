@@ -2,7 +2,7 @@
 
 This document explains how to apply one or more licenses in your project after [choosing](./licensing-how-to-choose-a-license.md) them.
 
-[foundata](https://foundata.com/)'s projects are usually following the [REUSE specification](https://reuse.software/spec/). It is helpful to [install the `reuse` tool](https://reuse.readthedocs.io/en/latest/readme.html#install), usually be available as package of the same name (e.g. via `dnf` or `apt`).
+[foundata](https://foundata.com/)'s projects are usually following the [REUSE specification](https://reuse.software/spec/). It is helpful to [install the `reuse` tool](https://reuse.readthedocs.io/en/latest/readme.html#install), usually being available as package of the same name (e.g. via `dnf` or `apt`).
 
 
 
@@ -29,7 +29,7 @@ This document explains how to apply one or more licenses in your project after [
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-Read our [guideline on how to choose a license](./licensing-how-to-choose-a-license.md) if you are new to the topic. It provides reasoning and summarizes the characteristics of each of the relevant ones.
+Read our [guideline on how to choose a license](./licensing-how-to-choose-a-license.md) if you are new to the topic. It provides reasoning and summarizes the characteristics of each of the relevant licenses. TL;DR:
 
 **Our defaults for software projects are:**
 
@@ -82,12 +82,12 @@ Read our [guideline on how to choose a license](./licensing-how-to-choose-a-lice
    Copyright: foundata GmbH <https://foundata.com>
    License: GPL-3.0-or-later
    ```
-   Replace `GPL-3.0-or-later` with your [SPDX license identifier](https://spdx.org/licenses/) and all other information as needed. The `Files:` field expects a whitespace-separated list and can appear multiple times, see [the official documentation](https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/#files-field) for more information on the syntax, e.g. on how to defined excludes.
+   Replace `GPL-3.0-or-later` with your [SPDX license identifier](https://spdx.org/licenses/) and all other information as needed. The `Files:` field expects a whitespace-separated list and can appear multiple times, see [the official documentation](https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/#files-field) for more information on the syntax, e.g. on how to defined excludes. The `*` wildcard makes sure all existing files are properly licensed by default even without inline license comments or `.license` files.
 
 
 ### Multiple licenses<a id="machine-readable-file-multiple-licenses"></a>
 
-You can add additional stanzas when using multiple licenses and/or third party components in the same project. [SAP's OpenUI5 `.reuse/dep5` file](https://github.com/SAP/openui5/blob/master/.reuse/dep5) is a good real-world example on how to do so.
+You can add additional stanzas when using multiple licenses and/or third party components in the same project. [SAP's OpenUI5 `.reuse/dep5` file](https://github.com/SAP/openui5/blob/master/.reuse/dep5) is a good real-world example on how to do so with many third party libraries and good usage of `Comment:`.
 
 
 
@@ -102,9 +102,9 @@ Add a `Licensing, copyright` section in the `README.md` (or a comparable central
 
 Copyright (c) YYYY, foundata GmbH (https://foundata.com)
 
-This project is licensed under GNU General Public License v3.0 or later (SPDX-License-Identifier: `GPL-3.0-or-later`), see [`LICENSES/GPL-3.0-or-later.txt`](./LICENSES/GPL-3.0-or-later.txt) for the full text.
+This project is licensed under the GNU General Public License v3.0 or later (SPDX-License-Identifier: `GPL-3.0-or-later`), see [`LICENSES/GPL-3.0-or-later.txt`](LICENSES/GPL-3.0-or-later.txt) for the full text.
 
-Almost all files have a machine-readable `SDPX-License-Identifier:` comment denoting its respective license(s) or an equivalent entry in an accompanying `.license` file. Some files which will not be part of a release (like changelog or build fragments) or documentation usually do not have a license notice. This conforms to the [REUSE specification](https://reuse.software/spec/).
+The [`.reuse/dep5`](.reuse/dep5) file provides detailed licensing and copyright information in a human- and machine-readable format. This includes parts that may be subject to different licensing or usage terms, such as third party components. The repository conforms to the [REUSE specification](https://reuse.software/spec/), you can use [`reuse spdx`](https://reuse.readthedocs.io/en/latest/readme.html#cli) to create a [SPDX software bill of materials (SBOM)](https://en.wikipedia.org/wiki/Software_Package_Data_Exchange).
 ```
 
 Replace `YYYY` with the year of the first release or [code contribution](https://reuse.readthedocs.io/en/latest/scripts.html#starting-point-of-the-codebase) and adapt the mentioned license, filenames and links as needed.
@@ -125,13 +125,26 @@ Special thanks to:
 
 ### Multiple licenses<a id="human-info-multiple-licenses"></a>
 
-If you are using multiple licenses in the same project, adapt the wording of the "licensed under" sentence. Please use the following template to do so:
+The wording of the `README.md`'s licensing and copyright information is already pointing to the `.reuse/dep5` file and mentioning that parts of the project might be subject to different licensing than the main one prominently mentioned. If this is not good enough, feel free to adapt the wording of the main "licensed under" sentence to highlight the main licensing rules without the need to maintain every single bit outside of the `.reuse/dep5` file. Examples (adapt as needed):
 
 ```markdown
-This project is primarily licensed under GNU General Public License v3.0 or later (SPDX-License-Identifier: `GPL-3.0-or-later`), see [`LICENSES/GPL-3.0-or-later.txt`](./LICENSES/GPL-3.0-or-later.txt) for the full text. Parts of the project are licensed differently, see `[.reuse/dep5]` for details.
+
+The project is dual-licensed under the
+
+* GNU General Public License v3.0 or later (SPDX-License-Identifier: `Apache-2.0`), see [`LICENSES/Apache-2.0.txt`](./LICENSES/Apache-2.0.txt) for the full text.
+* Apache License 2.0 (SPDX-License-Identifier: `GPL-3.0-or-later`), see [`LICENSES/GPL-3.0-or-later.txt`](./LICENSES/GPL-3.0-or-later.txt) for the full text.
+
+[... usual template follows ...]
 ```
 
-Adapt the mentioned license, filenames and links as needed.
+```markdown
+Parts of the project are licensed differently:
+
+* The project is primarily licensed under the GNU General Public License v3.0 or later (SPDX-License-Identifier: `GPL-3.0-or-later`), see [`LICENSES/GPL-3.0-or-later.txt`](./LICENSES/GPL-3.0-or-later.txt) for the full text.
+* Files below `/doc` are licensed under the [Creative Commons Attribution Share Alike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/deed) license, see [`LICENSES/CC-BY-SA-4.0.txt`](./LICENSES/CC-BY-SA-4.0.txt) for the full text.
+
+The above list might not be exhaustive. [... usual template follows ...]
+```
 
 
 
@@ -219,7 +232,7 @@ It is a good idea to add `reuse lint` into your project's continuous integration
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-It is not *needed* to update the copyright year as the main legal intention is to state the year of the first public release or code contribution. But it is common to do so anyways and it shows third parties that a project is still alive. We therefore update this data and maintain the copyright year only at [central places like a project's `README.md`](#human-info) to reduce the effort to do so.
+It is not *needed* to update the copyright year as the main legal intention is to state the year of the first public release or code contribution. But it is common to do so anyways, especially as it shows third parties that a project is still alive. We therefore update this data but maintain the copyright year only at [central places like a project's `README.md`](#human-info) to reduce the maintainance effort.
 
 Please simply add each year with a release or updates separated by comma. You can use a timespan (`year1-year2`) for multiple subsequent years.
 
