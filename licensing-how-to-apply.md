@@ -90,7 +90,7 @@ Read our [guideline on how to choose a license](./licensing-how-to-choose-a-lice
 
 ### Multiple licenses<a id="machine-readable-file-multiple-licenses"></a>
 
-You can add additional stanzas when using multiple licenses and/or third party components in the same project. [SAP's OpenUI5 `.reuse/dep5` file](https://github.com/SAP/openui5/blob/master/.reuse/dep5) is a good real-world example on how to do so with many third party libraries and good usage of `Comment:`.
+You can add additional stanzas when using multiple licenses and/or third party components in the same project. [SAP's OpenUI5 `.reuse/dep5` file](https://github.com/SAP/openui5/blob/26f313e55bc88229623d8437f2a85855f9aadd65/.reuse/dep5) is a good real-world example on how to do so with many third party libraries and good usage of `Comment:`.
 
 
 
