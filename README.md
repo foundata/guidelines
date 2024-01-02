@@ -1,6 +1,6 @@
 # foundata: guidelines, conventions, standards and related documents
 
-This repository collects recommendations and rules [foundata](https://foundata.com/) is using to creates creative work (which includes source code) or doing operations. What makes sense to share in public will find its place in this repository.
+This repository collects recommendations and rules [foundata](https://foundata.com/) is using to create creative work (which includes source code) or doing operations. What makes sense to share in public will find its place in this repository.
 
 
 ## Table of contents
@@ -28,10 +28,10 @@ Resources on how to choose, apply or change a license.
 
 ## Licensing, copyright
 
-<!--REUSE-IgnoreStart-->
 Copyright (c) 2020, 2023 [foundata GmbH](https://foundata.com/)
 
+<!--REUSE-IgnoreStart-->
 This project is licensed under the [Creative Commons Attribution Share Alike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/deed) license, see [`LICENSES/CC-BY-SA-4.0.txt`](./LICENSES/CC-BY-SA-4.0.txt) for the full text.
 
-This project conforms to the [REUSE specification](https://reuse.software/spec/) and provides a human- and machine-readable [copyright file](.reuse/dep5), denoting the respective license(s) of all files. Some files might also provide an additional `SDPX-License-Identifier:` comment.
+The [`.reuse/dep5`](.reuse/dep5) file provides detailed licensing and copyright information in a human- and machine-readable format. This includes parts that may be subject to different licensing or usage terms, such as third party components. The repository conforms to the [REUSE specification](https://reuse.software/spec/), you can use [`reuse spdx`](https://reuse.readthedocs.io/en/latest/readme.html#cli) to create a [SPDX software bill of materials (SBOM)](https://en.wikipedia.org/wiki/Software_Package_Data_Exchange).
 <!--REUSE-IgnoreEnd-->
