@@ -9,7 +9,7 @@ This repository collects recommendations and rules [foundata](https://foundata.c
 * [Licensing](#licensing)
 
 
-## Ansible
+## Ansible<a id="ansible"></a>
 
 [Ansible](https://www.ansible.com/) is a simple, agentless IT automation tool.
 
@@ -17,7 +17,7 @@ This repository collects recommendations and rules [foundata](https://foundata.c
 * [Showcase playbook to clarify the Ansible style guide (`ansible-style-guide-example.yml`)](./ansible-style-guide-example.yml)
 
 
-## Licensing
+## Licensing<a id="licensing"></a>
 
 Resources on how to choose, apply or change a license.
 
@@ -28,7 +28,7 @@ Resources on how to choose, apply or change a license.
 
 ## Licensing, copyright
 
-Copyright (c) 2020, 2023 [foundata GmbH](https://foundata.com/)
+Copyright (c) 2020, 2024 [foundata GmbH](https://foundata.com/)
 
 <!--REUSE-IgnoreStart-->
 This project is licensed under the [Creative Commons Attribution Share Alike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/deed) license, see [`LICENSES/CC-BY-SA-4.0.txt`](./LICENSES/CC-BY-SA-4.0.txt) for the full text.
