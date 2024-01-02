@@ -14,10 +14,10 @@ This document explains how to apply one or more licenses in your project after [
   * [Multiple licenses](#machine-readable-file-multiple-licenses)
 * [Step 4: Add licensing and copyright information in the `README.md`](#human-info)
   * [Multiple licenses](#human-info-multiple-licenses)
-* [Step 5: license header comments (optional)](#license-header)
-  * [Reasoning](#license-header-reasoning)
-  * [Issues](#license-header-issues)
-* [Step 6: REUSE linting (optional)](#linting)
+* [Step 5: Add license comment headers (optional, recommended)](#license-comment-headers)
+  * [Reasoning](#license-comment-headers-reasoning)
+  * [Issues](#license-comment-headers-issues)
+* [Step 6: REUSE linting](#linting)
 * [Frequently Asked Questions (FAQ)](#faq)
   * [How to update the copyright year?](#update-copyright-year)
   * [Why does the license detection of GitHub and others not work?](#broken-repo-hoster-license-detection)
@@ -55,7 +55,9 @@ Read our [guideline on how to choose a license](./licensing-how-to-choose-a-lice
    ```bash
    reuse download GPL-3.0-or-later
    reuse download Apache-2.0
-   reuse download CC-BY-SA-4.0 CC-BY-4.0 MIT Apache-2.0
+   reuse download CC-BY-SA-4.0
+   reuse download CC-BY-4.0
+   reuse download GPL-3.0-or-later MIT Apache-2.0
    ```
 
 
@@ -82,7 +84,7 @@ Read our [guideline on how to choose a license](./licensing-how-to-choose-a-lice
    Copyright: foundata GmbH <https://foundata.com>
    License: GPL-3.0-or-later
    ```
-   Replace `GPL-3.0-or-later` with your [SPDX license identifier](https://spdx.org/licenses/) and all other information as needed. The `Files:` field expects a whitespace-separated list and can appear multiple times, see [the official documentation](https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/#files-field) for more information on the syntax, e.g. on how to defined excludes. The `*` wildcard makes sure all existing files are properly licensed by default even without inline license comments or `.license` files.
+   Replace `GPL-3.0-or-later` with your [SPDX license identifier](https://spdx.org/licenses/) and all other information as needed. The `Files:` field expects a whitespace-separated list and can appear multiple times, see [the official documentation](https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/#files-field) for more information on the syntax, e.g. on how to defined excludes. The `*` wildcard makes sure all existing files are properly licensed by default even without inline license comment headers or `.license` files.
 
 
 ### Multiple licenses<a id="machine-readable-file-multiple-licenses"></a>
@@ -95,7 +97,7 @@ You can add additional stanzas when using multiple licenses and/or third party c
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-Add a `Licensing, copyright` section in the `README.md` (or a comparable central place which is easy for humans to notice and read). Please use the following template to do so:
+Add a `Licensing, copyright` section in the `README.md` or a comparable central place which is easy for humans to notice and read. Please use the following template to do so:
 
 ```markdown
 ## Licensing, copyright
@@ -109,7 +111,7 @@ The [`.reuse/dep5`](.reuse/dep5) file provides detailed licensing and copyright 
 
 Replace `YYYY` with the year of the first release or [code contribution](https://reuse.readthedocs.io/en/latest/scripts.html#starting-point-of-the-codebase) and adapt the mentioned license, filenames and links as needed.
 
-Feel free to add additional author information not suitable for the [inline license notice](#license-header) as additional section:
+Feel free to add additional author information not suitable for the [inline license notice](#license-comment-headers) as additional section:
 
 ```markdown
 ## Author information
@@ -125,7 +127,7 @@ Special thanks to:
 
 ### Multiple licenses<a id="human-info-multiple-licenses"></a>
 
-The wording of the `README.md`'s licensing and copyright information is already pointing to the `.reuse/dep5` file and mentioning that parts of the project might be subject to different licensing than the main one prominently mentioned. If this is not good enough, feel free to adapt the wording of the main "licensed under" sentence to highlight the main licensing rules without the need to maintain every single bit outside of the `.reuse/dep5` file. Examples (adapt as needed):
+The wording of the `README.md`'s licensing and copyright information is already pointing to the [copyright file](#machine-readable-file) (`.reuse/dep5`) and mentions that parts of the project might be subject to different licensing than the main one. If this is not good enough, feel free to adapt the wording of the main "licensed under" sentence to highlight the main licensing rules without the need to maintain every single bit outside of the copyright file. Examples (adapt as needed):
 
 ```markdown
 
@@ -148,47 +150,51 @@ The above list might not be exhaustive. [... usual template follows ...]
 
 
 
-## Step 5: Add license header comments (optional)<a id="license-header"></a>
+## Step 5: Add license comment headers (optional, recommended)<a id="license-comment-headers"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-Because of some [issues](#license-header-issues), **add license headers only to files intended to be used stand-alone** without context and repository. This is usually the case for helper scripts or projects like [`pve_backup_usb.sh`](https://github.com/foundata/proxmox-pve_backup_usb/blob/main/pve_backup_usb.sh).
-
-Please use the following template if you want to include header comments:
+While having a [proper copyright file with wildcard](#machine-readable-file) beside an [updated README](#human-info) is compliant and convenient, it is recommended to add license comment headers. Please use the following template if so:
 
 ```
 SPDX-License-Identifier: GPL-3.0-or-later
 SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
 ```
 
-Replace `GPL-3.0-or-later` with your [SPDX license identifier](https://spdx.org/licenses/) as needed. Use `OR` to [declare multiple licenses for the file at the same time](https://reuse.software/faq/#multi-licensing) (e.g. `SPDX-License-Identifier: GPL-3.0-or-later OR Apache-2.0 OR MIT`). For binaries, images and other uncommentable files, put the comment into a accompanying `<filename>.license` textfile (e.g. `foo.jpg.license` for `foo.jpg`).
+Replace `GPL-3.0-or-later` with your [SPDX license identifier](https://spdx.org/licenses/) as needed. Use `OR` to [declare multiple licenses for the file at the same time](https://reuse.software/faq/#multi-licensing) (e.g. `SPDX-License-Identifier: GPL-3.0-or-later OR Apache-2.0 OR MIT`).
+
+For binaries, images and other uncommentable files, put the comment into a accompanying `<filename>.license` textfile (e.g. `foo.jpg.license` for `foo.jpg`). However, we usually do not use this as long as the binary file is not somehow outstanding as we think `.license` files are clumsy and clutter the repo.
+
+**Consider license comment headers at least for the following files:**
+
+* **Files which are intended to be used stand-alone** without context and repository. This is usually the case for helper scripts or projects like [`pve_backup_usb.sh`](https://github.com/foundata/proxmox-pve_backup_usb/blob/main/pve_backup_usb.sh).
+* **Files where header comments are common and not annoying**. Common sense applies: usual source code files with existing header comments are quite easy, but Markdown files are intended to be often read directly and a inline header comment is unusual and would disturb readability.
 
 **Never add a license notice for the following files** as this would disturb readability, maintainability or common tooling:
 
-* [build artifacts](https://reuse.software/tutorial/#build-artifacts) and comparable files usually listed in a project's `.gitignore`
+* [build artifacts](https://reuse.software/tutorial/#build-artifacts) and comparable files usually listed in a project's `.gitignore` (side note: [files listed in a `.gitignore` get automatically excluded](https://reuse.software/faq/#exclude-file) by the reuse-toolset)
 * tooling helper files and directories like `.gitignore`, `.github`, `.reuse` or `.ansible-lint`
 * repository bureaucracy files like changelogs, `SECURITY`, `README.md`, `CONTRIBUTING.md` and the text files below the `LICENSES` directory
 * third party components as thy should not be edited (simply list their license in the [copyright file](#machine-readable-file))
 
 
-### Reasoning<a id="license-header-reasoning"></a>
+### Reasoning<a id="license-comment-headers-reasoning"></a>
 
-At least [GNU](https://www.gnu.org/licenses/gpl-howto.html.en#why-license-notices) recommends to include license header comments in source files as it helps to prevent confusion or errors. Files sometimes get copied or forked into new projects an third parties might not have a well organized repository bureaucracy. Without a statement about what their license is, moving files into another context might eliminate all trace of that point. As this makes sense, we follow this recommendation for files intended to be used stand-alone and a high propability to exists somewhere without the repository.
+[REUSE](https://github.com/fsfe/reuse-docs/issues/117#issuecomment-1306963966) and many organizations like [GNU](https://www.gnu.org/licenses/gpl-howto.html.en#why-license-notices) recommends to include license header comments in source files as it helps to prevent confusion or errors. So even if the [copyright file](#machine-readable-file) exists as central place for licensing information, files sometimes get copied or forked into new projects and third parties might not have a well organized repository bureaucracy. Without a statement about what their license is, moving single files into another context might eliminate all trace of that point. As this argument makes sense, [we mostly follow this recommendation](#license-comment-headers) with a few exceptions.
 
-We do not include a copyright year nor links to license texts in the header comments to keep maintenance easy while still being informative. There is no legal disadvantage by doing so, the year is mostly historical common but optional information, especially if the [the `README.md`](#human-info) provides the year. Thanks to the commit history and public repositories, open source projects usually have no problems proving the chronological in a way that third parties can understand. This should also be legally more robust than a simple year in an easily changed file if somebody claims some kind of prior art. We therefore maintain the year and links to license texts only at central places like a project's [`README.md`](#human-info).
-
-
-### Issues<a id="license-header-issues"></a>
-
-Sadly, there are issues when using license header comments:
-
-* It is possible to produce conflicts between the [copyright file](#machine-readable-file) and the license header. You *must* avoid that as the legal order of precedence is unclear.
-* `reuse spdx` adds two `LicenseInfoInFile` keys even if the license is the same
-* `reuse lint` and the whole specification 3.0 [does not define the order of precedence](https://github.com/fsfe/reuse-tool/issues/779) in case of conflicts.
+We do not include a copyright year nor links to license texts in the header comments to keep maintenance easy while still being informative. There is no legal disadvantage by doing so, the year is mostly historical common but optional information, especially if [the `README.md`](#human-info) provides the year. Thanks to the commit history and public repositories, open source projects usually have no problems proving the chronological in a way that third parties can understand. This should also be legally more robust than a simple year in an easily changed file if somebody claims some kind of prior art. We therefore maintain the year and links to license texts only at central places like a project's [`README.md`](#human-info).
 
 
+### Issues<a id="license-comment-headers-issues"></a>
 
-## Step 6: REUSE linting (optional)<a id="linting"></a>
+There are a few issues when using license comment headers one should know about:
+
+* `reuse lint` and the whole specification 3.0 [does not define the order of precedence](https://github.com/fsfe/reuse-tool/issues/779) in case of conflicts between the [copyright file](#machine-readable-file) and the license header. You *must* avoid conflicts as the legal order of precedence is unclear.
+* `reuse spdx` adds two `LicenseInfoInFile` keys in the [SPDX software bill of materials (SBOM)](https://en.wikipedia.org/wiki/Software_Package_Data_Exchange) even if the license is the same (at least up to program version 2.1.0). As of 2024-Q1, this and [comparable toolset issues](https://github.com/fsfe/reuse-tool/issues/885) propably get fixed soon.
+
+
+
+## Step 6: REUSE linting<a id="linting"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
@@ -196,6 +202,7 @@ Sadly, there are issues when using license header comments:
 
 ```bash
 reuse lint
+reuse --root '/path/to/project' lint
 ```
 
 Example output:
@@ -222,7 +229,7 @@ Example commit for the changes if everything is fine:
 git commit -m "Update licensing information" -m "This project follows the REUSE specification (https://reuse.software/spec/)."
 ```
 
-It is a good idea to add `reuse lint` into your project's continuous integration pipeline (if any). [Files in `.gitignore` get automatically excluded](https://reuse.software/faq/#exclude-file) from REUSE compliance testing and [ignoring parts of a file](https://reuse.readthedocs.io/en/latest/usage.html#ignoring-parts-of-a-file) is possible by adding `REUSE-IgnoreStart` and `REUSE-IgnoreEnd`.
+It is a good idea to add `reuse lint` into your project's continuous integration pipeline (if any). [Files listed in `.gitignore` get automatically excluded](https://reuse.software/faq/#exclude-file) from REUSE compliance testing and [ignoring parts of a file](https://reuse.readthedocs.io/en/latest/usage.html#ignoring-parts-of-a-file) is possible by adding `REUSE-IgnoreStart` and `REUSE-IgnoreEnd`.
 
 
 
