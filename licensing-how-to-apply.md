@@ -105,12 +105,14 @@ Add a `Licensing, copyright` section in the `README.md` or a comparable central 
 
 Copyright (c) YYYY, foundata GmbH (https://foundata.com)
 
+<!--REUSE-IgnoreStart-->
 This project is licensed under the GNU General Public License v3.0 or later (SPDX-License-Identifier: `GPL-3.0-or-later`), see [`LICENSES/GPL-3.0-or-later.txt`](LICENSES/GPL-3.0-or-later.txt) for the full text.
 
 The [`.reuse/dep5`](.reuse/dep5) file provides detailed licensing and copyright information in a human- and machine-readable format. This includes parts that may be subject to different licensing or usage terms, such as third party components. The repository conforms to the [REUSE specification](https://reuse.software/spec/), you can use [`reuse spdx`](https://reuse.readthedocs.io/en/latest/readme.html#cli) to create a [SPDX software bill of materials (SBOM)](https://en.wikipedia.org/wiki/Software_Package_Data_Exchange).
+<!--REUSE-IgnoreEnd-->
 ```
 
-Replace `YYYY` with the year of the first release or [code contribution](https://reuse.readthedocs.io/en/latest/scripts.html#starting-point-of-the-codebase) and adapt the mentioned license, filenames and links as needed.
+Replace `YYYY` with the year of the first release or [code contribution](https://reuse.readthedocs.io/en/latest/scripts.html#starting-point-of-the-codebase) and adapt the mentioned license, filenames and links as needed. The HTML comments prevent linting errors when e.g. listing [multiple licenses](#human-info-multiple-licenses).
 
 Feel free to add additional author information not suitable for the [inline license notice](#license-comment-headers) as additional section:
 
