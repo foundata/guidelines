@@ -80,6 +80,15 @@ Read our [guideline on how to choose a license](./licensing-how-to-choose-a-lice
    Upstream-Name: <name of your project>
    Upstream-Contact: foundata GmbH <https://foundata.com>
    Source: <URL of the public repository, https://github.com/foundata/...>
+   Disclaimer: This project may include calls to Application Programming Interfaces
+    ("API calls"), as well as their respective specifications and code that
+    allows software to communicate with other software. API calls to products
+    or services developed outside of this project are not licensed under the
+    licensing or usage terms that govern this project. Any use of such API
+    calls and related external products is subject to applicable additional
+    agreements with their respective provider and does not alter, expand or
+    supersede any terms of these additional agreements.
+
 
    Files: *
    Copyright: foundata GmbH <https://foundata.com>
