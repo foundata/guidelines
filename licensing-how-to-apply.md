@@ -77,9 +77,9 @@ Read our [guideline on how to choose a license](./licensing-how-to-choose-a-lice
    Please use the following template to do so:
    ```
    Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-   Upstream-Name: <name of your project>
+   Upstream-Name: FIXME name of your project
    Upstream-Contact: foundata GmbH <https://foundata.com>
-   Source: <URL of the public repository, https://github.com/foundata/...>
+   Source: https://github.com/foundata/FIXME-your-project
    Disclaimer: This project may include calls to Application Programming Interfaces
     ("API calls"), as well as their respective specifications and code that
     allows software to communicate with other software. API calls to products
@@ -254,7 +254,7 @@ The Free Software Foundation provides an API plus services to continuously check
 See the following for more information:
 
 * https://api.reuse.software/projects
-* https://api.reuse.software/register (please use the `office@` email address for confirmation mails)
+* https://api.reuse.software/register (please use `foundata GmbH` as name and the `office@` email address to receive the confirmation mail)
 
 They also provide a status badge for your `README.md` like the one showing that [`github.com/foundata/guidelines`](https://github.com/foundata/guidelines) is REUSE compliant:
 
