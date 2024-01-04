@@ -142,7 +142,6 @@ Special thanks to:
 The wording of the `README.md`'s licensing and copyright information is already pointing to the [copyright file](#machine-readable-file) (`.reuse/dep5`) and mentions that parts of the project might be subject to different licensing than the main one. If this is not good enough, feel free to adapt the wording of the main "licensed under" sentence to highlight the main licensing rules without the need to maintain every single bit outside of the copyright file. Examples (adapt as needed):
 
 ```markdown
-
 The project is dual-licensed under the
 
 * GNU General Public License v3.0 or later (SPDX-License-Identifier: `GPL-3.0-or-later`), see [`LICENSES/GPL-3.0-or-later.txt`](./LICENSES/GPL-3.0-or-later.txt) for the full text.
@@ -152,13 +151,15 @@ The project is dual-licensed under the
 ```
 
 ```markdown
-Parts of the project are licensed differently:
+This work is licensed under multiple licences. Here is a brief summary:
 
 * The project is primarily licensed under the GNU General Public License v3.0 or later (SPDX-License-Identifier: `GPL-3.0-or-later`), see [`LICENSES/GPL-3.0-or-later.txt`](./LICENSES/GPL-3.0-or-later.txt) for the full text.
 * Files below `/doc` are licensed under the [Creative Commons Attribution Share Alike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/deed) license, see [`LICENSES/CC-BY-SA-4.0.txt`](./LICENSES/CC-BY-SA-4.0.txt) for the full text.
 
 The above list might not be exhaustive. [... usual template follows ...]
 ```
+
+[The reuse/api `README.md` file](https://git.fsfe.org/reuse/api/src/commit/6426ba31ee708953b85a1cc1e7b5efc764bbaa9d/README.md#license) is also a good real-world example.
 
 
 
