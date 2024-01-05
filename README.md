@@ -5,9 +5,13 @@ This repository collects recommendations and rules [foundata](https://foundata.c
 
 ## Table of contents
 
+Topics:
 * [Ansible](#ansible)
 * [Licensing](#licensing)
-* [Notes on the continuous release of guidelines and related documents](#continuous-release)
+
+Misc:
+* [Continuous release of guidelines and related documents](#continuous-release)
+* [Licensing, copyright](#licensing-copyright)
 
 
 ## Ansible<a id="ansible"></a>
@@ -26,18 +30,18 @@ Resources on how to choose, apply or change a license.
 * [How to apply licenses (`licensing-how-to-apply.md`)](./licensing-how-to-apply.md)
 
 
-## Notes on the continuous release of guidelines and related documents<a id="continuous-release"></a>
+## Continuous release of guidelines and related documents<a id="continuous-release"></a>
 
-Our guides are updated continuously, meaning:
+Our **guides are updated continuously**, meaning:
 
-* Changes are immediately put "live" by publishing them after a review.
+* **Changes are immediately put "live" by publishing them after a review**.
 * There is no special versioning, neither for the documents themselves nor for the repository.
 * As Git and a repository hosting are used, permanent links to specific "versions" are still easy and possible if needed.
 
 We believe that guides are work in progress and will probably never be finished as our understanding of each topic evolves. This fits our overall agile approach.
 
 
-## Licensing, copyright
+## Licensing, copyright<a id="licensing-copyright"></a>
 
 <!--REUSE-IgnoreStart-->
 Copyright (c) 2020, 2024 [foundata GmbH](https://foundata.com/)
