@@ -5,8 +5,9 @@ This repository collects recommendations and rules [foundata](https://foundata.c
 
 ## Table of contents
 
-Topics:
+Topics (in alphabetical order):
 * [Ansible](#ansible)
+* [Git](#git)
 * [Licensing](#licensing)
 
 Misc:
@@ -28,6 +29,13 @@ Resources on how to choose, apply or change a license.
 
 * [How to choose a license (`licensing-how-to-choose-a-license.md`)](./licensing-how-to-choose-a-license.md)
 * [How to apply licenses (`licensing-how-to-apply.md`)](./licensing-how-to-apply.md)
+
+
+## Git <a id="git"></a>
+
+Resources on how to work with, maintain and host Git repositories.
+
+* [How to name Git repositories (`git-repository-naming.md`)](./git-repository-naming.md)
 
 
 ## Continuous release of guidelines and related documents<a id="continuous-release"></a>
