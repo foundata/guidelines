@@ -36,6 +36,7 @@ Resources on how to choose, apply or change a license.
 Resources on how to work with, maintain and host Git repositories.
 
 * [How to name Git repositories (`git-repository-naming.md`)](./git-repository-naming.md)
+* [`gitignore` configuration (`git-gitignore.md`)](./git-gitignore.md)
 
 
 ## Continuous release of guidelines and related documents<a id="continuous-release"></a>
