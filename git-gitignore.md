@@ -7,7 +7,7 @@ It is mainly every developer's responsibility to not push unwanted files (like t
 
 ## Default starting point for a repository's `.gitignore`<a id="gitignore-file-default"></a>
 
-**Please use <https://www.toptal.com/developers/gitignore/api/git,vim,linux,macos,windows,jetbrains+all,visualstudiocode> as the default for a `.gitignore`**.
+**Please use <https://www.toptal.com/developers/gitignore/api/git,vim,linux,macos,windows,jetbrains+all,visualstudiocode,visualstudio> as the default for a `.gitignore` file**.
 
 We decided to ignore probably unwanted files of the following components by default:
 
@@ -16,12 +16,13 @@ We decided to ignore probably unwanted files of the following components by defa
 * MacOS and common tools like Finder
 * Microsoft Windows and common tools like File Explorer
 * [vim](https://www.vim.org/)
+* [Microsoft Visual Studio](https://visualstudio.microsoft.com/)
 * [Microsoft Visual Studio Code](https://code.visualstudio.com/)
 * [JetBrains Toolset (complete suite / all IDEs)](https://www.jetbrains.com/products)
 
 
 ## Project specific / additional files to ignore<a id="gitignore-file-extend"></a>
 
-Extend the `.gitignore` file as needed for your project, based on the tools you use (eg. Ansible, certain build tools, …). You can access <https://www.toptal.com/developers/gitignore?templates=git,vim,linux,macos,windows,jetbrains+all,visualstudiocode> WebUI to easily extend our default without much effort.
+Extend the `.gitignore` file as needed for your project, based on the tools you use (eg. Ansible, Chocolatey, certain build tools, …). You can access <https://www.toptal.com/developers/gitignore?templates=git,vim,linux,macos,windows,jetbrains+all,visualstudiocode,visualstudio> WebUI to easily extend our default without much effort.
 
 Please add repository specific things not covered by the templates below `# End of https://www.toptal.com/developers/gitignore[...]` to keep everything easily maintainable.
