@@ -1,8 +1,13 @@
 # Ansible style guide
 
-You should follow the [Best Practices of the Ansible User guide](https://docs.ansible.com/ansible/latest/user_guide/playbooks_best_practices.html) as well as [Red Hat's Coding Style Good Practices for Ansible](https://github.com/redhat-cop/automation-good-practices/blob/main/coding_style/README.adoc#ansible-guidelines) when developing playbooks. However, neither them nor the [Ansible documentation](https://docs.ansible.com/ansible/latest) in general are using a consistent code style nor defining one. This is done by this document.
+You should follow the following resources when developing playbooks:
 
-Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) for rules shown in code and further clarification. MUST, SHOULD and other key words are used as defined in [RFC 2119](https://tools.ietf.org/html/rfc2119) and [RFC 8174](https://tools.ietf.org/html/rfc8174).
+* [Red Hat's Coding Style Good Practices for Ansible](https://github.com/redhat-cop/automation-good-practices/blob/main/coding_style/README.adoc#ansible-guidelines) and
+* [Best Practices of the Ansible User guide](https://docs.ansible.com/ansible/latest/user_guide/playbooks_best_practices.html)
+
+However, neither them nor the [Ansible documentation](https://docs.ansible.com/ansible/latest) in general are using a consistent code style nor defining one. This is done by this document.
+
+Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) for rules shown in code and further clarification. MUST, SHOULD and other key words are used as defined in [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119) and [RFC 8174](https://datatracker.ietf.org/doc/html/rfc8174).
 
 
 ## Table of contents

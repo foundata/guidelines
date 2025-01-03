@@ -31,7 +31,7 @@ Resources on how to choose, apply or change a license.
 * [How to apply licenses (`licensing-how-to-apply.md`)](./licensing-how-to-apply.md)
 
 
-## Git <a id="git"></a>
+## Git<a id="git"></a>
 
 Resources on how to work with, maintain and host Git repositories.
 
