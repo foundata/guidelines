@@ -1,32 +1,35 @@
 # Licensing guide: How to apply licenses
 
-This document explains how to apply one or more licenses in your project after [choosing](./licensing-how-to-choose-a-license.md) them.
-
-[foundata](https://foundata.com/)'s projects are usually following the [REUSE specification](https://reuse.software/spec/). It is helpful to [install the `reuse` tool](https://reuse.readthedocs.io/en/latest/readme.html#install), usually being available as package of the same name (e.g. via `dnf` or `apt`).
-
+This document explains how to apply one or more licenses to your project after [choosing](./licensing-how-to-choose-a-license.md) them. [foundata](https://foundata.com/)'s projects typically follow the most recent version of the [REUSE specification](https://reuse.software/spec/) ([v3.3](https://reuse.software/spec-3.3/) at the time of writing).
 
 
 ## Table of contents
 
-* [Step 1: Choose the license(s)](#choose-license)
-* [Step 2: Add license text(s)](#add-text)
-* [Step 3: Add a machine-readable copyright file](#machine-readable-file)
+* [Step 1: Install the `reuse` tool](#prerequisites)
+* [Step 2: Choose the license(s)](#choose-license)
+* [Step 3: Add license text(s)](#add-text)
+* [Step 4: Add a machine-readable copyright file](#machine-readable-file)
   * [Multiple licenses](#machine-readable-file-multiple-licenses)
-* [Step 4: Add licensing and copyright information in the `README.md`](#human-info)
+* [Step 5: Add licensing and copyright information in the `README.md`](#human-info)
   * [Multiple licenses](#human-info-multiple-licenses)
-* [Step 5: Add license comment headers (optional, recommended)](#license-comment-headers)
+* [Step 6: Add license comment headers (optional, recommended)](#license-comment-headers)
   * [Reasoning](#license-comment-headers-reasoning)
   * [Issues](#license-comment-headers-issues)
-* [Step 6: REUSE linting](#linting)
-* [Step 7: Register as compliant repository (optional)](#reuse-api)
+* [Step 7: REUSE linting](#linting)
+* [Step 8: Register as compliant repository (optional)](#reuse-api)
 * [Frequently Asked Questions (FAQ)](#faq)
   * [How to update the copyright year?](#update-copyright-year)
   * [Why does the license detection of GitHub and others not work?](#broken-repo-hoster-license-detection)
 * [Disclaimer](#disclaimer)
 
 
+## Step 1: Install the `reuse` tool<a id="prerequisites"></a>
 
-## Step 1: Choose the license(s)<a id="choose-license"></a>
+* Please [install the `reuse` tool](https://reuse.readthedocs.io/en/latest/readme.html#install), usually available as [package](https://repology.org/project/reuse/versions) of the same name (e.g. via `dnf install reuse` or `apt install reuse`).
+* Make sure `reuse --version` is at least `4.0.2` for good-enough compatibility with the `REUSE.toml` file.
+
+
+## Step 2: Choose the license(s)<a id="choose-license"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
@@ -44,7 +47,7 @@ Read our [guideline on how to choose a license](./licensing-how-to-choose-a-lice
 
 
 
-## Step 2: Add license text(s)<a id="add-text"></a>
+## Step 3: Add license text(s)<a id="add-text"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
@@ -62,48 +65,56 @@ Read our [guideline on how to choose a license](./licensing-how-to-choose-a-lice
    ```
 
 
-## Step 3: Add a machine-readable copyright file<a id="machine-readable-file"></a>
+## Step 4: Add a machine-readable copyright file<a id="machine-readable-file"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-1. Create a `.reuse` directory in your project's root directory.
-   ```bash
-   mkdir '.reuse'
-   ```
-2. Add a UTF-8 encoded text file with Unix line feeds (LF, `\n`) called `dep5` in the `.reuse` directory.
-   ```bash
-   touch '.reuse/dep5'
-   ```
-   Please use the following template to do so:
-   ```
-   Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-   Upstream-Name: FIXME name of your project
-   Upstream-Contact: foundata GmbH <https://foundata.com>
-   Source: https://github.com/foundata/FIXME-your-project
-   Disclaimer: This project may include calls to Application Programming Interfaces
-    ("API calls"), as well as their respective specifications and code that
-    allows software to communicate with other software. API calls to products
-    or services developed outside of this project are not licensed under the
-    licensing or usage terms that govern this project. Any use of such API
-    calls and related external products is subject to applicable additional
-    agreements with their respective provider and does not alter, expand or
-    supersede any terms of these additional agreements.
+Add a UTF-8 encoded text file with Unix line feeds (LF, `\n`) called `REUSE.toml` in the project's root directory.
 
+```bash
+touch 'REUSE.toml'
+```
 
-   Files: *
-   Copyright: foundata GmbH <https://foundata.com>
-   License: GPL-3.0-or-later
-   ```
-   Replace `GPL-3.0-or-later` with your [SPDX license identifier](https://spdx.org/licenses/) and all other information as needed. The `Files:` field expects a whitespace-separated list and can appear multiple times, see [the official documentation](https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/#files-field) for more information on the syntax, e.g. on how to defined excludes. The `*` wildcard makes sure all existing files are properly licensed by default even without inline license comment headers or `.license` files.
+Please use the following template as a starting point:
+
+```toml
+version = 1
+SPDX-PackageName = "FIXME name of your project"
+SPDX-PackageDownloadLocation = "https://github.com/foundata/FIXME-your-project"
+SPDX-PackageSupplier = "foundata GmbH <https://foundata.com>"
+SPDX-PackageComment = """
+This project may include calls to Application Programming Interfaces
+("API calls"), as well as their respective specifications and code that
+allows software to communicate with other software. API calls to products
+or services developed outside of this project are not licensed under the
+licensing or usage terms that govern this project. Any use of such API
+calls and related external products is subject to applicable additional
+agreements with their respective provider and does not alter, expand or
+supersede any terms of these additional agreements.
+"""
+
+[[annotations]]
+path = "**"
+precedence = "closest"
+SPDX-FileCopyrightText = "foundata GmbH <https://foundata.com>"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+```
+
+Replace `GPL-3.0-or-later` with your [SPDX license identifier](https://spdx.org/licenses/) and update all other information as needed, especially values containing the string `FIXME`. The `**` wildcard ensures that all existing files are properly licensed by default, even without inline license comment headers or `.license` files. Refer to [the official documentation](https://reuse.software/spec-3.3/#reusetoml) for more information on the syntax and precedence.
 
 
 ### Multiple licenses<a id="machine-readable-file-multiple-licenses"></a>
 
-You can add additional stanzas when using multiple licenses and/or third party components in the same project. [SAP's OpenUI5 `.reuse/dep5` file](https://github.com/SAP/openui5/blob/26f313e55bc88229623d8437f2a85855f9aadd65/.reuse/dep5) is a good real-world example on how to do so with many third party libraries and good usage of `Comment:`.
+You can add additional stanzas when using multiple licenses and/or third-party components in the same project. Here are some good real-world examples:
+
+* [reuse-tool `REUSE.toml` file](https://github.com/fsfe/reuse-tool/blob/main/REUSE.toml).
+
+Legacy file examples (for REUSE ≤ [v3.0](https://reuse.software/spec-3.0/)):
+
+* [SAP OpenUI5 `.reuse/dep5` file](https://github.com/SAP/openui5/blob/26f313e55bc88229623d8437f2a85855f9aadd65/.reuse/dep5) with many third-party libraries, and good usage of `Comment:`.
 
 
-
-## Step 4: Add licensing and copyright information in the `README.md`<a id="human-info"></a>
+## Step 5: Add licensing and copyright information in the `README.md`<a id="human-info"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
@@ -117,7 +128,7 @@ Copyright (c) YYYY, foundata GmbH (https://foundata.com)
 
 This project is licensed under the GNU General Public License v3.0 or later (SPDX-License-Identifier: `GPL-3.0-or-later`), see [`LICENSES/GPL-3.0-or-later.txt`](LICENSES/GPL-3.0-or-later.txt) for the full text.
 
-The [`.reuse/dep5`](.reuse/dep5) file provides detailed licensing and copyright information in a human- and machine-readable format. This includes parts that may be subject to different licensing or usage terms, such as third party components. The repository conforms to the [REUSE specification](https://reuse.software/spec/), you can use [`reuse spdx`](https://reuse.readthedocs.io/en/latest/readme.html#cli) to create a [SPDX software bill of materials (SBOM)](https://en.wikipedia.org/wiki/Software_Package_Data_Exchange).
+The [`REUSE.toml`](REUSE.toml) file provides detailed licensing and copyright information in a human- and machine-readable format. This includes parts that may be subject to different licensing or usage terms, such as third-party components. The repository conforms to the [REUSE specification](https://reuse.software/spec/), you can use [`reuse spdx`](https://reuse.readthedocs.io/en/latest/readme.html#cli) to create a [SPDX software bill of materials (SBOM)](https://en.wikipedia.org/wiki/Software_Package_Data_Exchange).
 <!--REUSE-IgnoreEnd-->
 ```
 
@@ -139,7 +150,7 @@ Special thanks to:
 
 ### Multiple licenses<a id="human-info-multiple-licenses"></a>
 
-The wording of the `README.md`'s licensing and copyright information is already pointing to the [copyright file](#machine-readable-file) (`.reuse/dep5`) and mentions that parts of the project might be subject to different licensing than the main one. If this is not good enough, feel free to adapt the wording of the main "licensed under" sentence to highlight the main licensing rules without the need to maintain every single bit outside of the copyright file. Examples (adapt as needed):
+The wording of the `README.md`'s licensing and copyright information is already pointing to the [copyright file](#machine-readable-file) (`REUSE.toml`) and mentions that parts of the project might be subject to different licensing than the main one. If this is not good enough, feel free to adapt the wording of the main "licensed under" sentence to highlight the main licensing rules without the need to maintain every single bit outside of the copyright file. Examples (adapt as needed):
 
 ```markdown
 The project is dual-licensed under the
@@ -163,7 +174,7 @@ The above list might not be exhaustive. [... usual template follows ...]
 
 
 
-## Step 5: Add license comment headers (optional, recommended)<a id="license-comment-headers"></a>
+## Step 6: Add license comment headers (optional, recommended)<a id="license-comment-headers"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
@@ -180,15 +191,15 @@ For binaries, images and other uncommentable files, put the comment into a accom
 
 **Consider license comment headers at least for the following files:**
 
-* **Files which are intended to be used stand-alone** without context and repository. This is usually the case for helper scripts or projects like [`pve_backup_usb.sh`](https://github.com/foundata/proxmox-pve_backup_usb/blob/main/pve_backup_usb.sh).
+* **Files which are intended to be used stand-alone** without context and repository. This is usually the case for helper scripts or projects like [`pve_backup_usb.sh`](https://github.com/foundata/proxmox-pve-backup-usb/blob/main/pve_backup_usb.sh).
 * **Files where header comments are common and not annoying**. Common sense applies: usual source code files with existing header comments are quite easy, but Markdown files are intended to be often read directly and a inline header comment is unusual and would disturb readability.
 
 **Never add a license notice for the following files** as this would disturb readability, maintainability or common tooling:
 
 * [build artifacts](https://reuse.software/tutorial/#build-artifacts) and comparable files usually listed in a project's `.gitignore` (side note: [files listed in a `.gitignore` get automatically excluded](https://reuse.software/faq/#exclude-file) by the reuse-toolset)
-* tooling helper files and directories like `.gitignore`, `.github`, `.reuse` or `.ansible-lint`
+* tooling helper files and directories like `.gitignore`, `.github` or `.ansible-lint`
 * repository bureaucracy files like changelogs, `SECURITY`, `README.md`, `CONTRIBUTING.md` and the text files below the `LICENSES` directory
-* third party components as thy should not be edited (simply list their license in the [copyright file](#machine-readable-file))
+* third-party components as thy should not be edited (simply list their license in the [copyright file](#machine-readable-file))
 
 
 ### Reasoning<a id="license-comment-headers-reasoning"></a>
@@ -200,14 +211,15 @@ We do not include a copyright year nor links to license texts in the header comm
 
 ### Issues<a id="license-comment-headers-issues"></a>
 
-There are a few issues when using license comment headers one should know about:
+There are some issues when using license comment headers that you should be aware of:
 
-* `reuse lint` and the whole specification 3.0 [does not define the order of precedence](https://github.com/fsfe/reuse-tool/issues/779) in case of conflicts between the [copyright file](#machine-readable-file) and the license header. You *must* avoid conflicts as the legal order of precedence is unclear.
+* You can set a `precedence` key in the `REUSE.toml` file, which defines the tool's behavior and the legal order of precedence in case of conflicts between the [copyright file](#machine-readable-file) and the license header.
+  * **Attention:** Versions of `reuse lint` ≤ v4.x and the specification version ≤ [v3.0](https://reuse.software/spec-3.0/) [do not define the order of precedence](https://github.com/fsfe/reuse-tool/issues/779). You _must_ avoid conflicts, as the legal order of precedence is unclear when having the deprecated `.reuse/dep5` file in use.
 * `reuse spdx` adds two `LicenseInfoInFile` keys in the [SPDX software bill of materials (SBOM)](https://en.wikipedia.org/wiki/Software_Package_Data_Exchange) even if the license is the same (at least up to program version 2.1.0). As of 2024-Q1, this and [comparable toolset issues](https://github.com/fsfe/reuse-tool/issues/885) propably get fixed soon.
 
 
 
-## Step 6: REUSE linting<a id="linting"></a>
+## Step 7: REUSE linting<a id="linting"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
@@ -233,7 +245,7 @@ Example output:
 * files with copyright information: 16 / 16
 * files with license information: 16 / 16
 
-Congratulations! Your project is compliant with version 3.0 of the REUSE Specification :-)
+Congratulations! Your project is compliant with version 3.3 of the REUSE Specification :-)
 ```
 
 Example commit for the changes if everything is fine:
@@ -242,7 +254,7 @@ Example commit for the changes if everything is fine:
 git commit -m "Update licensing information" -m "This project follows the REUSE specification (https://reuse.software/spec/)."
 ```
 
-It is a good idea to add `reuse lint` into your project's continuous integration pipeline (if any). [Files listed in `.gitignore` get automatically excluded](https://reuse.software/faq/#exclude-file) from REUSE compliance testing and [ignoring parts of a file](https://reuse.readthedocs.io/en/latest/usage.html#ignoring-parts-of-a-file) is possible by adding `REUSE-IgnoreStart` and `REUSE-IgnoreEnd`.
+It is a good idea to add `reuse lint` into your project's continuous integration (CI) pipeline, if applicable. [Files listed in `.gitignore` are automatically excluded](https://reuse.software/faq/#exclude-file) from REUSE compliance testing and [you can ignore specific parts of a file](https://reuse.readthedocs.io/en/latest/usage.html#ignoring-parts-of-a-file) by adding `REUSE-IgnoreStart` and `REUSE-IgnoreEnd`.
 
 
 
