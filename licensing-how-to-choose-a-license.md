@@ -4,7 +4,6 @@
 
 ## Table of contents
 
-* [Reasoning](#reasoning)
 * [Licenses to choose from](#licenses-to-choose-from)
   * [GNU General Public License v3.0 or later (`GPL-3.0-or-later`)](#GPL-3.0-or-later)
   * [GNU Affero General Public License v3.0 or later (`AGPL-3.0-or-later`)](#agpl-30-or-later)
@@ -13,15 +12,8 @@
   * [MIT License (`MIT`)](#mit)
   * [Creative Commons Attribution Share Alike 4.0 International (`CC-BY-SA-4.0`)](#cc-by-sa-40)
   * [Creative Commons Attribution 4.0 International (`CC-BY-4.0`)](#cc-by-40)
+* [Reasoning](#reasoning)
 * [Disclaimer](#disclaimer)
-
-
-
-## Reasoning
-
-[foundata](https://foundata.com/) is driven by open source. A good open source license allows reuse of code while retaining copyright. Using well-known licenses also reduces [legal mumbo jumbo](https://en.wikipedia.org/wiki/Mumbo_jumbo_(phrase)) when working with third-parties, helping you to achieve results. Therefore you should **choose one of the [licenses listed in this document](#licenses-to-choose-from) whenever possible. We usually only check whether there are obvious reasons against the publication of source code**, like confidential contracting work for a customer.
-
-[Copyleft](https://en.wikipedia.org/wiki/Copyleft) licenses like GNU (A)GPL 3.0 [or later](https://foundata.com/en/blog/2024/use-gpl-or-later/) might prevent some organizations from using a project as they do not want to release the source code of their own modifications. Sadly, corporate compliance sometimes even nonsensically prohibits the usage of copyleft projects at all, even if nobody plans to modify anything. We still **prefer [free](https://www.gnu.org/licenses/license-list.en.html) copyleft licenses** as long as it fits into the ecosystem of a project as [we do not care about corporate-anti-oss use cases](https://foundata.com/en/blog/2024/copyleft-open-source-licenses/).
 
 
 
@@ -29,20 +21,21 @@
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-The following licenses are well-known and **all of them allow commercial and private use, modification and distribution and instruct that copyright and license notices must be preserved.** The main differences between them are [copyleft](https://en.wikipedia.org/wiki/Copyleft), what a third party has to do with modifications or when embedding a work into another existing project (a "larger work") and if they are suitable for software. **We prefer copyleft over permissive licenses.**
-
 **Our defaults for software projects are:**
 
 * [`GPL-3.0-or-later`](#GPL-3.0-or-later) as copyleft license
-* [`Apache-2.0`](#Apache-2.0) as premissive license
+* [`Apache-2.0`](#Apache-2.0) as permissive license
 
 
 **Our defaults for projects with focus on media, design, 3D-printing plans or physical objects are:**
 
 * [`CC-BY-SA-4.0`](#CC-BY-SA-4.0) as copyleft license
-* [`CC-BY-4.0`](#CC-BY-4.0) as premissive license
+* [`CC-BY-4.0`](#CC-BY-4.0) as permissive license
 
-However, many projects exist in a wider ecosystem with a license preferred by the community, usually aligned with the main project or product if so. Take this into account when choosing a license. Have a look at existing repositories and/or search the web for `<project> licensing requirements` to get an impression.
+
+Many projects operate within a broader ecosystem that has a license preferred by the community, often aligned with the primary project or product. Consider this when selecting a license. Check existing repositories or search online for `<project> licensing requirements` to understand community expectations.
+
+The licenses listed here are widely recognized and **all of them allow commercial and private use, modification, and distribution while requiring that copyright and license notices be preserved.** The primary differences lie in their treatment of [copyleft](https://en.wikipedia.org/wiki/Copyleft)—specifically, the obligations of third parties regarding modifications or embedding the work into a larger project—and their applicability to software. **We favor copyleft over permissive licenses.**
 
 
 
@@ -222,6 +215,14 @@ A **permissive** license:
 
 * [CC-BY 4.0 Deed / Summary](https://creativecommons.org/licenses/by/4.0/deed)
 * [Software Package Data Exchange (SPDX): `CC-BY-4.0`](https://spdx.org/licenses/CC-BY-4.0.html)
+
+
+
+## Reasoning
+
+[foundata](https://foundata.com/) is committed to open source. A good open source license allows reuse of code while retaining copyright. Using well-known licenses also reduces [legal mumbo jumbo](https://en.wikipedia.org/wiki/Mumbo_jumbo_(phrase)) when working with third-parties, helping you achieve results more efficiently. Therefore you should **choose one of the [licenses listed in this document](#licenses-to-choose-from) whenever possible. We usually only check whether there are obvious reasons against the publication of source code**, like confidential contracting work for a customer.
+
+[Copyleft](https://en.wikipedia.org/wiki/Copyleft) licenses like GNU (A)GPL 3.0 [or later](https://foundata.com/en/blog/2024/use-gpl-or-later/) might prevent some organizations from using a project as they do not want to release the source code of their own modifications. Sadly, corporate compliance sometimes even nonsensically prohibits the usage of copyleft projects altogether, even if nobody plans to modify anything. Nonetheless, we **prefer [free](https://www.gnu.org/licenses/license-list.en.html) copyleft licenses** whenever they align with a project's ecosystem, as [we are not concerned about corporate-anti-oss use cases](https://foundata.com/en/blog/2024/copyleft-open-source-licenses/).
 
 
 
