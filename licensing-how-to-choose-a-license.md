@@ -5,7 +5,7 @@
 ## Table of contents
 
 * [Licenses to choose from](#licenses-to-choose-from)
-  * [GNU General Public License v3.0 or later (`GPL-3.0-or-later`)](#GPL-3.0-or-later)
+  * [GNU General Public License v3.0 or later (`GPL-3.0-or-later`)](#gpl-30-or-later)
   * [GNU Affero General Public License v3.0 or later (`AGPL-3.0-or-later`)](#agpl-30-or-later)
   * [GNU Lesser General Public License v3.0 or later (`LGPL-3.0-or-later`)](#lgpl-30-or-later)
   * [Apache License 2.0 (`Apache-2.0`)](#apache-20)
@@ -23,8 +23,8 @@
 
 **Our defaults for software projects are:**
 
-* [`GPL-3.0-or-later`](#GPL-3.0-or-later) as copyleft license
-* [`Apache-2.0`](#Apache-2.0) as permissive license
+* [`GPL-3.0-or-later`](#gpl-30-or-later) as copyleft license
+* [`Apache-2.0`](#apache-20) as permissive license
 
 
 **Our defaults for projects with focus on media, design, 3D-printing plans or physical objects are:**
@@ -43,21 +43,21 @@ The licenses listed here are widely recognized and **all of them allow commercia
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-A **strong [copyleft](https://en.wikipedia.org/wiki/Copyleft)** license:
+A **strong [copyleft](https://en.wikipedia.org/wiki/Copyleft)** license with the following main characteristics:
 
 * Copyright and license notices must be preserved.
-* Modifications have to be released under the same license.
+* Modifications must be released under the same license.
 * Embedding into a larger work is only possible when the larger work is using the same or a compatible license.
 * [Listed as free by the FSF](https://www.gnu.org/licenses/license-list.en.html#GNUGPLv3)
 * [OSI Approved](https://opensource.org/license/gpl-3-0/)
 
 
-**Used by / default for:**
+Used by / default for the following:
 
 * [Ansible](https://docs.ansible.com/ansible/devel/community/collection_contributors/collection_requirements.html#collection-licensing-requirements)
 
 
-**Further reading:**
+Further reading:
 
 * [Choose a license: GNU General Public License v3.0](https://choosealicense.com/licenses/gpl-3.0/)
 * [Software Package Data Exchange (SPDX): `GPL-3.0-or-later`](https://spdx.org/licenses/GPL-3.0-or-later.html)
@@ -69,22 +69,22 @@ A **strong [copyleft](https://en.wikipedia.org/wiki/Copyleft)** license:
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-A **very strong [copyleft](https://en.wikipedia.org/wiki/Copyleft)** license:
+A **very strong [copyleft](https://en.wikipedia.org/wiki/Copyleft)** license with the following main characteristics:
 
 * Copyright and license notices must be preserved.
-* Modifications have to be released under the same license.
+* Modifications must be released under the same license.
 * Embedding into a larger work is only possible when the larger work is using the same or a compatible license.
 * The source code of a modified version must be made available if it is used to provide a service over a network (e.g. as [SaaS](https://en.wikipedia.org/wiki/Software_as_a_service)).
 * [Listed as free by the FSF](https://www.gnu.org/licenses/license-list.en.html#AGPLv3.0)
 * [OSI Approved](https://opensource.org/license/agpl-v3/)
 
 
-**Used by / default for:**
+Used by / default for the following:
 
 * [Grafana](https://github.com/grafana/grafana#license)
 
 
-**Further reading:**
+Further reading:
 
 * [Choose a license: GNU Affero General Public License v3.0](https://choosealicense.com/licenses/agpl-3.0/)
 * [Software Package Data Exchange (SPDX): `AGPL-3.0-or-later`](https://spdx.org/licenses/AGPL-3.0-or-later.html)
@@ -95,10 +95,10 @@ A **very strong [copyleft](https://en.wikipedia.org/wiki/Copyleft)** license:
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-A **[copyleft](https://en.wikipedia.org/wiki/Copyleft)** license, especially useful for libraries to be used in other software:
+A **[copyleft](https://en.wikipedia.org/wiki/Copyleft)** license, especially useful for libraries to be used in other software. It has the following main characteristics:
 
 * Copyright and license notices must be preserved.
-* Modifications have to be released under the same license.
+* Modifications must be released under the same license.
 * Embedding into a larger work is possible when
   * the larger work is using the same or a compatible license or
   * the larger work is distributed under different terms and without source code but using the project only through provided interfaces
@@ -106,13 +106,13 @@ A **[copyleft](https://en.wikipedia.org/wiki/Copyleft)** license, especially use
 * [OSI Approved](https://opensource.org/license/lgpl-3-0/)
 
 
-**Used by / default for:**
+Used by / default for the following:
 
 * [7-Zip](https://7-zip.org/license.txt) (most of it, LGPL 2.1 or later)
 * [GTK](https://gitlab.gnome.org/GNOME/gtk/-/blob/main/COPYING) (LGPL 2.1 or later)
 
 
-**Further reading:**
+Further reading:
 
 * [Choose a license: GNU Lesser General Public License v3.0](https://choosealicense.com/licenses/lgpl-3.0/)
 * [Software Package Data Exchange (SPDX): `LGPL-3.0-or-later`](https://spdx.org/licenses/LGPL-3.0-or-later.html)
@@ -125,21 +125,21 @@ A **[copyleft](https://en.wikipedia.org/wiki/Copyleft)** license, especially use
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-A **permissive** license:
+A **permissive** license with the following main characteristics:
 
 * Copyright and license notices must be preserved.
-* Modifications have to be stated (even if only internally).
+* Modifications must be stated (even if only internally).
 * [Listed as free by the FSF](https://www.gnu.org/licenses/license-list.en.html#apache2)
 * [OSI Approved](https://opensource.org/license/apache-2-0/)
 
 
-**Used by / default for:**
+Used by / default for the following:
 
 * [Chocolatey](https://docs.chocolatey.org/en-us/information/legal#open-source-edition)
 * [Puppet](https://github.com/puppetlabs/puppet/blob/main/LICENSE)
 
 
-**Further reading:**
+Further reading:
 
 * [Choose a license: Apache License 2.0](https://choosealicense.com/licenses/apache-2.0/)
 * [Apache.org: How to apply the ALv2 (for Apache developers)](https://www.apache.org/legal/apply-license.html)
@@ -152,19 +152,19 @@ A **permissive** license:
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-A **permissive and simple** license:
+A **permissive and simple** license with the following main characteristics:
 
 * Copyright and license notices must be preserved.
 * [Listed as free by the FSF](https://www.gnu.org/licenses/license-list.en.html#Expat)
 * [OSI Approved](https://opensource.org/license/mit/)
 
 
-**Used by / default for:**
+Used by / default for the following:
 
 * [Tailwind CSS](https://github.com/tailwindlabs/tailwindcss/blob/master/LICENSE)
 
 
-**Further reading:**
+Further reading:
 
 * [Choose a license: MIT License](https://choosealicense.com/licenses/mit/)
 * [Software Package Data Exchange (SPDX): `MIT`](https://spdx.org/licenses/MIT.html)
@@ -175,22 +175,22 @@ A **permissive and simple** license:
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-A **strong [copyleft](https://en.wikipedia.org/wiki/Copyleft)** license for documents and media files:
+A **strong [copyleft](https://en.wikipedia.org/wiki/Copyleft)** license for documents and media files. It has the following main characteristics:
 
 * Attribution
 * Copyright and license notices must be preserved.
-* Modifications have to be released under the same license.
+* Modifications must be released under the same license.
 * Embedding into a larger work is only possible when the larger work is using the same or a compatible license.
-* [Listed as free by the FSF but not GPLv3 compatible](https://www.gnu.org/licenses/license-list.en.html#ccbysa). [Can be one-way converted to GPLv3](https://creativecommons.org/2015/10/08/cc-by-sa-4-0-now-one-way-compatible-with-gplv3/)) though.
+* [Listed as free by the FSF but not GPLv3 compatible](https://www.gnu.org/licenses/license-list.en.html#ccbysa). [Can be one-way converted to GPLv3](https://creativecommons.org/2015/10/08/cc-by-sa-4-0-now-one-way-compatible-with-gplv3/) though.
 * [**Not** to be used for software](https://creativecommons.org/faq/#can-i-apply-a-creative-commons-license-to-software) and therefore not OSI approved.
 
 
-**Used by / default for:**
+Used by / default for the following:
 
 * [KDE (for documentation)](https://community.kde.org/Policies/Licensing_Policy)
 
 
-**Further reading:**
+Further reading:
 
 * [CC-BY-SA 4.0 Deed / Summary](https://creativecommons.org/licenses/by-sa/4.0/deed)
 * [Software Package Data Exchange (SPDX): `CC-BY-SA-4.0`](https://spdx.org/licenses/CC-BY-SA-4.0.html)
@@ -202,16 +202,16 @@ A **strong [copyleft](https://en.wikipedia.org/wiki/Copyleft)** license for docu
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-A **permissive** license:
+A **permissive** license with the following main characteristics:
 
 * Attribution
 * Copyright and license notices must be preserved.
-* Modifications have to be stated (even if only internally).
+* Modifications must be stated (even if only internally).
 * [Listed as free by the FSF](https://www.gnu.org/licenses/license-list.en.html#ccby).
 * [**Not** to be used for software](https://creativecommons.org/faq/#can-i-apply-a-creative-commons-license-to-software) and therefore not OSI approved.
 
 
-**Further reading:**
+Further reading:
 
 * [CC-BY 4.0 Deed / Summary](https://creativecommons.org/licenses/by/4.0/deed)
 * [Software Package Data Exchange (SPDX): `CC-BY-4.0`](https://spdx.org/licenses/CC-BY-4.0.html)
