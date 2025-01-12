@@ -23,6 +23,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 * [Author information](#author-information)
 
 
+
 ## YAML files<a id="yaml-files"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
@@ -34,7 +35,8 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 * Use Unix line feed (LF, `\n`) for new lines.
 * Use [UTF-8 encoding](https://yaml.org/spec/1.2.2/#52-character-encodings).
 * Trim trailing whitespace whenever possible, but end your files with a new line.
-
+* Keep the line length below 160 characters whenever technically possible.
+* Use JSON syntax only when it makes sense (e.g., for an automatically generated file) or when it improves readability.
 
 **You SHOULD**
 
@@ -43,6 +45,10 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 * Start scripts with comments explaining their purpose, including example usage if necessary.
 * Include blank lines around the `---` separator, followed by the rest of the file.
 * Check all [`YAML_FILENAME_EXTENSIONS`](https://docs.ansible.com/ansible/latest/reference_appendices/config.html#yaml-filename-extensions) when searching for files (e.g., `vars_files`, `include_vars`, plugins, or similar functions).
+* Keep the line length below 120 characters.
+  * Use [block scalars](https://yaml-multiline.info/#block-scalars) (`>` and `|`) as needed to manage long strings.
+  * Include a chomping indicator (`>-`) when it is important to exclude the trailing newline from the string (e.g., when defining a string variable).
+  * If a `when:` condition results in a long line and contains an and expression, break it into a list of conditions for better readability.
 
 
 **Good examples:**
@@ -62,6 +68,16 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
     - name: "Connect to host, verify a Python installation."
       ansible.builtin.ping:
         data: "{{ ping_data_return }}"
+
+    - name: "Print a very long line"
+      ansible.builtin.debug:
+        msg: >
+          Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et
+          dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet
+          clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet,
+          consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat,
+          sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no
+          sea takimata sanctus est Lorem ipsum dolor sit amet.
 ```
 
 
@@ -74,6 +90,10 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
     - name: "Connect to host, verify a Python installation."
       ansible.builtin.ping:
         data: "{{ ping_data_return }}"
+
+    - name: "Print a very long line"
+      ansible.builtin.debug:
+        msg: "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet."
 ```
 
 
@@ -83,6 +103,8 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 * The `.yml` extension must be used for consistency. It is predominant in the Ansible ecosystem, even though [yaml.org](https://yaml.org/faq.html) recommends `.yaml`.
 * Adding comments at the very beginning of a file allows for quickly identifying the purpose or usage of a script, either by opening the file or using the `head` command.
 * Ending files with a new line is a common Unix best practice. It prevents terminal prompt misalignment when printing files to, for example, STDOUT.
+* Long lines are difficult to read. Many projects ask for a line length limit around 120-150 character and [`ansible-lint`](#linting) checks for 160 characters by default ([yaml rule](https://ansible.readthedocs.io/projects/lint/rules/yaml/)).
+* Even though JSON is syntactically valid YAML and understood by Ansible, nobody expects it in playbooks.
 
 
 
@@ -94,6 +116,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 
 * Use two spaces to represent sub-maps when indenting.
 * Especially indent list contents beyond the list definition.
+* Start multi-line maps with a dash (`-`).
 
 
 **Reasoning:**
@@ -133,14 +156,13 @@ Following the indentation rules produces consistent code that is easy to read.
 
 **You SHOULD**
 
-* have blank lines between
-  * two host blocks
-  * two task blocks
-  * host and include blocks
-* start multi-line maps with a `-`.
-* use a single space separating Jinja2 template markers from variable names or expressions.
+* Add blank lines between:
+  * Two host blocks.
+  * Two task blocks.
+  * Host and include blocks.
+* Use a single space to separate Jinja2 template markers from variable names or expressions.
 
-Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) for a more in-depth example of proper spacing (and other things).
+Refer to [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) for a more detailed example of proper spacing and other best practices.
 
 
 **Reasoning:**
@@ -442,8 +464,7 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 **You MUST**
 
-* use bracket notation to access maps / dictionaries for new projects.
-* follow the style of existing projects and files (to keep the code consistent).
+* use bracket notation for value retrieval.
 
 
 **You SHOULD**
@@ -694,6 +715,8 @@ The official rules are based on experience of technical writers. As these are al
 
 
 ## Reasoning<a id="reasoning"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
 
 According to Read Hat and most of the Ansible community, one should refer to the following resources when developing:
 
