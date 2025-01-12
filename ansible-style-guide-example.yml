@@ -5,6 +5,7 @@
 # * Follow the YAML 1.2 specification
 # * Use ".yml" as extension
 # * Use two spaces for indentation
+# * Indent list contents beyond the list definition.
 # * Use UTF-8 encoding and Unix line feed (LF, \n) for new lines
 # * Trim trailing white space whenever possible but end your files with new line
 #
@@ -18,22 +19,22 @@
 - hosts: "localhost"
   tasks:
     - name: "Safeguard to prevent accidental execution"
-      fail:
-        msg: "This playbook is not meant to be run. It is an example to inspect the source"
+      ansible.builtin.fail:
+        msg: "This playbook is not meant to be run. It is an example to inspect the source."
 
 
     # quote names, filenames and tags
     - name: "Include tasks to configure the managed software"
-      include_tasks: "/tmp/config.yml"
+      ansible.builtin.include_tasks: "/tmp/config.yml"
 
 
     - name: "Include tasks to cleanup"
-      include: "cleanup.yml"
+      ansible.builtin.include_tasks: "cleanup.yml"
       tags: [ "always", "cleanup" ]
 
 
     - name: "List file permissions in /tmp"
-      command: "ls -l /tmp"
+      ansible.builtin.command: "ls -l /tmp"
       # Use a local prefix (like "style_guide_" or "role_name_") for variables.
       # Do not quote variable names when registering
       register: style_guide_tmp_permissions_listing
@@ -43,14 +44,14 @@
     # A task should be defined in the following order:
     #
     # 1. name
-    # 2. module (for example "file:")
+    # 2. module (for example "ansible.builtin.file:")
     # 3. module parameters in map declaration, alphabetical order
     # 4. loop operator (for example "with_items:" or "with_fileglob:")
     # 5. task options in alphabetical order except "when:" and "tags:"
     # 5. "when:"
     # 6. "tags:"
     - name: "Touch all in /tmp"
-      file:
+      ansible.builtin.file:
         # module parameters in alphabetical order
         # use "path:" for single file actions, "dest:" and "src:" for multi file actions
         path: "{{ item }}"
@@ -69,9 +70,9 @@
 
 
     # Use folded scalar if a line gets too long (usually >160 chars).
-    # A sane verbosity for "debug:" helps to prevent noise on daily usage.
+    # A sane verbosity for "ansible.builtin.debug:" helps to prevent noise on daily usage.
     - name: "A debug message"
-      debug:
+      ansible.builtin.debug:
         msg: >
           Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy
           eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam
@@ -84,7 +85,7 @@
     # Use parentheses and new lines to group conditions when it helps to understand the logic.
     # In doubt, use parentheses if there are multiple and/or.
     - name: "Shut down CentOS 8 and Debian 10 systems"
-      command: "/sbin/shutdown -t now"
+      ansible.builtin.command: "/sbin/shutdown -t now"
       when: (ansible_distribution is defined and ansible_distribution_major_version is defined) and
             (
               (ansible_distribution == "CentOS" and ansible_distribution_major_version == "8") or

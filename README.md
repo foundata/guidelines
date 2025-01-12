@@ -19,8 +19,8 @@ Misc:
 
 [Ansible](https://www.ansible.com/) is a simple, agentless IT automation tool.
 
-* [Ansible style guide (`ansible-style-guide.md`)](./ansible-style-guide.md)
-* [Showcase playbook to clarify the Ansible style guide (`ansible-style-guide-example.yml`)](./ansible-style-guide-example.yml)
+* [Ansible style guide (playbooks) (`ansible-style-guide.md`)](./ansible-style-guide.md)
+  * [Showcase playbook to clarify the Ansible style guide (`ansible-style-guide-example.yml`)](./ansible-style-guide-example.yml)
 
 
 ## Licensing<a id="licensing"></a>

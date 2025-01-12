@@ -61,7 +61,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
   tasks:
 
     - name: "Connect to host, verify a usable Python"
-      ping:
+      ansible.builtin.ping:
         data: "{{ ping_return }}"
 ```
 
@@ -73,7 +73,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 - hosts: localhost
   tasks:
     - name: "Connect to host, verify a usable Python"
-      ping:
+      ansible.builtin.ping:
         data: "{{ ping_return }}"
 ```
 
@@ -116,11 +116,11 @@ Following the spacing rules produces consistent code that is easy to read.
   tasks:
 
   - name: "Set a variable"
-    set_fact:
+    ansible.builtin.set_fact:
       foo: "{{ bar | default('baz') }}"
 
   - name: "Set another variable"
-    set_fact:
+    ansible.builtin.set_fact:
       bar: "{{ baz | default('foo') }}"
 ```
 
@@ -132,10 +132,10 @@ Following the spacing rules produces consistent code that is easy to read.
 - hosts: localhost
   tasks:
   - name: "Set a variable"
-      set_fact:
+      ansible.builtin.set_fact:
           foo: "{{bar|default('baz')}}"
   - name: "Set another variable"
-      set_fact:
+      ansible.builtin.set_fact:
           bar: "{{baz|default('foo')}}"
 ```
 
@@ -171,13 +171,13 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 # good
 - name: "Connect to host, verify a usable python"
-  ping:
+  ansible.builtin.ping:
     data: "{{ ping_return }}"
 
 
 # double quotes with nested single quotes
 - name: "Start all nodes"
-  service:
+  ansible.builtin.service:
     name: "{{ item['node_name'] }}"
     state: "started"
     enabled: true
@@ -187,7 +187,7 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 # folded scalar style (useful to prevent complicated quoting or lines longer than 160 chars)
 - name: "Node infos"
-  debug:
+  ansible.builtin.debug:
     msg: >
       Node {{ item['node_name'] }} is {{ item['status'] }} and in {{ item['az'] }}
       availability zone and belongs to "{{ item['customer'] }}" customer.
@@ -196,7 +196,7 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 # don't quote booleans and numbers
 - name: "Download example homepage"
-  get_url:
+  ansible.builtin.get_url:
     dest: "/tmp"
     timeout: 60
     url: 'https://example.com'
@@ -205,20 +205,20 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 # variables example 1
 - name: "set a variable"
-  set_fact:
+  ansible.builtin.set_fact:
     foo: "bar"
 
 
 # variables example 2
 - name: "Print a variable"
-  debug:
+  ansible.builtin.debug:
     var: foo
   when: ansible_os_family == "Fedora"
 
 
 # variables example 3
 - name: "set another variable"
-  set_fact:
+  ansible.builtin.set_fact:
     baz: "{{ foo }}"
 ```
 
@@ -227,7 +227,7 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 ```yaml
 - name: Start node named Horton
-  service:
+  ansible.builtin.service:
     name: horton
     state: 'started'
     enabled: true
@@ -262,7 +262,7 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 ```yaml
 - name: "set some facts"
-  set_fact:
+  ansible.builtin.set_fact:
     node_is_online: true
     node_age: 20
     node_name: "test"
@@ -273,7 +273,7 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 ```yaml
 - name: "Set some facts"
-  set_fact:
+  ansible.builtin.set_fact:
     nodeIsOnline: true
     nodeage: 20
     NODE_NAME: "test"
@@ -301,7 +301,7 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 ```yaml
 - name: "Start fail2ban"
-  service:
+  ansible.builtin.service:
     name: "fail2ban"
     state: "restarted"
     enabled: true
@@ -312,7 +312,7 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 ```yaml
 - name: "Start fail2ban"
-  service:
+  ansible.builtin.service:
     name: "fail2ban"
     state: "restarted"
     enabled: 1
@@ -342,7 +342,7 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 ```yaml
 - name: "Start fail2ban"
-  service:
+  ansible.builtin.service:
     name: "fail2ban"
     state: "restarted"
     enabled: true
@@ -350,7 +350,7 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 
 - name: "Create filter.d directory for easier fail2ban extension"
-  file:
+  ansible.builtin.file:
     group: "fail2ban"
     mode: "0755"
     owner: "fail2ban"
@@ -360,7 +360,7 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 
 - name: "Copy sshd.conf to /etc/fail2ban/filter.d/"
-  copy:
+  ansible.builtin.copy:
     dest: "/etc/fail2ban/filter.d/"
     src: "files/filters/sshd.conf"
   become: true
@@ -371,7 +371,7 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 ```yaml
 - name: "Start fail2ban"
-  service:
+  ansible.builtin.service:
     name    : "fail2ban"
     state   : "restarted"
     enabled : true
@@ -379,12 +379,12 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 
 - name: "Create filter.d directory for easier fail2ban extension"
-  file: "path:=/etc/fail2ban/filter.d state=directory group=fail2ban mode=0755 owner=fail2ban"
+  ansible.builtin.file: "path:=/etc/fail2ban/filter.d state=directory group=fail2ban mode=0755 owner=fail2ban"
   become: true
 
 
 - name: "Copy sshd.conf to /etc/fail2ban/filter.d/"
-  copy: "dest=/etc/fail2ban/filter.d/ src=files/filters/sshd.conf"
+  ansible.builtin.copy: "dest=/etc/fail2ban/filter.d/ src=files/filters/sshd.conf"
   become: true
 ```
 
@@ -420,7 +420,7 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 ```yaml
 - name: "Define some variables"
-  set_fact:
+  ansible.builtin.set_fact:
     foo:
       field1: "one"
       field2: "two"
@@ -435,17 +435,17 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 
 - name: "Show field1 (prints: one)"
-  debug:
+  ansible.builtin.debug:
     msg: "{{ foo['field1'] }}"
 
 
 - name: "Nice Linux distribution? (prints: Fedora)"
-  debug:
+  ansible.builtin.debug:
     msg: "{{ platforms[0]['name'] }}"
 
 
 - name: "Ubuntu version used? (prints: 16.10)"
-  debug:
+  ansible.builtin.debug:
     msg: "{{ platforms[1]['versions'][1] }}"
 
 ```
@@ -456,7 +456,7 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 ```yaml
 
 - name: "Define some variables"
-  set_fact:
+  ansible.builtin.set_fact:
     foo:
       field1: "one"
       field2: "two"
@@ -471,17 +471,17 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 
 - name: "Show field1 (prints: one)"
-  debug:
+  ansible.builtin.debug:
     msg: "{{ foo.field1 }}"
 
 
 - name: "Nice Linux distribution? (prints: Fedora)"
-  debug:
+  ansible.builtin.debug:
     msg: "{{ platforms.0.name }}"
 
 
 - name: "Ubuntu version used? (prints: 16.10)"
-  debug:
+  ansible.builtin.debug:
     msg: "{{ platforms.1.versions[1] }}"
 ```
 
@@ -515,7 +515,7 @@ A `hosts` section declaration **SHOULD follow** this general order:
     nginx_state: "started"
   pre_tasks:
     - name: "Set the timezone to Europe/Berlin"
-      lineinfile:
+      ansible.builtin.lineinfile:
         dest: "/etc/environment"
         line: "TZ=Europe/Berlin"
         state: "present"
@@ -524,7 +524,7 @@ A `hosts` section declaration **SHOULD follow** this general order:
     - { role: "nginx", tags: [ "nginx", "webserver" ] }
   tasks:
     - name: "start the NGINX service"
-      service:
+      ansible.builtin.service:
         name: "nginx"
         state: "{{ nginx_state }}"
 ```
@@ -560,7 +560,7 @@ Please note that `include_*` or `import_*`  do not differ from others tasks/play
 
 ```yaml
 - name: "Create some EC2 Instances"
-  ec2:
+  amazon.aws.ec2_instance:
     assign_public_ip: true
     image: "ami-c7d092f7"
     instance_tags:
@@ -574,16 +574,16 @@ Please note that `include_*` or `import_*`  do not differ from others tasks/play
 
 
 - name: "Include tasks to setup the managed software"
-  include_tasks: "setup.yml"
+  ansible.builtin.include_tasks: "setup.yml"
   tags: "setup"
 
 
 - name: "Include tasks to configure the managed software"
-  include_tasks: "config.yml"
+  ansible.builtin.include_tasks: "config.yml"
 
 
 - name: "Include tasks to cleanup"
-  include: "cleanup.yml"
+  ansible.builtin.include_tasks: "cleanup.yml"
   tags: [ "always", "cleanup" ]
 ```
 
@@ -594,16 +594,16 @@ Please note that `include_*` or `import_*`  do not differ from others tasks/play
 - name: "Create some EC2 Instances"
   when: ansible_os_family == "Fedora"
   tags: "ec2"
-  ec2: "image=ami-c7d092f7 assign_public_ip=true"
+  amazon.aws.ec2_instance: "image=ami-c7d092f7 assign_public_ip=true"
   register: ec2_output
   with_items: "{{ instance_names }}"
   ignore_errors: true
 
 
-- include_tasks: "setup.yml"
+- ansible.builtin.include_tasks: "setup.yml"
   tags: "setup"
-- include_tasks: "config.yml"
-- include: "cleanup.yml" tags=always
+- ansible.builtin.include_tasks: "config.yml"
+- ansible.builtin.include_tasks: "cleanup.yml" tags=always
 ```
 
 
