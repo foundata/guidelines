@@ -1,6 +1,8 @@
 # Ansible style guide (playbooks)
 
-This document defines the style to follow when writing Ansible playbooks. Refer to [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) for rules illustrated in code and for further clarification. The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119) and [RFC 8174](https://datatracker.ietf.org/doc/html/rfc8174).
+This document defines the style to follow when writing Ansible playbooks. Refer to [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) for rules illustrated in code and for further clarification.
+
+The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119) and [RFC 8174](https://datatracker.ietf.org/doc/html/rfc8174).
 
 
 ## Table of contents
@@ -26,20 +28,21 @@ This document defines the style to follow when writing Ansible playbooks. Refer 
 
 **You MUST**
 
-* follow the [YAML 1.2 specification](https://yaml.org/spec/1.2/spec.html).
-* use two spaces for [indentation](http://yaml.org/spec/1.2/spec.html#id2777534).
-* use Unix line feed (LF, `\n`) for new lines.
-* use [UTF-8 encoding](http://yaml.org/spec/current.html#id2513364).
-* trim trailing whitespace whenever possible but end your files with a new line.
+* Follow the [YAML 1.2.2 specification](https://yaml.org/spec/1.2.2/).
+* Use two spaces for [indentation](https://yaml.org/spec/1.2.2/#61-indentation-spaces).
+* Indent list contents beyond the list definition.
+* Use Unix line feed (LF, `\n`) for new lines.
+* Use [UTF-8 encoding](https://yaml.org/spec/1.2.2/#52-character-encodings).
+* Trim trailing whitespace whenever possible, but end your files with a new line.
 
 
 **You SHOULD**
 
-* use `.yml` as extension for new roles and collections
-  * but stay consistent / keep extensions if `.yaml` is already used in an existing role
-* start your scripts with comments explaining what the script's purpose does including example usage, if necessary.
-* blank lines around the `---`, followed by the rest of the file.
-* check for all [`YAML_FILENAME_EXTENSIONS`](https://docs.ansible.com/ansible/latest/reference_appendices/config.html#yaml-filename-extensions) when looking for files with e.g. `vars_files`, `include_vars`, plugins or comparable functions.
+* Use `.yml` as the extension for new roles and collections.
+  * Stay consistent with existing extensions if `.yaml` is already used in a role.
+* Start scripts with comments explaining their purpose, including example usage if necessary.
+* Include blank lines around the `---` separator, followed by the rest of the file.
+* Check all [`YAML_FILENAME_EXTENSIONS`](https://docs.ansible.com/ansible/latest/reference_appendices/config.html#yaml-filename-extensions) when searching for files (e.g., `vars_files`, `include_vars`, plugins, or similar functions).
 
 
 **Good examples:**
@@ -77,10 +80,10 @@ This document defines the style to follow when writing Ansible playbooks. Refer 
 
 **Reasoning:**
 
-* YAML 1.2 is out there since 2009 and uses only `true` and `false` for booleans which excludes a lot of possible edge-case problems. It makes no sense to allow YAML 1.1 anymore.
-* The `.yml` extension must be used for consistency. It is predominant in the Ansible eco-system extension, even though [yaml.org](https://yaml.org/faq.html) recommends `.yaml`.
-* Comments at the very beginning of a file makes it to quickly find out the purpose/usage of a script, either by opening the file or using the `head` command.
-* A new line at the end of a file is common Unix best practice as it avoids any terminal prompt misalignment when printing files to e.g STDOUT.
+* YAML 1.2 has been the standard since 2009 and uses only `true` and `false` for booleans, avoiding many potential edge-case issues. Allowing YAML 1.1 is no longer practical.
+* The `.yml` extension must be used for consistency. It is predominant in the Ansible ecosystem, even though [yaml.org](https://yaml.org/faq.html) recommends `.yaml`.
+* Adding comments at the very beginning of a file allows for quickly identifying the purpose or usage of a script, either by opening the file or using the `head` command.
+* Ending files with a new line is a common Unix best practice. It prevents terminal prompt misalignment when printing files to, for example, STDOUT.
 
 
 ## Spacing<a id="spacing"></a>
