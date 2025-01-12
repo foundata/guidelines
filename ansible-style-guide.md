@@ -14,7 +14,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 * [Naming of variables, roles, plugins and modules](#naming)
 * [Booleans](#booleans)
 * [Maps (`key: value`)](#maps)
-  * [Referencing maps: bracket notation](#maps-referencing)
+  * [Value retrieval: bracket notation](#value-retrieval)
 * [Hosts declaration](#hosts)
 * [Tasks and play declaration](#tasks-plays)
 * [Ansible lint](#linting)
@@ -161,6 +161,8 @@ Following the indentation rules produces consistent code that is easy to read.
   * Two task blocks.
   * Host and include blocks.
 * Use a single space to separate Jinja2 template markers from variable names or expressions.
+* Break up lengthy Jinja templates into multiple templates when they contain distinct logical sections.
+* Avoid Jinja templates for generating text and semi-structured data, not for creating structured data.
 
 Refer to [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) for a more detailed example of proper spacing and other best practices.
 
@@ -183,7 +185,7 @@ Following the spacing rules produces consistent code that is easy to read.
 
   - name: "Set another variable"
     ansible.builtin.set_fact:
-      bar: "{{ baz | default('foo') }}"
+      bar: "{{ baz | default('foo, barbaz') }}"
 ```
 
 
@@ -198,7 +200,7 @@ Following the spacing rules produces consistent code that is easy to read.
           foo: "{{bar|default('baz')}}"
   - name: "Set another variable"
       ansible.builtin.set_fact:
-          bar: "{{baz|default('foo')}}"
+          bar: "{{baz|default('foo,barbaz')}}"
 ```
 
 
@@ -457,7 +459,7 @@ Refer to [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) fo
 
 
 
-### Referencing maps: bracket notation<a id="maps-referencing"></a>
+### Value retrieval: bracket notation<a id="value-retrieval"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
@@ -616,6 +618,14 @@ Just omit points which do not apply.
 
 Please note that `include_*` or `import_*`  do not differ from others tasks/plays (just to mention as many style guides out there are having separate rules for them).
 
+If needed, task names can be made dynamic by using variables wrapped in Jinja2 templates *at the end* of the string.
+
+
+**You MUST NOT**
+
+* Use variables (wrapped in Jinja2 templates) in play names, as they do not expand properly.
+* Use loop variables (e.g., the default `item`) in task names within a loop, as they also do not expand properly.
+
 
 **Good examples:**
 
@@ -642,10 +652,13 @@ Please note that `include_*` or `import_*`  do not differ from others tasks/play
 - name: "Include tasks to configure the managed software"
   ansible.builtin.include_tasks: "config.yml"
 
-
 - name: "Include tasks to cleanup"
   ansible.builtin.include_tasks: "cleanup.yml"
   tags: [ "always", "cleanup" ]
+
+- name: "Manage device {{ device_name }}"
+  foo.module:
+    device: "{{ device_name }}"
 ```
 
 
@@ -665,12 +678,17 @@ Please note that `include_*` or `import_*`  do not differ from others tasks/play
   tags: "setup"
 - ansible.builtin.include_tasks: "config.yml"
 - ansible.builtin.include_tasks: "cleanup.yml" tags=always
+
+- name: "{{ device_name }} gets managed as device"
+  foo.module:
+    device: "{{ device_name }}"
 ```
 
 
 **Reasoning:**
 
-Well-defined parameter rules are helping to create consistent code.
+* Well-defined parameter rules are helping to create consistent code. Version control diffs are cleaner and more meaningful, as only new or changed parameters are highlighted.
+* Keep in mind that using variables in task names can make it harder for users to correlate logs with the corresponding code when searching for an actual variable value (e.g., `/dev/foo gets managed as device` instead of `{{ device_name }} gets managed as device`). Placing the variable part at the end of a task name improves log readability and makes it easier to search for the corresponding code.
 
 
 
