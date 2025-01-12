@@ -2,7 +2,7 @@
 #
 # Important rules
 #
-# * Follow the YAML 1.2 specification
+# * Follow the YAML 1.2.2 specification
 # * Use ".yml" as extension
 # * Use two spaces for indentation
 # * Indent list contents beyond the list definition.

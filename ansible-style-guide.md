@@ -8,6 +8,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 ## Table of contents
 
 * [YAML files](#yaml-files)
+* [Indentation](#indentation)
 * [Spacing](#spacing)
 * [Quoting](#quoting)
 * [Naming of variables, roles, plugins and modules](#naming)
@@ -29,8 +30,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 **You MUST**
 
 * Follow the [YAML 1.2.2 specification](https://yaml.org/spec/1.2.2/).
-* Use two spaces for [indentation](https://yaml.org/spec/1.2.2/#61-indentation-spaces).
-* Indent list contents beyond the list definition.
+* Use spaces for [indentation](https://yaml.org/spec/1.2.2/#61-indentation-spaces).
 * Use Unix line feed (LF, `\n`) for new lines.
 * Use [UTF-8 encoding](https://yaml.org/spec/1.2.2/#52-character-encodings).
 * Trim trailing whitespace whenever possible, but end your files with a new line.
@@ -48,21 +48,20 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 **Good examples:**
 
 ```yaml
-# The Playbook tries to connect to host and verifies if there is an
-# existing, usable Python.
+# The playbook connects to the host and checks for an existing, usable Python installation.
 #
 # Example usage:
-#   ansible-playbook -e data="pong" playbook.yml
-#   ansible-playbook -e data="crash" playbook.yml
+#   ansible-playbook -e ping_data_return="pong" playbook.yml
+#   ansible-playbook -e ping_data_return="crash" playbook.yml
 
 ---
 
 - hosts: localhost
   tasks:
 
-    - name: "Connect to host, verify a usable Python"
+    - name: "Connect to host, verify a Python installation."
       ansible.builtin.ping:
-        data: "{{ ping_return }}"
+        data: "{{ ping_data_return }}"
 ```
 
 
@@ -72,9 +71,9 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 ---
 - hosts: localhost
   tasks:
-    - name: "Connect to host, verify a usable Python"
+    - name: "Connect to host, verify a Python installation."
       ansible.builtin.ping:
-        data: "{{ ping_return }}"
+        data: "{{ ping_data_return }}"
 ```
 
 
@@ -84,6 +83,48 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 * The `.yml` extension must be used for consistency. It is predominant in the Ansible ecosystem, even though [yaml.org](https://yaml.org/faq.html) recommends `.yaml`.
 * Adding comments at the very beginning of a file allows for quickly identifying the purpose or usage of a script, either by opening the file or using the `head` command.
 * Ending files with a new line is a common Unix best practice. It prevents terminal prompt misalignment when printing files to, for example, STDOUT.
+
+
+
+## Indentation<a id="indentation"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+**You MUST**
+
+* Use two spaces to represent sub-maps when indenting.
+* Especially indent list contents beyond the list definition.
+
+
+**Reasoning:**
+
+Following the indentation rules produces consistent code that is easy to read.
+
+
+**Good examples:**
+
+```yaml
+---
+- name: "Print some dummy messages."
+  ansible.builtin.debug:
+    msg:
+      - "Dummy 1"
+      - "Dummy 2"
+      - "Dummy 3"
+```
+
+
+**Bad examples:**
+
+```yaml
+- name: "Print some dummy messages."
+  ansible.builtin.debug:
+    msg:
+    - "Dummy 1"
+    - "Dummy 2"
+    - "Dummy 3"
+```
+
 
 
 ## Spacing<a id="spacing"></a>
@@ -96,7 +137,6 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
   * two host blocks
   * two task blocks
   * host and include blocks
-* use 2 spaces to represent sub-maps when indenting.
 * start multi-line maps with a `-`.
 * use a single space separating Jinja2 template markers from variable names or expressions.
 
