@@ -1,13 +1,6 @@
-# Ansible style guide
+# Ansible style guide (playbooks)
 
-You should follow the following resources when developing playbooks:
-
-* [Red Hat's Coding Style Good Practices for Ansible](https://github.com/redhat-cop/automation-good-practices/blob/main/coding_style/README.adoc#ansible-guidelines) and
-* [Best Practices of the Ansible User guide](https://docs.ansible.com/ansible/latest/user_guide/playbooks_best_practices.html)
-
-However, neither them nor the [Ansible documentation](https://docs.ansible.com/ansible/latest) in general are using a consistent code style nor defining one. This is done by this document.
-
-Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) for rules shown in code and further clarification. MUST, SHOULD and other key words are used as defined in [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119) and [RFC 8174](https://datatracker.ietf.org/doc/html/rfc8174).
+This document defines the style to follow when writing Ansible playbooks. Refer to [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) for rules illustrated in code and for further clarification. The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119) and [RFC 8174](https://datatracker.ietf.org/doc/html/rfc8174).
 
 
 ## Table of contents
@@ -15,18 +8,19 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 * [YAML files](#yaml-files)
 * [Spacing](#spacing)
 * [Quoting](#quoting)
-* [Naming of variables, roles, plugins and modules](#naming-of-variables-roles-plugins-and-modules)
+* [Naming of variables, roles, plugins and modules](#naming)
 * [Booleans](#booleans)
-* [Maps (`key: value`)](#maps-key-value)
-* [Referencing maps: bracket notation](#referencing-maps-bracket-notation)
-* [Hosts declaration](#hosts-declaration)
-* [Tasks and play declaration](#tasks-and-play-declaration)
-* [Ansible lint](#ansible-lint)
+* [Maps (`key: value`)](#maps)
+  * [Referencing maps: bracket notation](#maps-referencing)
+* [Hosts declaration](#hosts)
+* [Tasks and play declaration](#tasks-plays)
+* [Ansible lint](#linting)
 * [Linguistic guidelines](#linguistic-guidelines)
+* [Reasoning](#reasoning)
 * [Author information](#author-information)
 
 
-## YAML files
+## YAML files<a id="yaml-files"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
@@ -89,7 +83,7 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 * A new line at the end of a file is common Unix best practice as it avoids any terminal prompt misalignment when printing files to e.g STDOUT.
 
 
-## Spacing
+## Spacing<a id="spacing"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
@@ -143,7 +137,7 @@ Following the spacing rules produces consistent code that is easy to read.
 ```
 
 
-## Quoting
+## Quoting<a id="quoting"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
@@ -249,7 +243,8 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 
 
-## Naming of variables, roles, plugins and modules
+
+## Naming of variables, roles, plugins and modules<a id="naming"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
@@ -292,7 +287,7 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 
 
-## Booleans
+## Booleans<a id="booleans"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
@@ -330,7 +325,7 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 
 
-## Maps (`key: value`)
+## Maps (`key: value`)<a id="maps"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
@@ -398,7 +393,7 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 
 
-## Referencing maps: bracket notation
+### Referencing maps: bracket notation<a id="maps-referencing"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
@@ -495,7 +490,7 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 * Dot notation can cause problems because keys can collide with attributes and methods of python dictionaries.
 
 
-## Hosts declaration
+## Hosts declaration<a id="hosts"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
@@ -538,7 +533,7 @@ Well-defined parameter rules are helping to create consistent code.
 
 
 
-## Tasks and play declaration
+## Tasks and play declaration<a id="tasks-plays"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
@@ -615,7 +610,7 @@ Well-defined parameter rules are helping to create consistent code.
 
 
 
-## Ansible lint
+## Ansible lint<a id="linting"></a>
 
 You MUST check your playbooks, roles and other applicable files with [`ansible-lint`](https://docs.ansible.com/ansible-lint/).
 
@@ -626,8 +621,7 @@ Ansible Lint is a Ansible Core Team project and widely adopted. You can run it o
 
 
 
-
-## Linguistic guidelines
+## Linguistic guidelines<a id="linguistic-guidelines"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
@@ -653,6 +647,18 @@ Excerpt of the **most important rules**:
 **Reasoning:**
 
 The official rules are based on experience of technical writers. As these are also rules for Ansible developers, they are influencing the whole community. It makes sense to apply them in-house to have a consistent user experience.
+
+
+
+## Reasoning<a id="reasoning"></a>
+
+According to Read Hat and most of the Ansible community, one should refer to the following resources when developing:
+
+* [Red Hat's Coding Style Good Practices for Ansible](https://github.com/redhat-cop/automation-good-practices/blob/main/coding_style/README.adoc#ansible-guidelines)
+* [Best Practices of the Ansible User Guide](https://docs.ansible.com/ansible/latest/user_guide/playbooks_best_practices.html)
+
+However, neither these resources nor the [Ansible documentation](https://docs.ansible.com/ansible/latest) in general follow a consistent code style or define one comprehensively. This document addresses that gap.
+
 
 
 ## Author information
