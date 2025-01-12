@@ -209,22 +209,22 @@ Following the spacing rules produces consistent code that is easy to read.
 
 **You MUST**
 
-* quote strings.
-* write a long string, we use the "folded scalar" style and omit all special quoting.
-* a whole value if it starts with `{{`.
+* Quote all strings.
+* Use [block scalars](https://yaml-multiline.info/#block-scalars) (`>` and `|`) for writing long strings or to simplify complicated quoting.
+* Quote an entire value if it starts with `{{`.
 
 
 **You SHOULD**
 
-* Prefer double quotes (`"`) over single quotes (`'`). The only time you should use single quotes is when nesting things makes it far easier (for example Jinja map references with other quoting style).
+* Prefer double quotes (`"`) over single quotes (`'`). Use single quotes only when they simplify nested expressions, such as Jinja map references with mixed quoting styles.
 
 
 **You MUST NOT**
 
-* quote non-string types (for example booleans (`true`, `false`) or numbers like `1337`).
-* things referencing the local Ansible environment (for example names of variables one is assigning values to).
+* Quote non-string types, such as booleans (`true`, `false`) or numbers (e.g., `1337`).
+* Quote references to the local Ansible environment, such as the names of variables being assigned values.
 
-Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) for a more in-depth example of proper quoting (and other things).
+Refer to [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) for a detailed example of proper quoting and other best practices.
 
 
 **Good Examples:**
@@ -299,13 +299,12 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 **Reasoning:**
 
-* Single quotes in YAML are special and do not behave like most programmers expect:
-  * Escaping with `\` is *not* possible, instead `''` is used.
-  * They to *not* prevent variable interpolation
-* It is easier to troubleshoot malformed strings when they should be properly escaped to have the desired effect.
-* YAML requires that if you start a value with `{{ foo }}` you quote the whole line to distinguish between a value and a YAML dictionary.
-* Syntax highlighting usually works far better when stating strings by quoting.
-
+* Single quotes in YAML behave differently than most programmers expect:
+  * Escaping with `\` is **not** possible; instead, `''` (two single quotes) is used.
+  * They do **not** prevent variable interpolation.
+* Properly escaping strings makes it easier to troubleshoot malformed strings and ensures the desired effect.
+* YAML requires you to quote the entire line if it starts with `{{ foo }}` to distinguish between a value and a YAML dictionary.
+*-* Syntax highlighting generally works better when strings are explicitly quoted.
 
 
 
@@ -315,9 +314,10 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 **You MUST**
 
-* use [`snake_case`](https://en.wikipedia.org/wiki/Snake_case).
-* use `[a-z0-9_]` only.
-* start variables with a letter.
+* Use [`snake_case`](https://en.wikipedia.org/wiki/Snake_case).
+* Only use characters from the set `[a-z0-9_]`.
+* Start variable names with a letter.
+
 
 
 **Good examples:**
@@ -345,10 +345,10 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 **Reasoning:**
 
-* Ansible itself uses `snake_case` for module names and parameters. As they are influencing a wide range of playbooks it makes sense to extend this convention to variable names even if they are technically not limited to it.
-* Names of plugin and roles must follow the rules of the Python namespace (which does not allow for example minus or dots). See [StackOverflow](https://stackoverflow.com/a/37831973), [Galaxy Issue 775](https://github.com/ansible/galaxy/issues/775) and a [comment from Issue 779](https://github.com/ansible/galaxy/issues/779#issuecomment-401632750) for more information:
+* Ansible uses `snake_case` for module names and parameters. Since this convention influences a wide range of playbooks, it makes sense to extend it to variable names, even though they are not technically restricted to this format.
+* Names of plugins and roles and most parts of Ansible  must follow the rules of the Python namespace, which does not allow certain characters, such as hyphens (`-`) or dots (`.`). See [StackOverflow](https://stackoverflow.com/a/37831973), [Galaxy Issue 775](https://github.com/ansible/galaxy/issues/775), and a [comment from Issue 779](https://github.com/ansible/galaxy/issues/779#issuecomment-401632750) for more information:
   > For that to work, namespaces need to be Python compatible, which means they can’t contain ‘-’.
-* The [Ansible Galaxy documentation on role names](https://galaxy.ansible.com/docs/contributing/creating_role.html#role-names).
+*  Refer to the [Ansible Galaxy documentation on role names](https://galaxy.ansible.com/docs/contributing/creating_role.html#role-names) for additional guidance.
 
 
 
@@ -389,15 +389,14 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 
 
-
 ## Maps (`key: value`)<a id="maps"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
 **You MUST**
 
-* use only one space after the colon when designating a key-value pair
-* use the map syntax, regardless of how many pairs exist in the map.
+* Use only one space after the colon when specifying a key-value pair.
+* Always use the map syntax, regardless of the number of pairs in the map.
 
 
 **Good examples:**
@@ -453,8 +452,8 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 **Reasoning:**
 
-* The map syntax is far easier to read and less error prone.
-* Version control diffs are less noisy and more meaningful as only new and changed parameters are getting highlighted.
+* The map syntax is easier to read and less error-prone.
+* Version control diffs are cleaner and more meaningful, as only new or changed parameters are highlighted.
 
 
 
@@ -464,17 +463,17 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 **You MUST**
 
-* use bracket notation for value retrieval.
+* Use bracket notation for value retrieval.
 
 
 **You SHOULD**
 
-* rewrite projects to use bracket notation (instead of dot notation) if the project maintainers are OK with it.
+* Refactor projects to use bracket notation instead of dot notation, provided the project maintainers agree.
 
 
 **You MUST NOT**
 
-* mix dot and bracket notation.
+* Mix dot and bracket notation within the same project.
 
 
 **Good examples:**
@@ -549,9 +548,10 @@ Have a look at [`ansible-style-guide-example.yml`](ansible-style-guide-example.y
 
 **Reasoning:**
 
-* Bracket notation makes it easier do distinguish between keys and attributes or methods of python dictionaries. It usually results in better editor highlighting, too.
-* Bracket notation can be easily be used with variables as keys.
-* Dot notation can cause problems because keys can collide with attributes and methods of python dictionaries.
+* Bracket notation makes it easier to distinguish between keys and attributes or methods of Python dictionaries. It also usually results in better editor highlighting.
+* Bracket notation allows for seamless use of variables as keys.
+* Dot notation can lead to issues because keys may collide with attributes or methods of Python dictionaries (e.g., `count`, `copy`, `title`, and others). Consistency is crucial, so it’s better to stick with bracket notation rather than switching between the two options within a playbook.
+
 
 
 ## Hosts declaration<a id="hosts"></a>
@@ -676,12 +676,12 @@ Well-defined parameter rules are helping to create consistent code.
 
 ## Ansible lint<a id="linting"></a>
 
-You MUST check your playbooks, roles and other applicable files with [`ansible-lint`](https://docs.ansible.com/ansible-lint/).
+You MUST check your playbooks, collections, roles, and other applicable files with [`ansible-lint`](https://docs.ansible.com/ansible-lint/).
 
 
 **Reasoning:**
 
-Ansible Lint is a Ansible Core Team project and widely adopted. You can run it offline and it provides a commandline tool for linting playbooks and helps you to find lines that could potentially be improved. Following its advice is helping to create consistent code.
+Ansible Lint is an official project by the Ansible Core Team and is widely adopted. It can be run offline and provides a command-line tool for linting playbooks, helping to identify areas for potential improvement. Following its recommendations promotes consistent, high-quality code.
 
 
 
