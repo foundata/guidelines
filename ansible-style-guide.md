@@ -73,6 +73,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
       ansible.builtin.ping:
         data: "{{ ping_data_return }}"
 
+
     - name: "Print a very long line"
       ansible.builtin.debug:
         msg: >
@@ -88,6 +89,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
         # when clause is a raw Jinja2 expression without double curly braces or quoting
         - foo is not defined
         - bar is not defined
+
 
     # Use parentheses and new lines to group conditions when it helps to understand the
     # logic. In doubt, use parentheses if there are multiple and/or.
@@ -125,10 +127,17 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
       ansible.builtin.ping:
         data: "{{ ping_data_return }}"
 
+
     - name: "Print a very long line"
       ansible.builtin.debug:
         msg: "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet."
       when: foo is not defined and bar is not defined
+
+
+    - name: "Include OS vars"
+      ansible.builtin.include_vars:
+        dir: "vars"
+        files_matching: "^mswindows.yml$" # unexpected filename, no fallback, only .yml
 ```
 
 
@@ -193,8 +202,9 @@ Following the indentation rules produces consistent code that is easy to read.
 
 * Add at least one blank line between:
   * Two host blocks.
-  * Two task blocks.
   * Host and include blocks.
+* Add at least two blank line between:
+  * Two task blocks.
 * Use a single space to separate Jinja2 template markers from variable names or expressions.
 * Break up lengthy Jinja templates into multiple templates when they contain distinct logical sections.
 * Avoid Jinja templates for generating text and semi-structured data, not for creating structured data.
@@ -211,6 +221,7 @@ Following the spacing rules produces consistent code that is easy to read.
 - name: "Set a variable"
   ansible.builtin.set_fact:
     foo: "{{ bar | default('baz') }}"
+
 
 - name: "Set another variable"
   ansible.builtin.set_fact:
@@ -322,6 +333,7 @@ Following the spacing rules produces consistent code that is easy to read.
     enabled: true
   become: true
 
+
 - name: "Assign a value without quoting"
   ansible.builtin.set_fact:
     baz: another_var  # can cause ambiguity if `another_var` (string or existing variable?)
@@ -331,7 +343,7 @@ Following the spacing rules produces consistent code that is easy to read.
 **Reasoning:**
 
 * We have stricter rules than much of the community (cf. [8.2. YAML and Jinja2 Syntax](https://redhat-cop.github.io/automation-good-practices/#_yaml_and_jinja2_syntax)):
-  * We believe all strings [should be quoted](https://news.ycombinator.com/item?id=34509789)
+  * We believe all strings [should be quoted](https://news.ycombinator.com/item?id=34509789).
   * The number of rules to remember, if you want to use the quotes only when they are really needed, is somewhat excessive for such a simple thing as specifying one of the most common datatypes.
   * However, since laxer rules are so common, we have categorized this as SHOULD instead of MUST.
 * Single quotes in YAML behave differently than most programmers expect:
@@ -672,6 +684,7 @@ The `include_*` and `import_*` statements are not treated differently from other
       tags:
         - "ec2"
 
+
     - name: "Include tasks to cleanup"
       ansible.builtin.include_tasks:
         file: "cleanup.yml"
@@ -679,13 +692,14 @@ The `include_*` and `import_*` statements are not treated differently from other
         - "always"
         - "cleanup"
 
+
     - name: "Manage device {{ device_name }}"
       foo.module:
         device: "{{ device_name }}"
       when:
         - ansible_os_family == 'Fedora'
-  changed_when: false
-  failed_when: false
+      changed_when: false
+      failed_when: false
 
 ```
 
@@ -706,6 +720,7 @@ The `include_*` and `import_*` statements are not treated differently from other
             msg: "Hello world!"
       when: true # when key should be before block
 
+
   - name: "Create some EC2 Instances"
     when: ansible_os_family == 'Fedora'
     tags: "ec2"
@@ -721,6 +736,8 @@ The `include_*` and `import_*` statements are not treated differently from other
   - ansible.builtin.include_tasks: "cleanup.yml" tags=always
 
   - name: "{{ device_name }} gets managed as device"
+    changed_when: false
+    failed_when: false
     foo.module:
       device: "{{ device_name }}"
 ```
