@@ -1,6 +1,6 @@
 # Ansible style guide (playbooks)
 
-This document defines the style to follow when writing Ansible playbooks. Refer to [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) for rules illustrated in code and for further clarification.
+This document defines the style for writing Ansible playbooks, addressing the lack of a consistent and comprehensive code style and usage in both [Red Hat's guidelines](https://github.com/redhat-cop/automation-good-practices/blob/main/coding_style/README.adoc#ansible-guidelines) and the [Ansible documentation](https://docs.ansible.com/ansible/latest/user_guide/playbooks_best_practices.html).
 
 The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119) and [RFC 8174](https://datatracker.ietf.org/doc/html/rfc8174).
 
@@ -11,15 +11,15 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 * [Indentation](#indentation)
 * [Spacing](#spacing)
 * [Quoting](#quoting)
-* [Naming of variables, roles, plugins and modules](#naming)
+* [Naming](#naming)
 * [Booleans](#booleans)
 * [Maps (`key: value`)](#maps)
   * [Value retrieval: bracket notation](#value-retrieval)
-* [Hosts declaration](#hosts)
 * [Tasks and play declaration](#tasks-plays)
-* [Ansible lint](#linting)
+* [Comments](#comments)
+* [Linting](#linting)
+* [Miscellaneous](#misc)
 * [Linguistic guidelines](#linguistic-guidelines)
-* [Reasoning](#reasoning)
 * [Author information](#author-information)
 
 
@@ -28,33 +28,36 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-**You MUST**
+**You MUST:**
 
 * Follow the [YAML 1.2.2 specification](https://yaml.org/spec/1.2.2/).
 * Use spaces for [indentation](https://yaml.org/spec/1.2.2/#61-indentation-spaces).
 * Use Unix line feed (LF, `\n`) for new lines.
 * Use [UTF-8 encoding](https://yaml.org/spec/1.2.2/#52-character-encodings).
-* Trim trailing whitespace whenever possible, but end your files with a new line.
-* Keep the line length below 160 characters whenever technically possible.
+* Trim trailing whitespace whenever possible, but ensure files end with a new line.
+* Keep line lengths below 160 characters whenever technically possible.
 * Use JSON syntax only when it makes sense (e.g., for an automatically generated file) or when it improves readability.
 
-**You SHOULD**
 
-* Use `.yml` as the extension for new roles and collections.
-  * Stay consistent with existing extensions if `.yaml` is already used in a role.
-* Start scripts with comments explaining their purpose, including example usage if necessary.
-* Include blank lines around the `---` separator, followed by the rest of the file.
+**You SHOULD:**
+
+* Use `.yml` as the extension for new playbooks (or tasks files in roles, and collections).
+  * Stay consistent with existing extensions if `.yaml` is already used in a role or collection.
+* Start files with comments explaining their purpose, including example usage if reasonable.
+* Include blank lines before and after the `---` separator, followed by the rest of the file.
 * Check all [`YAML_FILENAME_EXTENSIONS`](https://docs.ansible.com/ansible/latest/reference_appendices/config.html#yaml-filename-extensions) when searching for files (e.g., `vars_files`, `include_vars`, plugins, or similar functions).
-* Keep the line length below 120 characters.
+* If a `when:` condition contains only `and` expressions, break it into a list of conditions for better readability.
+* Keep content below 80 characters in length, and ensure the overall line length, including indentation, stays below 120 characters.
   * Use [block scalars](https://yaml-multiline.info/#block-scalars) (`>` and `|`) as needed to manage long strings.
-  * Include a chomping indicator (`>-`) when it is important to exclude the trailing newline from the string (e.g., when defining a string variable).
-  * If a `when:` condition results in a long line and contains an and expression, break it into a list of conditions for better readability.
+  * Include a chomping indicator (`-`) behind [block scalars](https://yaml-multiline.info/#block-scalars) (`>` and `|`) when it is important to exclude the trailing newline from the string (e.g., when defining a string variable).
+* Use parentheses and new lines to group conditions when it helps to clarify the logic. When in doubt, use parentheses if there are multiple `and` or `or` operators.
+
 
 
 **Good examples:**
 
 ```yaml
-# The playbook connects to the host and checks for an existing, usable Python installation.
+# Connect to the host and checks for an Python installation. Show demo tasks.
 #
 # Example usage:
 #   ansible-playbook -e ping_data_return="pong" playbook.yml
@@ -62,7 +65,8 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 
 ---
 
-- hosts: localhost
+- name: "Example playbook"
+  hosts: localhost
   tasks:
 
     - name: "Connect to host, verify a Python installation."
@@ -78,6 +82,34 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
           consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat,
           sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no
           sea takimata sanctus est Lorem ipsum dolor sit amet.
+      when:
+        # when clause is a raw Jinja2 expression without double curly braces or quoting
+        - foo is not defined
+        - bar is not defined
+
+    # Use parentheses and new lines to group conditions when it helps to understand the logic.
+    # In doubt, use parentheses if there are multiple and/or.
+    - name: "Shut down CentOS 8 (or newer) and Debian 10 systems"
+      ansible.builtin.command:
+        cmd: "/sbin/shutdown -t now"
+      register: shutdown_result
+      when:
+        - ansible_distribution is defined
+        - ansible_distribution_major_version is defined
+        - (ansible_distribution == 'CentOS' and ansible_distribution_version is version('8.0.0', '>=')) or
+          (ansible_distribution == 'Debian' and ansible_distribution_major_version == '10')
+      changed_when:
+        - shutdown_result.rc is defined
+        - shutdown_result.rc == 0
+
+
+    - name: "Include OS vars (with default fallback)"
+      ansible.builtin.include_vars:
+        dir: "vars"
+        files_matching: "^({{ ansible_distribution }}|default)(\\{{ lookup('ansible.builtin.config', 'YAML_FILENAME_EXTENSIONS') | join('|\\\\') }})$"
+
+# newline (Unix line feed, \n) at end of file
+
 ```
 
 
@@ -94,6 +126,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
     - name: "Print a very long line"
       ansible.builtin.debug:
         msg: "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet."
+      when: foo is not defined and bar is not defined
 ```
 
 
@@ -101,8 +134,8 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 
 * YAML 1.2 has been the standard since 2009 and uses only `true` and `false` for booleans, avoiding many potential edge-case issues. Allowing YAML 1.1 is no longer practical.
 * The `.yml` extension must be used for consistency. It is predominant in the Ansible ecosystem, even though [yaml.org](https://yaml.org/faq.html) recommends `.yaml`.
-* Adding comments at the very beginning of a file allows for quickly identifying the purpose or usage of a script, either by opening the file or using the `head` command.
-* Ending files with a new line is a common Unix best practice. It prevents terminal prompt misalignment when printing files to, for example, STDOUT.
+* Adding comments at the very beginning of a file allows for quickly identifying the purpose or usage of it, either by opening the file or using the `head` command.
+* Ending files with a new line is a common Unix best practice. It prevents terminal prompt misalignment when printing files to [STDOUT](https://en.wikipedia.org/wiki/Standard_streams#Standard_output_(stdout)).
 * Long lines are difficult to read. Many projects ask for a line length limit around 120-150 character and [`ansible-lint`](#linting) checks for 160 characters by default ([yaml rule](https://ansible.readthedocs.io/projects/lint/rules/yaml/)).
 * Even though JSON is syntactically valid YAML and understood by Ansible, nobody expects it in playbooks.
 
@@ -112,7 +145,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-**You MUST**
+**You MUST:**
 
 * Use two spaces to represent sub-maps when indenting.
 * Especially indent list contents beyond the list definition.
@@ -154,17 +187,15 @@ Following the indentation rules produces consistent code that is easy to read.
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-**You SHOULD**
+**You SHOULD:**
 
-* Add blank lines between:
+* Add at least one blank line between:
   * Two host blocks.
   * Two task blocks.
   * Host and include blocks.
 * Use a single space to separate Jinja2 template markers from variable names or expressions.
 * Break up lengthy Jinja templates into multiple templates when they contain distinct logical sections.
 * Avoid Jinja templates for generating text and semi-structured data, not for creating structured data.
-
-Refer to [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) for a more detailed example of proper spacing and other best practices.
 
 
 **Reasoning:**
@@ -175,32 +206,25 @@ Following the spacing rules produces consistent code that is easy to read.
 **Good examples:**
 
 ```yaml
----
-- hosts: localhost
-  tasks:
+- name: "Set a variable"
+  ansible.builtin.set_fact:
+    foo: "{{ bar | default('baz') }}"
 
-  - name: "Set a variable"
-    ansible.builtin.set_fact:
-      foo: "{{ bar | default('baz') }}"
-
-  - name: "Set another variable"
-    ansible.builtin.set_fact:
-      bar: "{{ baz | default('foo, barbaz') }}"
+- name: "Set another variable"
+  ansible.builtin.set_fact:
+    bar: "{{ baz | default('foo, barbaz') }}"
 ```
 
 
 **Bad examples:**
 
 ```yaml
----
-- hosts: localhost
-  tasks:
-  - name: "Set a variable"
-      ansible.builtin.set_fact:
-          foo: "{{bar|default('baz')}}"
-  - name: "Set another variable"
-      ansible.builtin.set_fact:
-          bar: "{{baz|default('foo,barbaz')}}"
+- name: "Set a variable"
+    ansible.builtin.set_fact:
+        foo: "{{bar|default('baz')}}"
+- name: "Set another variable"
+    ansible.builtin.set_fact:
+        bar: "{{baz|default('foo,barbaz')}}"
 ```
 
 
@@ -209,37 +233,34 @@ Following the spacing rules produces consistent code that is easy to read.
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
 
-**You MUST**
+**You MUST:**
+
+* Use [block scalars](https://yaml-multiline.info/#block-scalars) (`>` and `|`) for writing long strings or to simplify complicated quoting.
+
+
+**You SHOULD:**
 
 * Quote all strings.
-* Use [block scalars](https://yaml-multiline.info/#block-scalars) (`>` and `|`) for writing long strings or to simplify complicated quoting.
-* Quote an entire value if it starts with `{{`.
+* Use double quotes (`"`) for YAML strings.
+  * Use single quotes only when they simplify nested expressions, such as Jinja map references with mixed quoting styles.
+* Use single quotes (`'`) for Jinja2 strings.
 
 
-**You SHOULD**
-
-* Prefer double quotes (`"`) over single quotes (`'`). Use single quotes only when they simplify nested expressions, such as Jinja map references with mixed quoting styles.
-
-
-**You MUST NOT**
+**You MUST NOT:**
 
 * Quote non-string types, such as booleans (`true`, `false`) or numbers (e.g., `1337`).
 * Quote references to the local Ansible environment, such as the names of variables being assigned values.
-
-Refer to [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) for a detailed example of proper quoting and other best practices.
 
 
 **Good Examples:**
 
 ```yaml
-
-# good
 - name: "Connect to host, verify a usable python"
   ansible.builtin.ping:
     data: "{{ ping_return }}"
 
 
-# double quotes with nested single quotes
+# double quotes with nested single quotes for Jinja2
 - name: "Start all nodes"
   ansible.builtin.service:
     name: "{{ item['node_name'] }}"
@@ -255,7 +276,7 @@ Refer to [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) fo
     msg: >
       Node {{ item['node_name'] }} is {{ item['status'] }} and in {{ item['az'] }}
       availability zone and belongs to "{{ item['customer'] }}" customer.
-  with_items: nodes
+  with_items: "{{ nodes }}"
 
 
 # don't quote booleans and numbers
@@ -270,20 +291,23 @@ Refer to [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) fo
 # variables example 1
 - name: "set a variable"
   ansible.builtin.set_fact:
-    foo: "bar"
+    foo: "bar" # explicitly references the string "bar"
 
 
 # variables example 2
 - name: "Print a variable"
   ansible.builtin.debug:
+    # be aware that this option already runs in Jinja2 context and has an implicit
+    # {{ }} wrapping, so you should not be using Jinja2 delimiters unless you are
+    # looking for double interpolation.
     var: foo
-  when: ansible_os_family == "Fedora"
+  when: ansible_os_family == 'Fedora'
 
 
 # variables example 3
-- name: "set another variable"
+- name: "Set another variable"
   ansible.builtin.set_fact:
-    baz: "{{ foo }}"
+    baz: "{{ foo }}" # explicitly references the variable foo
 ```
 
 
@@ -296,30 +320,43 @@ Refer to [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) fo
     state: 'started'
     enabled: true
   become: true
+
+- name: "Assign a value without quoting"
+  ansible.builtin.set_fact:
+    baz: another_var  # can cause ambiguity if `another_var` (string or existing variable?)
 ```
 
 
 **Reasoning:**
 
+* We have stricter rules than much of the community (cf. [8.2. YAML and Jinja2 Syntax](https://redhat-cop.github.io/automation-good-practices/#_yaml_and_jinja2_syntax)):
+  * We believe all strings [should be quoted](https://news.ycombinator.com/item?id=34509789)
+  * The number of rules to remember, if you want to use the quotes only when they are really needed, is somewhat excessive for such a simple thing as specifying one of the most common datatypes.
+  * However, since laxer rules are so common, we have categorized this as SHOULD instead of MUST.
 * Single quotes in YAML behave differently than most programmers expect:
   * Escaping with `\` is **not** possible; instead, `''` (two single quotes) is used.
   * They do **not** prevent variable interpolation.
-* Properly escaping strings makes it easier to troubleshoot malformed strings and ensures the desired effect.
+* Properly escaped strings makes it easier to troubleshoot malformed strings and ensures the desired effect.
 * YAML requires you to quote the entire line if it starts with `{{ foo }}` to distinguish between a value and a YAML dictionary.
-*-* Syntax highlighting generally works better when strings are explicitly quoted.
+* Syntax highlighting generally works better when strings are explicitly quoted.
+* Refer to the following for more information about edge cases:
+  * [Ansible FAQ: "When should I use {{ }}? Also, how to interpolate variables or dynamic variable names"](https://docs.ansible.com/ansible/latest/reference_appendices/faq.html#when-should-i-use-also-how-to-interpolate-variables-or-dynamic-variable-names)
+  * [Ansible Lint rule: `risky-octal`](https://ansible.readthedocs.io/projects/lint/rules/risky-octal/)
+* Further discussion:
+  * [Ansible Lint: add rule to prefer double quotes intead of single (like black) #584](https://github.com/ansible/ansible-lint/discussions/584)
+  * [YAML: Do I need quotes for strings in YAML?](https://stackoverflow.com/questions/19109912/yaml-do-i-need-quotes-for-strings-in-yaml)
 
 
 
-## Naming of variables, roles, plugins and modules<a id="naming"></a>
+## Naming<a id="naming"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-**You MUST**
+**You MUST:**
 
-* Use [`snake_case`](https://en.wikipedia.org/wiki/Snake_case).
+* Use [`snake_case`](https://en.wikipedia.org/wiki/Snake_case) for variables, roles, collections and modules.
 * Only use characters from the set `[a-z0-9_]`.
 * Start variable names with a letter.
-
 
 
 **Good examples:**
@@ -332,6 +369,7 @@ Refer to [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) fo
     node_name: "test"
     one_and_only: false
 ```
+
 
 **Bad examples:**
 
@@ -347,8 +385,8 @@ Refer to [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) fo
 
 **Reasoning:**
 
-* Ansible uses `snake_case` for module names and parameters. Since this convention influences a wide range of playbooks, it makes sense to extend it to variable names, even though they are not technically restricted to this format.
-* Names of plugins and roles and most parts of Ansible  must follow the rules of the Python namespace, which does not allow certain characters, such as hyphens (`-`) or dots (`.`). See [StackOverflow](https://stackoverflow.com/a/37831973), [Galaxy Issue 775](https://github.com/ansible/galaxy/issues/775), and a [comment from Issue 779](https://github.com/ansible/galaxy/issues/779#issuecomment-401632750) for more information:
+* Ansible uses `snake_case` for module names and parameters. As this convention influences a wide range of playbooks, it is logical to extend it to variable names, even though they are not technically restricted to this format.
+* Names of plugins, roles, and most parts of Ansible must follow Python namespace rules, which disallow certain characters, such as hyphens  (`-`) or dots (`.`). See [StackOverflow](https://stackoverflow.com/a/37831973), [Galaxy Issue 775](https://github.com/ansible/galaxy/issues/775), and a [comment from Issue 779](https://github.com/ansible/galaxy/issues/779#issuecomment-401632750) for more information:
   > For that to work, namespaces need to be Python compatible, which means they can’t contain ‘-’.
 *  Refer to the [Ansible Galaxy documentation on role names](https://galaxy.ansible.com/docs/contributing/creating_role.html#role-names) for additional guidance.
 
@@ -358,7 +396,7 @@ Refer to [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) fo
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-**You MUST** use `true` and `false` only (all lowercase without quotes).
+**You MUST:** use `true` and `false` only (all lowercase without quotes).
 
 
 **Good examples:**
@@ -371,6 +409,7 @@ Refer to [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) fo
     enabled: true
   become: true
 ```
+
 
 **Bad examples:**
 
@@ -386,8 +425,8 @@ Refer to [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) fo
 
 **Reasoning:**
 
-* Using only `true`/`false` prevents [the Norway problem](https://hitchdev.com/strictyaml/why/implicit-typing-removed/).
-* YAML 1.2 only allows `true`/`false` as boolean literals. YAML 1.1 (which is less strict on this) is old and deprecated.
+* Using `true` / `false` prevents [the Norway problem](https://hitchdev.com/strictyaml/why/implicit-typing-removed/).
+* YAML 1.2 only allows `true` / `false` as boolean literals. YAML 1.1 (which is less strict on this) is old and deprecated.
 
 
 
@@ -395,7 +434,7 @@ Refer to [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) fo
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-**You MUST**
+**You MUST:**
 
 * Use only one space after the colon when specifying a key-value pair.
 * Always use the map syntax, regardless of the number of pairs in the map.
@@ -463,17 +502,17 @@ Refer to [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) fo
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-**You MUST**
+**You MUST:**
 
 * Use bracket notation for value retrieval.
 
 
-**You SHOULD**
+**You SHOULD:**
 
 * Refactor projects to use bracket notation instead of dot notation, provided the project maintainers agree.
 
 
-**You MUST NOT**
+**You MUST NOT:**
 
 * Mix dot and bracket notation within the same project.
 
@@ -516,7 +555,6 @@ Refer to [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) fo
 **Bad examples:**
 
 ```yaml
-
 - name: "Define some variables"
   ansible.builtin.set_fact:
     foo:
@@ -556,132 +594,134 @@ Refer to [`ansible-style-guide-example.yml`](ansible-style-guide-example.yml) fo
 
 
 
-## Hosts declaration<a id="hosts"></a>
-
-[*⇑ Back to TOC ⇑*](#table-of-contents)
-
-A `hosts` section declaration **SHOULD follow** this general order:
-
-1. `hosts`
-2. options in alphabetical order
-3. `pre_tasks`
-4. `roles`
-5. `tasks`
-
-
-**Good examples:**
-
-```yaml
-- hosts: "webnodes"
-  remote_user: "nginx"
-  vars:
-    nginx_state: "started"
-  pre_tasks:
-    - name: "Set the timezone to Europe/Berlin"
-      ansible.builtin.lineinfile:
-        dest: "/etc/environment"
-        line: "TZ=Europe/Berlin"
-        state: "present"
-      become: true
-  roles:
-    - { role: "nginx", tags: [ "nginx", "webserver" ] }
-  tasks:
-    - name: "start the NGINX service"
-      ansible.builtin.service:
-        name: "nginx"
-        state: "{{ nginx_state }}"
-```
-
-
-**Reasoning:**
-
-Well-defined parameter rules are helping to create consistent code.
-
-
-
 ## Tasks and play declaration<a id="tasks-plays"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
 
-A task/play declaration **SHOULD follow** this general order:
+**You MUST:**
 
-1. `name`
-2. `module` (for example `service`)
-3. module parameters in map declaration, alphabetical order
-4. loop operator (for example `with_items` or `with_fileglob`)
-5. task options in alphabetical order (for example `become`, `ignore_errors`, `register`) except `when` and `tags`
-5. `when`
-6. `tags`
-
-Just omit points which do not apply.
-
-Please note that `include_*` or `import_*`  do not differ from others tasks/plays (just to mention as many style guides out there are having separate rules for them).
-
-If needed, task names can be made dynamic by using variables wrapped in Jinja2 templates *at the end* of the string.
+* Use `name:` as the first key for plays, tasks and handlers.
+* Use the module name (for example `ansible.builtin.debug`) as the second parameter of a task.
+* Use the `block`, `rescue` and `always` as the last key on tasks.
 
 
-**You MUST NOT**
+**You SHOULD:**
 
-* Use variables (wrapped in Jinja2 templates) in play names, as they do not expand properly.
+* Begin all names with an uppercase letter.
+* Make task names dynamic, if necessary, by appending `{{ variables }}` at the end of the string.
+* Arrange keys in tasks to follow this general order (omit any keys that are not needed):
+  1. `name`
+  2. `module`
+     * Place primary, mandatory module parameters (e.g., `name`, `state`, `path`) directly under the module name for clarity.
+     * Arrange all other, optional module parameters in alphabetical order, unless doing so negatively impacts readability or logic.
+  3. Loop operators (e.g., `loop`, `with_items`, or `with_fileglob`).
+  4. `register`
+  5. Other common keys (e.g., `become`), arranged in alphabetical order.
+  6. Control attributes:
+     - `when`, `changed_when`, `failed_when`, and `ignore_errors` (in this specific order).
+     - Use a list format for `when`, `changed_when`, and `failed_when`, even if there is only one condition.
+  7. `tags`
+     - Use a list format, even if there is only one tag.
+
+The `include_*` and `import_*` statements are not treated differently from other tasks/plays. This clarification is included because many other style guides impose separate rules for these.
+
+
+**You MUST NOT:**
+
+* Use variables (wrapped in Jinja2 templates) in play names (the `name` attribute of a playbook), as they do not expand properly.
 * Use loop variables (e.g., the default `item`) in task names within a loop, as they also do not expand properly.
 
 
 **Good examples:**
 
 ```yaml
-- name: "Create some EC2 Instances"
-  amazon.aws.ec2_instance:
-    assign_public_ip: true
-    image: "ami-c7d092f7"
-    instance_tags:
-      name: "{{ item }}"
-    key_name: "my_key"
-  with_items: "{{ instance_names }}"
-  ignore_errors: true
-  register: ec2_output
-  when: ansible_os_family == "Fedora"
-  tags: "ec2"
+---
+- name: "A cool playbook"
+  hosts: localhost
+  tasks:
+    - name: "A block"
+      when: true
+      block: # last key, even after "when:" to prevent indentation errors
+        - name: "Display a message"
+          ansible.builtin.debug:
+            msg: "Hello world!"
 
 
-- name: "Include tasks to setup the managed software"
-  ansible.builtin.include_tasks: "setup.yml"
-  tags: "setup"
+    - name: "Install Nginx"
+      ansible.builtin.apt:
+        name: "nginx"
+        state: "present"
+      when:
+        - ansible_os_family == 'Fedora'
 
 
-- name: "Include tasks to configure the managed software"
-  ansible.builtin.include_tasks: "config.yml"
+    - name: "Create some EC2 Instances"
+      amazon.aws.ec2_instance:
+        image: "ami-c7d092f7"
+        assign_public_ip: true
+        key_name: "my_key"
+        instance_tags:
+          name: "{{ item }}"
+      with_items: "{{ instance_names }}"
+      ignore_errors: true
+      register: ec2_output
+      when:
+        - ansible_os_family == 'Fedora'
+      tags:
+        - "ec2"
 
-- name: "Include tasks to cleanup"
-  ansible.builtin.include_tasks: "cleanup.yml"
-  tags: [ "always", "cleanup" ]
+    - name: "Include tasks to cleanup"
+      ansible.builtin.include_tasks:
+        file: "cleanup.yml"
+      tags:
+        - "always"
+        - "cleanup"
 
-- name: "Manage device {{ device_name }}"
-  foo.module:
-    device: "{{ device_name }}"
+    - name: "Manage device {{ device_name }}"
+      foo.module:
+        device: "{{ device_name }}"
+      when:
+        - ansible_os_family == 'Fedora'
+  changed_when: false
+  failed_when: false
+
 ```
 
 
 **Bad examples:**
 
 ```yaml
-- name: "Create some EC2 Instances"
-  when: ansible_os_family == "Fedora"
-  tags: "ec2"
-  amazon.aws.ec2_instance: "image=ami-c7d092f7 assign_public_ip=true"
-  register: ec2_output
-  with_items: "{{ instance_names }}"
-  ignore_errors: true
+
+---
+
+- hosts: localhost
+  name: "A cool playbook" # should be the first one
+  tasks:
+    - name: "A block"
+      block:
+        - name: "Display a message"
+          ansible.builtin.debug:
+            msg: "Hello world!"
+      when: true # when key should be before block
+
+  - name: "Create some EC2 Instances"
+    when: ansible_os_family == 'Fedora'
+    tags: "ec2"
+    amazon.aws.ec2_instance: "image=ami-c7d092f7 assign_public_ip=true"
+    register: ec2_output
+    with_items: "{{ instance_names }}"
+    ignore_errors: true
 
 
-- ansible.builtin.include_tasks: "setup.yml"
-  tags: "setup"
-- ansible.builtin.include_tasks: "config.yml"
-- ansible.builtin.include_tasks: "cleanup.yml" tags=always
+  - ansible.builtin.include_tasks: "setup.yml"
+    tags: "setup"
+  - ansible.builtin.include_tasks: "config.yml"
+  - ansible.builtin.include_tasks: "cleanup.yml" tags=always
 
-- name: "{{ device_name }} gets managed as device"
-  foo.module:
-    device: "{{ device_name }}"
+  - name: "{{ device_name }} gets managed as device"
+    foo.module:
+      device: "{{ device_name }}"
 ```
 
 
@@ -689,17 +729,59 @@ If needed, task names can be made dynamic by using variables wrapped in Jinja2 t
 
 * Well-defined parameter rules are helping to create consistent code. Version control diffs are cleaner and more meaningful, as only new or changed parameters are highlighted.
 * Keep in mind that using variables in task names can make it harder for users to correlate logs with the corresponding code when searching for an actual variable value (e.g., `/dev/foo gets managed as device` instead of `{{ device_name }} gets managed as device`). Placing the variable part at the end of a task name improves log readability and makes it easier to search for the corresponding code.
+* The reasoning of the [Ansible Lint rule: `key-order`](https://ansible.readthedocs.io/projects/lint/rules/key-order/#correct-code).
+* Further discussion:
+  * [Ansible Lint: ansible lint should check order of tasks attributes for when and name #578](https://github.com/ansible/ansible-lint/issues/578)
 
 
 
-## Ansible lint<a id="linting"></a>
+## Comments<a id="comments"></a>
 
-You MUST check your playbooks, collections, roles, and other applicable files with [`ansible-lint`](https://docs.ansible.com/ansible-lint/).
+**You MUST:**
+
+* Provide explanations for role and collection variables using comments in `/defaults` or `/vars` where they are defined.
+* Whenever [`ansible.builtin.command`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/command_module.html) or [`ansible.builtin.shell`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/shell_module.html) modules are used, include a comment with a justification why they are needed to aid future maintenance.
+
+
+**You SHOULD:**
+
+* Use descriptive enough `name` values to tell what a task does instead of comments whenever possible.
+* Keep multi-line comments below 80 characters per line (excluding indentation).
 
 
 **Reasoning:**
 
-Ansible Lint is an official project by the Ansible Core Team and is widely adopted. It can be run offline and provides a command-line tool for linting playbooks, helping to identify areas for potential improvement. Following its recommendations promotes consistent, high-quality code.
+* Good, descriptive `name` values also produce valuable output for the user, as comments are not displayed."
+* Variables documented in the `/defaults` or `/vars` directories do not require explanation within the playbooks themselves.
+
+
+
+## Linting<a id="linting"></a>
+
+**You MUST:**
+
+* Check your playbooks, collections, roles, and other applicable files with [`ansible-lint --profile production --strict --skip-list use-loop`](https://docs.ansible.com/ansible-lint/).
+
+
+**Reasoning:**
+
+* Ansible Lint is an official project by the Ansible Core Team and is widely adopted. It can be run offline and provides a command-line tool for linting playbooks, helping to identify areas for potential improvement. Following its recommendations promotes consistent, high-quality code.
+* Ansible Lint automatically [runs `ansible-playbook --syntax-check`](https://ansible.readthedocs.io/projects/lint/rules/syntax-check/).
+* `with_*` deprecation is still [under discussion](https://github.com/ansible/ansible-lint/issues/2204).
+
+
+
+## Miscellaneous<a id="misc"></a>
+
+
+* Ensure that all tasks are idempotent.
+* Avoid overriding role defaults, variables, or input parameters using `set_fact`. Instead, use a distinct variable name.
+* Do not use `meta: end_play`, as it terminates the entire play rather than just the tasks for a specific host (when working with multiple hosts in the inventory). If absolutely necessary, consider using `meta: end_host` instead.
+* Limit the use of the [`ansible.builtin.copy`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/copy_module.html) module to scenarios such as copying remote files, static files, or uploading binary blobs. For most file operations, prefer using [`ansible.builtin.template`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/template_module.html). Even if the file currently does not require templating, this preemptively simplifies future updates, especially when templating functionality needs to be added later.
+* When using the [`ansible.builtin.template`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/template_module.html) module, append `.j2` to the template file name for clarity and convention.
+* [Use tags with caution](https://redhat-cop.github.io/automation-good-practices/#_use_tags_cautiously_either_for_roles_or_for_complete_purposes).
+* [Use the verbosity parameter with debug statements](https://redhat-cop.github.io/automation-good-practices/#_use_the_verbosity_parameter_with_debug_statements).
+
 
 
 
@@ -707,10 +789,10 @@ Ansible Lint is an official project by the Ansible Core Team and is widely adopt
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-You **SHOULD**
+**You SHOULD:**
 
-* follow the official [Ansible Developers Style Guide](https://docs.ansible.com/ansible/latest/dev_guide/style_guide/index.html)
-* follow [Spelling - Word Usage - Common Words and Phrases to Use and Avoid](https://docs.ansible.com/ansible/latest/dev_guide/style_guide/spelling_word_choice.html) recommendations.
+* Follow the official [Ansible Developers Style Guide](https://docs.ansible.com/ansible/latest/dev_guide/style_guide/index.html).
+* Follow [Spelling - Word Usage - Common Words and Phrases to Use and Avoid](https://docs.ansible.com/ansible/latest/dev_guide/style_guide/spelling_word_choice.html) recommendations.
 
 
 Excerpt of the **most important rules**:
@@ -729,19 +811,6 @@ Excerpt of the **most important rules**:
 **Reasoning:**
 
 The official rules are based on experience of technical writers. As these are also rules for Ansible developers, they are influencing the whole community. It makes sense to apply them in-house to have a consistent user experience.
-
-
-
-## Reasoning<a id="reasoning"></a>
-
-[*⇑ Back to TOC ⇑*](#table-of-contents)
-
-According to Read Hat and most of the Ansible community, one should refer to the following resources when developing:
-
-* [Red Hat's Coding Style Good Practices for Ansible](https://github.com/redhat-cop/automation-good-practices/blob/main/coding_style/README.adoc#ansible-guidelines)
-* [Best Practices of the Ansible User Guide](https://docs.ansible.com/ansible/latest/user_guide/playbooks_best_practices.html)
-
-However, neither these resources nor the [Ansible documentation](https://docs.ansible.com/ansible/latest) in general follow a consistent code style or define one comprehensively. This document addresses that gap.
 
 
 
