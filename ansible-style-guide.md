@@ -47,7 +47,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 * Include blank lines before and after the `---` separator, followed by the rest of the file.
 * Check all [`YAML_FILENAME_EXTENSIONS`](https://docs.ansible.com/ansible/latest/reference_appendices/config.html#yaml-filename-extensions) when searching for files (e.g., `vars_files`, `include_vars`, plugins, or similar functions).
 * If a `when:` condition contains only `and` expressions, break it into a list of conditions for better readability.
-* Keep content below 80 characters in length, and ensure the overall line length, including indentation, stays below 120 characters.
+* Keep content around 80 characters in length, and ensure the overall line length, including indentation, stays below 120 characters.
   * Use [block scalars](https://yaml-multiline.info/#block-scalars) (`>` and `|`) as needed to manage long strings.
   * Include a chomping indicator (`-`) behind [block scalars](https://yaml-multiline.info/#block-scalars) (`>` and `|`) when it is important to exclude the trailing newline from the string (e.g., when defining a string variable).
 * Use parentheses and new lines to group conditions when it helps to clarify the logic. When in doubt, use parentheses if there are multiple `and` or `or` operators.
@@ -76,19 +76,21 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
     - name: "Print a very long line"
       ansible.builtin.debug:
         msg: >
-          Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et
-          dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet
-          clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet,
-          consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat,
-          sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no
-          sea takimata sanctus est Lorem ipsum dolor sit amet.
+          Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod
+          tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At
+          vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren,
+          no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit
+          amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut
+          labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam
+          et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata
+          sanctus est Lorem ipsum dolor sit amet.
       when:
         # when clause is a raw Jinja2 expression without double curly braces or quoting
         - foo is not defined
         - bar is not defined
 
-    # Use parentheses and new lines to group conditions when it helps to understand the logic.
-    # In doubt, use parentheses if there are multiple and/or.
+    # Use parentheses and new lines to group conditions when it helps to understand the
+    # logic. In doubt, use parentheses if there are multiple and/or.
     - name: "Shut down CentOS 8 (or newer) and Debian 10 systems"
       ansible.builtin.command:
         cmd: "/sbin/shutdown -t now"
