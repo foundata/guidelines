@@ -234,7 +234,6 @@ Following the spacing rules produces consistent code that is easy to read.
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-
 **You MUST:**
 
 * Use [block scalars](https://yaml-multiline.info/#block-scalars) (`>` and `|`) for writing long strings or to simplify complicated quoting.
@@ -739,6 +738,8 @@ The `include_*` and `import_*` statements are not treated differently from other
 
 ## Comments<a id="comments"></a>
 
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
 **You MUST:**
 
 * Provide explanations for role and collection variables using comments in `/defaults` or `/vars` where they are defined.
@@ -775,6 +776,7 @@ The `include_*` and `import_*` statements are not treated differently from other
 
 ## Miscellaneous<a id="misc"></a>
 
+[*⇑ Back to TOC ⇑*](#table-of-contents)
 
 * Ensure that all tasks are idempotent.
 * Avoid overriding role defaults, variables, or input parameters using `set_fact`. Instead, use a distinct variable name.
