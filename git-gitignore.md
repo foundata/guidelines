@@ -49,8 +49,14 @@ After reviewing development environments within our organization and among our p
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-Add repository-specific excludes below the line:<br>
-`# End of https://www.toptal.com/developers/gitignore[...]`.
+Add repository-specific excludes below the end of the Toptal templates:
+
+```
+# End of https://www.toptal.com/developers/gitignore[...]
+
+### Repository-specific files
+...
+```
 
 Use this section **only for files that are *not* covered by Toptal's general-purpose templates**.
 
