@@ -81,7 +81,7 @@ Please use the following template as a starting point:
 version = 1
 SPDX-PackageName = "FIXME name of your project"
 SPDX-PackageDownloadLocation = "https://github.com/foundata/FIXME-your-project"
-SPDX-PackageSupplier = "foundata GmbH <https://foundata.com>"
+SPDX-PackageSupplier = "foundata GmbH (https://foundata.com)"
 SPDX-PackageComment = """
 This project may include calls to Application Programming Interfaces
 ("API calls"), as well as their respective specifications and code that
@@ -96,7 +96,7 @@ supersede any terms of these additional agreements.
 [[annotations]]
 path = "**"
 precedence = "closest"
-SPDX-FileCopyrightText = "foundata GmbH <https://foundata.com>"
+SPDX-FileCopyrightText = "foundata GmbH (https://foundata.com)"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 ```
 
@@ -182,7 +182,7 @@ While having a [proper copyright file with wildcard](#machine-readable-file) bes
 
 ```
 SPDX-License-Identifier: GPL-3.0-or-later
-SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+SPDX-FileCopyrightText: foundata GmbH (https://foundata.com)
 ```
 
 Replace `GPL-3.0-or-later` with your [SPDX license identifier](https://spdx.org/licenses/) as needed. Use `OR` to [declare multiple licenses for the file at the same time](https://reuse.software/faq/#multi-licensing) (e.g. `SPDX-License-Identifier: GPL-3.0-or-later OR Apache-2.0 OR MIT`).
