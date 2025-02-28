@@ -369,7 +369,9 @@ Following the spacing rules produces consistent code that is easy to read.
 
 * Use [`snake_case`](https://en.wikipedia.org/wiki/Snake_case) for variables, roles, collections and modules.
 * Only use characters from the set `[a-z0-9_]`.
-* Start variable names with a letter.
+* Start variable names with a letter or underscore.
+* Prefix role variables with the collection and/or role name.
+* Prefix internal variables (those that are not expected to be set by users) by two underscores.
 
 
 **Good examples:**
@@ -381,6 +383,21 @@ Following the spacing rules produces consistent code that is easy to read.
     node_age: 20
     node_name: "test"
     one_and_only: false
+
+- name: "determine version of foo"
+  ansible.builtin.shell:
+    cmd: |
+      __foo_installed=""
+      if command -v 'foo' > /dev/null 2>&1
+      then
+        __foo_installed="$(foo --version | tail -1 | sed -e 's/^v//g')"
+        if ! printf '%s' "${__foo_installed}" | grep -E -q -e '^[[:digit:]\.]*$'
+        then
+          __foo_installed=''
+        fi
+      fi
+      printf '%s' "${__foo_installed}"
+  register: __foo_installed_result
 ```
 
 
@@ -393,6 +410,21 @@ Following the spacing rules produces consistent code that is easy to read.
     nodeage: 20
     NODE_NAME: "test"
     1andOnly: False
+
+- name: "determine version of foo"
+  ansible.builtin.shell:
+    cmd: |
+      installed=""
+      if command -v 'foo' > /dev/null 2>&1
+      then
+        installed="$(foo --version | tail -1 | sed -e 's/^v//g')"
+        if ! printf '%s' "${installed}" | grep -E -q -e '^[[:digit:]\.]*$'
+        then
+          installed=''
+        fi
+      fi
+      printf '%s' "${installed}"
+  register: installed_result
 ```
 
 
@@ -401,7 +433,8 @@ Following the spacing rules produces consistent code that is easy to read.
 * Ansible uses `snake_case` for module names and parameters. As this convention influences a wide range of playbooks, it is logical to extend it to variable names, even though they are not technically restricted to this format.
 * Names of plugins, roles, and most parts of Ansible must follow Python namespace rules, which disallow certain characters, such as hyphens  (`-`) or dots (`.`). See [StackOverflow](https://stackoverflow.com/a/37831973), [Galaxy Issue 775](https://github.com/ansible/galaxy/issues/775), and a [comment from Issue 779](https://github.com/ansible/galaxy/issues/779#issuecomment-401632750) for more information:
   > For that to work, namespaces need to be Python compatible, which means they can’t contain ‘-’.
-*  Refer to the [Ansible Galaxy documentation on role names](https://galaxy.ansible.com/docs/contributing/creating_role.html#role-names) for additional guidance.
+* Refer to the [Ansible Galaxy documentation on role names](https://galaxy.ansible.com/docs/contributing/creating_role.html#role-names) for additional guidance.
+* Role variables, registered variables, and custom facts are not truly local—they persist globally and can pollute the namespace. Prefixing them with the role name reduces conflicts, while two underscores indicate they are internal. This applies to variables set by set_fact and register, as they remain after the role completes. The two underscores for internal variables is [a community convention](https://redhat-cop.github.io/automation-good-practices/#_naming_parameters).
 
 
 
