@@ -66,7 +66,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 ---
 
 - name: "Example playbook"
-  hosts: localhost
+  hosts: "localhost"
   tasks:
 
     - name: "Connect to host, verify a Python installation."
@@ -96,15 +96,15 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
     - name: "Shut down CentOS 8 (or newer) and Debian 10 systems"
       ansible.builtin.command:
         cmd: "/sbin/shutdown -t now"
-      register: shutdown_result
       when:
         - ansible_distribution is defined
         - ansible_distribution_major_version is defined
         - (ansible_distribution == 'CentOS' and ansible_distribution_version is version('8.0.0', '>=')) or
           (ansible_distribution == 'Debian' and ansible_distribution_major_version == '10')
       changed_when:
-        - shutdown_result.rc is defined
-        - shutdown_result.rc == 0
+        - __shutdown_result.rc is defined
+        - __shutdown_result.rc == 0
+      register: __shutdown_result
 
 
     - name: "Include OS vars (with default fallback)"
@@ -121,7 +121,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 
 ```yaml
 ---
-- hosts: localhost
+- hosts: "localhost"
   tasks:
     - name: "Connect to host, verify a Python installation."
       ansible.builtin.ping:
@@ -274,12 +274,12 @@ Following the spacing rules produces consistent code that is easy to read.
 
 # double quotes with nested single quotes for Jinja2
 - name: "Start all nodes"
+  become: true
   ansible.builtin.service:
     name: "{{ item['node_name'] }}"
     state: "started"
     enabled: true
   with_items: "{{ nodes }}"
-  become: true
 
 
 # folded scalar style (useful to prevent complicated quoting or lines longer than 160 chars)
@@ -313,7 +313,8 @@ Following the spacing rules produces consistent code that is easy to read.
     # {{ }} wrapping, so you should not be using Jinja2 delimiters unless you are
     # looking for double interpolation.
     var: foo
-  when: ansible_os_family == 'Fedora'
+  when:
+    - ansible_os_family == 'RedHat'
 
 
 # variables example 3
@@ -327,11 +328,12 @@ Following the spacing rules produces consistent code that is easy to read.
 
 ```yaml
 - name: Start node named Horton
+  become: true
   ansible.builtin.service:
     name: horton
     state: 'started'
     enabled: true
-  become: true
+
 
 
 - name: "Assign a value without quoting"
@@ -377,14 +379,14 @@ Following the spacing rules produces consistent code that is easy to read.
 **Good examples:**
 
 ```yaml
-- name: "set some facts"
+- name: "Set some facts"
   ansible.builtin.set_fact:
     node_is_online: true
     node_age: 20
     node_name: "test"
     one_and_only: false
 
-- name: "determine version of foo"
+- name: "Determine version of foo"
   ansible.builtin.shell:
     cmd: |
       __foo_installed=""
@@ -449,11 +451,11 @@ Following the spacing rules produces consistent code that is easy to read.
 
 ```yaml
 - name: "Start fail2ban"
+  become: true
   ansible.builtin.service:
     name: "fail2ban"
     state: "restarted"
     enabled: true
-  become: true
 ```
 
 
@@ -461,11 +463,11 @@ Following the spacing rules produces consistent code that is easy to read.
 
 ```yaml
 - name: "Start fail2ban"
+  become: 'yes'
   ansible.builtin.service:
     name: "fail2ban"
     state: "restarted"
     enabled: 1
-  become: 'yes'
 ```
 
 
@@ -494,7 +496,6 @@ Following the spacing rules produces consistent code that is easy to read.
     name: "fail2ban"
     state: "restarted"
     enabled: true
-  become: true
 
 
 - name: "Create filter.d directory for easier fail2ban extension"
@@ -504,14 +505,12 @@ Following the spacing rules produces consistent code that is easy to read.
     owner: "fail2ban"
     path: "/etc/fail2ban/filter.d"
     state: "directory"
-  become: true
 
 
 - name: "Copy sshd.conf to /etc/fail2ban/filter.d/"
   ansible.builtin.copy:
     dest: "/etc/fail2ban/filter.d/"
     src: "files/filters/sshd.conf"
-  become: true
 ```
 
 
@@ -523,17 +522,14 @@ Following the spacing rules produces consistent code that is easy to read.
     name    : "fail2ban"
     state   : "restarted"
     enabled : true
-  become : true
 
 
 - name: "Create filter.d directory for easier fail2ban extension"
   ansible.builtin.file: "path:=/etc/fail2ban/filter.d state=directory group=fail2ban mode=0755 owner=fail2ban"
-  become: true
 
 
 - name: "Copy sshd.conf to /etc/fail2ban/filter.d/"
   ansible.builtin.copy: "dest=/etc/fail2ban/filter.d/ src=files/filters/sshd.conf"
-  become: true
 ```
 
 
@@ -648,29 +644,42 @@ Following the spacing rules produces consistent code that is easy to read.
 **You MUST:**
 
 * Use `name:` as the first key for plays, tasks and handlers.
-* Use the module name (for example `ansible.builtin.debug`) as the second parameter of a task.
+* Begin all names with an uppercase letter.
 * Use the `block`, `rescue` and `always` as the last key on tasks.
 
 
 **You SHOULD:**
 
-* Begin all names with an uppercase letter.
-* Make task names dynamic, if necessary, by appending `{{ variables }}` at the end of the string.
 * Arrange keys in tasks to follow this general order (omit any keys that are not needed):
-  1. `name`
-  2. `module`
-     * Place primary, mandatory module parameters (e.g., `name`, `state`, `path`) directly under the module name for clarity.
-     * Arrange all other, optional module parameters in alphabetical order, unless doing so negatively impacts readability or logic.
-  3. Loop operators (e.g., `loop`, `with_items`, or `with_fileglob`).
-  4. `register`
-  5. Other common keys (e.g., `become`), arranged in alphabetical order.
-  6. Control attributes:
-     - `when`, `changed_when`, `failed_when`, and `ignore_errors` (in this specific order).
-     - Use a list format for `when`, `changed_when`, and `failed_when`, even if there is only one condition.
-  7. `tags`
-     - Use a list format, even if there is only one tag.
-
-The `include_*` and `import_*` statements are not treated differently from other tasks/plays. This clarification is included because many other style guides impose separate rules for these.
+  1. Attributes defining what the task is, where to run it and what its parameters are:
+     - `name`: Always first, providing a clear description of what the task does.
+     - `delegate_to`
+     - `become`
+     - `module`: The actual action.
+       * Place primary, mandatory module parameters (e.g., `name`, `state`, `path`) directly under the module name for clarity.
+       * Arrange all other, optional module parameters in alphabetical order, unless doing so negatively impacts readability or logic.
+     - `args`: If using the args syntax for complex module parameters.
+     - `vars`: If using additional or inline variables to the module.
+     - `environment`: If settingenvironment variables for an action.
+  2. Attributes defining when to run or fail, control attributes:
+     - `when`
+     - `changed_when`
+     - `failed_when`
+     - `ignore_errors`
+     - `run_once`
+  3. Loop controls:
+     - `loop`
+     - `loop_control`
+     - `with_*`
+  4. Attributes defining how to process results:
+     - `register`
+     - `no_log`
+  5. Attributes defining what to do afterwards:
+     - `notify`
+  6. `tags`
+* Always use a list format for `when`, `changed_when`, and `failed_when`, even if there is only one condition.
+* If it is necessary to make task names dynamic, do so by appending `{{ variables }}` at the end of the string.
+* The `include_*` and `import_*` statements are not treated differently from other tasks/plays. This clarification is included because many other style guides impose separate rules for these.
 
 
 **You MUST NOT:**
@@ -684,22 +693,54 @@ The `include_*` and `import_*` statements are not treated differently from other
 ```yaml
 ---
 - name: "A cool playbook"
-  hosts: localhost
+  hosts: "localhost"
   tasks:
     - name: "A block"
-      when: true
+      when:
+        - false
       block: # last key, even after "when:" to prevent indentation errors
         - name: "Display a message"
           ansible.builtin.debug:
             msg: "Hello world!"
 
 
-    - name: "Install Nginx"
+        - name: "Get basic information from 'linux_container' hosts"
+          delegate_to: "{{ item }}"
+          # ansible.builtin.raw instead of ansible.builtin.command as it works
+          # without any existing python on the target
+          ansible.builtin.raw: |
+            /usr/bin/grep "PRETTY" /etc/os-release; /usr/bin/uname -r;
+          args:
+            executable: "/bin/bash"
+          changed_when: false
+          failed_when: false
+          loop: "{{ groups['linux_container'] }}"
+          loop_control:
+            label: "{{ item }}"
+          register: __basicinfo_result
+
+
+        - name: "Show basic information from 'linux_container' hosts"
+          ansible.builtin.debug:
+            msg: "{{ processed_result.split('\n') }}"
+          vars:
+            processed_result: |-
+              {% for result in __basicinfo_result.results %}
+              Host: {{ result.item }} - {{ result.stdout_lines | default(['No output']) | join(', ') }}
+              {% endfor %}
+          when:
+            - __basicinfo_result is defined
+            - __basicinfo_result.results is defined
+            - __basicinfo_result.results[0].stdout_lines is defined
+          run_once: true
+
+
+    - name: "Install nginx"
       ansible.builtin.apt:
         name: "nginx"
         state: "present"
       when:
-        - ansible_os_family == 'Fedora'
+        - ansible_os_family == 'RedHat'
 
 
     - name: "Create some EC2 Instances"
@@ -709,11 +750,11 @@ The `include_*` and `import_*` statements are not treated differently from other
         key_name: "my_key"
         instance_tags:
           name: "{{ item }}"
-      with_items: "{{ instance_names }}"
-      ignore_errors: true
-      register: ec2_output
       when:
-        - ansible_os_family == 'Fedora'
+        - ansible_os_family == 'RedHat'
+      ignore_errors: true
+      loop: "{{ instance_names }}"
+      register: __ec2_output
       tags:
         - "ec2"
 
@@ -730,10 +771,9 @@ The `include_*` and `import_*` statements are not treated differently from other
       foo.module:
         device: "{{ device_name }}"
       when:
-        - ansible_os_family == 'Fedora'
+        - ansible_os_family == 'RedHat'
       changed_when: false
       failed_when: false
-
 ```
 
 
@@ -743,7 +783,7 @@ The `include_*` and `import_*` statements are not treated differently from other
 
 ---
 
-- hosts: localhost
+- hosts: "localhost"
   name: "A cool playbook" # should be the first one
   tasks:
     - name: "A block"
@@ -755,10 +795,10 @@ The `include_*` and `import_*` statements are not treated differently from other
 
 
   - name: "Create some EC2 Instances"
-    when: ansible_os_family == 'Fedora'
+    when: ansible_os_family == 'RedHat'
     tags: "ec2"
     amazon.aws.ec2_instance: "image=ami-c7d092f7 assign_public_ip=true"
-    register: ec2_output
+    register: __ec2_output
     with_items: "{{ instance_names }}"
     ignore_errors: true
 
@@ -779,10 +819,11 @@ The `include_*` and `import_*` statements are not treated differently from other
 **Reasoning:**
 
 * Well-defined parameter rules are helping to create consistent code. Version control diffs are cleaner and more meaningful, as only new or changed parameters are highlighted.
+* The proposed ordering creates a logical flow: "what the task is and where to run it" → "when to run it" → "how to process results" → "what to do afterwards". `register:` is placed after loops since the registered variable structure depends on whether loops are used.
 * Keep in mind that using variables in task names can make it harder for users to correlate logs with the corresponding code when searching for an actual variable value (e.g., `/dev/foo gets managed as device` instead of `{{ device_name }} gets managed as device`). Placing the variable part at the end of a task name improves log readability and makes it easier to search for the corresponding code.
 * The reasoning of the [Ansible Lint rule: `key-order`](https://ansible.readthedocs.io/projects/lint/rules/key-order/#correct-code).
 * Further discussion:
-  * [Ansible Lint: ansible lint should check order of tasks attributes for when and name #578](https://github.com/ansible/ansible-lint/issues/578)
+  * [Ansible Lint: ansible lint should check order of tasks attributes for when and name #578](https://github.com/ansible/ansible-lint/issues/578). Many people at Red Hat place `when:` immediately after `name:`. This is a subjective choice and we think our approach of grouping it with other control attributes is logical and the `name:` as well as the module describe what is done *together* as a unit.
 
 
 
