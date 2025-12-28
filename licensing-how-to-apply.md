@@ -33,6 +33,7 @@ This document explains how to apply one or more licenses to your project after [
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
+<!--REUSE-IgnoreStart-->
 Read our [guideline on how to choose a license](./licensing-how-to-choose-a-license.md) if you are new to the topic. It provides reasoning and summarizes the characteristics of each of the relevant licenses. TL;DR:
 
 **Our defaults for software projects are:**
@@ -44,7 +45,7 @@ Read our [guideline on how to choose a license](./licensing-how-to-choose-a-lice
 
 * [`CC-BY-SA-4.0`](./licensing-how-to-choose-a-license.md#cc-by-sa-40) as [copyleft](https://en.wikipedia.org/wiki/Copyleft) license
 * [`CC-BY-4.0`](./licensing-how-to-choose-a-license.md#cc-by-40) as premissive license
-
+<!--REUSE-IgnoreEnd-->
 
 
 ## Step 3: Add license text(s)<a id="add-text"></a>
@@ -69,6 +70,7 @@ Read our [guideline on how to choose a license](./licensing-how-to-choose-a-lice
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
+<!--REUSE-IgnoreStart-->
 Add a UTF-8 encoded text file with Unix line feeds (LF, `\n`) called `REUSE.toml` in the project's root directory.
 
 ```bash
@@ -101,10 +103,12 @@ SPDX-License-Identifier = "GPL-3.0-or-later"
 ```
 
 Replace `GPL-3.0-or-later` with your [SPDX license identifier](https://spdx.org/licenses/) and update all other information as needed, especially values containing the string `FIXME`. The `**` wildcard ensures that all existing files are properly licensed by default, even without inline license comment headers or `.license` files. Refer to [the official documentation](https://reuse.software/spec-3.3/#reusetoml) for more information on the syntax and precedence.
+<!--REUSE-IgnoreEnd-->
 
 
 ### Multiple licenses<a id="machine-readable-file-multiple-licenses"></a>
 
+<!--REUSE-IgnoreStart-->
 You can add additional stanzas when using multiple licenses and/or third-party components in the same project. Here are some good real-world examples:
 
 * [reuse-tool `REUSE.toml` file](https://github.com/fsfe/reuse-tool/blob/main/REUSE.toml).
@@ -112,6 +116,7 @@ You can add additional stanzas when using multiple licenses and/or third-party c
 Legacy file examples (for REUSE ≤ [v3.0](https://reuse.software/spec-3.0/)):
 
 * [SAP OpenUI5 `.reuse/dep5` file](https://github.com/SAP/openui5/blob/26f313e55bc88229623d8437f2a85855f9aadd65/.reuse/dep5) with many third-party libraries, and good usage of `Comment:`.
+<!--REUSE-IgnoreEnd-->
 
 
 ## Step 5: Add licensing and copyright information in the `README.md`<a id="human-info"></a>
@@ -150,6 +155,7 @@ Special thanks to:
 
 ### Multiple licenses<a id="human-info-multiple-licenses"></a>
 
+<!--REUSE-IgnoreStart-->
 The wording of the `README.md`'s licensing and copyright information is already pointing to the [copyright file](#machine-readable-file) (`REUSE.toml`) and mentions that parts of the project might be subject to different licensing than the main one. If this is not good enough, feel free to adapt the wording of the main "licensed under" sentence to highlight the main licensing rules without the need to maintain every single bit outside of the copyright file. Examples (adapt as needed):
 
 ```markdown
@@ -171,13 +177,14 @@ The above list might not be exhaustive. [... usual template follows ...]
 ```
 
 [The reuse/api `README.md` file](https://git.fsfe.org/reuse/api/src/commit/6426ba31ee708953b85a1cc1e7b5efc764bbaa9d/README.md#license) is also a good real-world example.
-
+<!--REUSE-IgnoreEnd-->
 
 
 ## Step 6: Add license comment headers (optional, recommended)<a id="license-comment-headers"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
+<!--REUSE-IgnoreStart-->
 While having a [proper copyright file with wildcard](#machine-readable-file) beside an [updated README](#human-info) is compliant and convenient, it is recommended to add license comment headers. Please use the following template if so:
 
 ```
@@ -200,6 +207,7 @@ For binaries, images and other uncommentable files, put the comment into a accom
 * tooling helper files and directories like `.gitignore`, `.github` or `.ansible-lint`
 * repository bureaucracy files like changelogs, `SECURITY`, `README.md`, `CONTRIBUTING.md` and the text files below the `LICENSES` directory
 * third-party components as thy should not be edited (simply list their license in the [copyright file](#machine-readable-file))
+<!--REUSE-IgnoreEnd-->
 
 
 ### Reasoning<a id="license-comment-headers-reasoning"></a>
@@ -223,6 +231,7 @@ There are some issues when using license comment headers that you should be awar
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
+<!--REUSE-IgnoreStart-->
 [Use `reuse lint`](https://reuse.readthedocs.io/en/stable/usage.html#lint) to confirm the project's compliance to the [REUSE specification](https://reuse.software/spec/):
 
 ```bash
@@ -255,7 +264,7 @@ git commit -m "Update licensing information" -m "This project follows the REUSE 
 ```
 
 It is a good idea to add `reuse lint` into your project's continuous integration (CI) pipeline, if applicable. [Files listed in `.gitignore` are automatically excluded](https://reuse.software/faq/#exclude-file) from REUSE compliance testing and [you can ignore specific parts of a file](https://reuse.readthedocs.io/en/latest/usage.html#ignoring-parts-of-a-file) by adding `REUSE-IgnoreStart` and `REUSE-IgnoreEnd`.
-
+<!--REUSE-IgnoreEnd-->
 
 
 ## Step 7: Register as compliant repository (optional)<a id="reuse-api"></a>
