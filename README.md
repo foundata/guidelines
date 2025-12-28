@@ -8,6 +8,7 @@ This repository collects recommendations and rules [foundata](https://foundata.c
 Topics (in alphabetical order):
 * [Ansible](#ansible)
 * [Git](#git)
+* [Shell scripting](#shell-scripting)
 * [Licensing](#licensing)
 
 Misc:
@@ -37,6 +38,13 @@ Resources on how to work with, maintain and host Git repositories.
 
 * [How to name Git repositories (`git-repository-naming.md`)](./git-repository-naming.md)
 * [`gitignore` configuration (`git-gitignore.md`)](./git-gitignore.md)
+
+
+## Shell Scripting<a id="shell-scripting"></a>
+
+Resources on how to develop and maintain shell scripts:
+
+* [Shell scripting style guide (`shell-scripting-style-guide.md`)](./shell-scripting-style-guide.md)
 
 
 ## Continuous release of guidelines and related documents<a id="continuous-release"></a>
