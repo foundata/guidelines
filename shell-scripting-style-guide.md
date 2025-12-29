@@ -1112,7 +1112,7 @@ get_config_dir() {
   LC_ALL='en_US.UTF-8'
   ```
   Do so until your script explicitly has to follow a system's localization.
-- Set a `PATH` fallback:
+- Set a [`PATH`](https://en.wikipedia.org/wiki/PATH_(variable)) fallback:
   ```sh
   PATH="${PATH:-'/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin'}"
   ```
