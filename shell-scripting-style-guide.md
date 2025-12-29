@@ -161,8 +161,9 @@ Library files should not have execute permission to prevent accidental direct ex
 
 **You MUST:**
 
-- Use 4 spaces for each indentation level. Do not use tabs.
+- Use 2 (two) spaces for each indentation level. Do not use tabs.
   - Exception: using tabs is for the body of `<<-` tab-indented here-document.
+  - Exception: Be consistent and use 4 spaces if an established project of us is using it. Open an dedicated issue for reformatting if so.
 - Use consistent indentation throughout the script.
 - Indent the bodies of `if`, `for`, `while`, `case`, and function blocks.
 
@@ -176,36 +177,36 @@ Library files should not have execute permission to prevent accidental direct ex
 **Good examples:**
 
 ```sh
-# 4 spaces per indentation level
+# 2 spaces per indentation level
 if [ -f "${config_file}" ]; then
-    process_config "${config_file}"
+  process_config "${config_file}"
 fi
 
 # Multi-line conditions (operator at end of line)
 if [ -n "${foo}" ] ||
-    [ -n "${bar}" ]; then
-    printf '%s\n' 'At least one is set'
+  [ -n "${bar}" ]; then
+  printf '%s\n' 'At least one is set'
 fi
 
 # Case statement with indented bodies
 case "${option}" in
-    start)
-        start_service
-        ;;
-    stop)
-        stop_service
-        ;;
-    *)
-        printf '%s\n' 'Unknown option' >&2
-        exit 1
-        ;;
+  start)
+    start_service
+    ;;
+  stop)
+    stop_service
+    ;;
+  *)
+    printf '%s\n' 'Unknown option' >&2
+    exit 1
+    ;;
 esac
 
 # Nested blocks
-for file in "${files[@]}"; do
-    if [ -r "${file}" ]; then
-        process_file "${file}"
-    fi
+for file in "/file1 /foo/file2 ./file-3"; do
+  if [ -r "${file}" ]; then
+    process_file "${file}"
+  fi
 done
 ```
 
@@ -263,26 +264,26 @@ fi
 ```sh
 # Breaking a long command with backslash
 curl --silent --location --retry 3 \
-    --output "${download_dir}/${filename}" \
-    "${download_url}"
+  --output "${download_dir}/${filename}" \
+  "${download_url}"
 
 # Breaking a pipeline: pipe at end of line, continuation indented
 find "${source_dir}" -type f -name '*.txt' |
-    grep -v 'backup' |
-    sort |
-    head -n 10
+  grep -v 'backup' |
+  sort |
+  head -n 10
 
 # Complex pipeline with clear structure
 cat "${input_file}" |
-    grep -E '^[0-9]+' |
-    awk '{ sum += $1 } END { print sum }' |
-    tee "${output_file}"
+  grep -E '^[0-9]+' |
+  awk '{ sum += $1 } END { print sum }' |
+  tee "${output_file}"
 
 # Breaking logical expressions: operator at end of line
 if [ -f "${config_file}" ] &&
-    [ -r "${config_file}" ] &&
-    [ -s "${config_file}" ]; then
-    process_config "${config_file}"
+  [ -r "${config_file}" ] &&
+  [ -s "${config_file}" ]; then
+  process_config "${config_file}"
 fi
 
 # Multi-line string without unwanted whitespace
@@ -360,7 +361,7 @@ rm -f '/tmp/cache.tmp'
 
 # Variables in test expressions
 if [ -n "${username}" ]; then
-    printf '%s\n' "Hello, ${username}"
+  printf '%s\n' "Hello, ${username}"
 fi
 
 # Mixed quoting to prevent complicated escaping
@@ -423,8 +424,20 @@ printf '%s\n' 'it\'s working'
 
 - Use lowercase with underscores for local variables: `my_variable`.
 - Use UPPERCASE for exported environment variables: `MY_ENV_VAR`.
+- Use UPPERCASE for constants (`readlonly`): `MY_ENV_VAR`.
 - Always wrap variable names in braces: `${variable}`, not `$variable`.
 - Quote variable assignments: `foo='bar'` or `bar="${baz}"`.
+- Declare and assign separately when assigning a command substitution with an independent return value to avoid masking return values:
+  ```sh
+  foo="$(mycmd)"
+  export foo
+
+  local config_file
+  config_file = foobar
+  readonly config_file
+
+  bar='baz'
+  ``
 
 
 **You SHOULD:**
@@ -456,12 +469,12 @@ export DATABASE_URL="${db_host}:${db_port}"
 message="${greeting}, ${user_name}!"
 
 # Using readonly for constants
-readonly script_name="$(basename "${0}")"
-readonly script_dir="$(dirname "${0}")"
+readonly CFG_SCRIPT_NAME="$(basename "${0}")"
+readonly CFG_SCRIPT_DIRr="$(dirname "${0}")"
 
 # Check if variable is set (compatible with set -u)
-if [ -z "${config_path:-}" ]; then
-    printf '%s\n' 'config_path is not set' >&2
+if [ -z "${CONFIG_PATH:-}" ]; then
+  printf '%s\n' 'CONFIG_PATH is not set' >&2
 fi
 ```
 
@@ -470,7 +483,7 @@ fi
 
 ```sh
 # UPPERCASE for local variables (risky)
-PATH='/custom/path'      # Overwrites system PATH!
+HOME='/custom/path'      # Overwrites system HOME!
 USER='admin'             # Overwrites current user variable
 
 # Missing braces
@@ -523,20 +536,20 @@ file="$name_backup.txt"  # Tries to expand $name_backup, not $name
 # Returns:
 #   0 if successful, 1 if file not found, 2 if validation fails.
 process_config() {
-    local config_path="${1}"
-    local expected_version="${2:-1.0}"
+  local config_path="${1}"
+  local expected_version="${2:-1.0}"
 
-    if [ ! -f "${config_path}" ]; then
-        printf '%s\n' "Error: Config file not found: ${config_path}" >&2
-        return 1
-    fi
+  if [ ! -f "${config_path}" ]; then
+    printf '%s\n' "Error: Config file not found: ${config_path}" >&2
+    return 1
+  fi
 
-    # Validate configuration
-    if ! validate_config "${config_path}" "${expected_version}"; then
-        return 2
-    fi
+  # Validate configuration
+  if ! validate_config "${config_path}" "${expected_version}"; then
+    return 2
+  fi
 
-    return 0
+  return 0
 }
 
 
@@ -547,8 +560,8 @@ process_config() {
 # Outputs:
 #   Writes error message to STDERR.
 print_error() {
-    printf '%s: %s\n' "Error" "${1}" >&2
-    return 0
+  printf '%s: %s\n' "Error" "${1}" >&2
+  return 0
 }
 
 
@@ -557,12 +570,12 @@ print_error() {
 # Arguments:
 #   $@ - Command-line arguments.
 main() {
-    if [ "$#" -lt 1 ]; then
-        print_error "Missing required argument"
-        exit 2
-    fi
+  if [ "$#" -lt 1 ]; then
+    print_error "Missing required argument"
+    exit 2
+  fi
 
-    process_config "${1}"
+  process_config "${1}"
 }
 
 # Call main at the end of the script
@@ -573,9 +586,9 @@ The `main` pattern keeps execution flow clear, allows functions to be defined in
 
 ```sh
 # Source without executing (main is not called when sourced)
-(return 0 2>/dev/null) && sourced=1 || sourced=0
+(return 0 2>/dev/null) && sourced='1' || sourced='0'
 if [ "${sourced}" -eq 0 ]; then
-    main "$@"
+  main "$@"
 fi
 ```
 
@@ -585,13 +598,13 @@ fi
 ```sh
 # Using function keyword (Bashism)
 function process_config() {
-    printf '%s\n' 'Processing...'
+  printf '%s\n' 'Processing...'
 }
 
 # Missing documentation
 process_config() {
-    local config_path="${1}"
-    # What does this function do? What are the parameters?
+  local config_path="${1}"
+  # What does this function do? What are the parameters?
 }
 
 # No space before brace, inconsistent style
@@ -636,8 +649,8 @@ backup_name="$(basename "$(dirname "${path}")")"
 
 # Command substitution in conditionals
 if [ "$(id -u)" -ne 0 ]; then
-    printf '%s\n' 'This script requires root privileges.' >&2
-    exit 1
+  printf '%s\n' 'This script requires root privileges.' >&2
+  exit 1
 fi
 ```
 
@@ -656,9 +669,9 @@ backup_name=`basename \`dirname "${path}"\``
 
 **Reasoning:**
 
+- The `$()` syntax is POSIX-compliant and supported by all modern shells.
 - The `$()` syntax is more readable and easier to nest.
 - Backticks are a legacy syntax from the Bourne shell era and require complex escaping for nesting.
-- The `$()` syntax is POSIX-compliant and supported by all modern shells.
 
 
 
@@ -685,37 +698,37 @@ backup_name=`basename \`dirname "${path}"\``
 ```sh
 # String comparisons
 if [ "${answer}" = 'yes' ]; then
-    printf '%s\n' 'Confirmed'
+  printf '%s\n' 'Confirmed'
 fi
 
 # Testing for empty/non-empty strings
 if [ -z "${username}" ]; then
-    printf '%s\n' 'Username is required' >&2
-    exit 1
+  printf '%s\n' 'Username is required' >&2
+  exit 1
 fi
 
 if [ -n "${verbose}" ]; then
-    printf '%s\n' 'Verbose mode enabled'
+  printf '%s\n' 'Verbose mode enabled'
 fi
 
 # File tests
 if [ -f "${config_file}" ] && [ -r "${config_file}" ]; then
-    . "${config_file}"
+  . "${config_file}"
 fi
 
 # Numeric comparisons
 if [ "${count}" -gt 10 ]; then
-    printf '%s\n' 'Count exceeds limit'
+  printf '%s\n' 'Count exceeds limit'
 fi
 
 # Pattern matching with grep (POSIX-compliant)
 if printf '%s' "${input}" | grep -E -q '^[0-9]+$'; then
-    printf '%s\n' 'Input is a number'
+  printf '%s\n' 'Input is a number'
 fi
 
 # Substring check with grep
 if printf '%s' "${haystack}" | grep -F -q 'needle'; then
-    printf '%s\n' 'Found needle in haystack'
+  printf '%s\n' 'Found needle in haystack'
 fi
 ```
 
@@ -725,27 +738,27 @@ fi
 ```sh
 # Double brackets (Bashism)
 if [[ "${answer}" == 'yes' ]]; then
-    printf '%s\n' 'Confirmed'
+  printf '%s\n' 'Confirmed'
 fi
 
 # Using == in single brackets (Bashism in test)
 if [ "${answer}" == 'yes' ]; then
-    printf '%s\n' 'Confirmed'
+  printf '%s\n' 'Confirmed'
 fi
 
 # Regex in double brackets (Bashism)
 if [[ "${input}" =~ ^[0-9]+$ ]]; then
-    printf '%s\n' 'Input is a number'
+  printf '%s\n' 'Input is a number'
 fi
 
 # Unquoted variable in test (dangerous)
 if [ -n ${var} ]; then    # Breaks if var is empty
-    printf '%s\n' 'var is set'
+  printf '%s\n' 'var is set'
 fi
 
 # Comparing against empty string (prefer -z)
 if [ "${var}" = '' ]; then
-    printf '%s\n' 'var is empty'
+  printf '%s\n' 'var is empty'
 fi
 ```
 
@@ -880,7 +893,7 @@ For long-running scripts or daemons, include a timestamp in error messages:
 # Outputs:
 #   Writes timestamped error message to STDERR.
 err() {
-    printf '[%s]: %s\n' "$(date +'%Y-%m-%dT%H:%M:%S%z')" "$*" >&2
+  printf '[%s]: %s\n' "$(date +'%Y-%m-%dT%H:%M:%S%z')" "$*" >&2
 }
 
 # Usage
@@ -897,42 +910,42 @@ set -u  # Error on unset variables
 
 # Explicit error handling
 if ! mkdir -p "${output_dir}"; then
-    printf '%s: Failed to create directory: %s\n' "$(basename "${0}")" "${output_dir}" >&2
-    exit 1
+  printf '%s: Failed to create directory: %s\n' "$(basename "${0}")" "${output_dir}" >&2
+  exit 1
 fi
 
 # Check command success with meaningful message
 if ! curl --silent --fail --output "${output_file}" "${url}"; then
-    printf '%s: Download failed: %s\n' "$(basename "${0}")" "${url}" >&2
-    exit 1
+  printf '%s: Download failed: %s\n' "$(basename "${0}")" "${url}" >&2
+  exit 1
 fi
 
 # Using exit code 2 for usage errors
 if [ "$#" -lt 1 ]; then
-    printf 'Usage: %s <input_file>\n' "$(basename "${0}")" >&2
-    exit 2
+  printf 'Usage: %s <input_file>\n' "$(basename "${0}")" >&2
+  exit 2
 fi
 
 # Cleanup on exit using trap
 cleanup() {
-    rm -f "${temp_file:-}"
+  rm -f "${temp_file:-}"
 }
 trap cleanup EXIT
 
 # Handle pipeline failures explicitly (POSIX-compliant way)
 if ! grep 'pattern' file.txt | sort > output.txt; then
-    # Note: This only checks if 'sort' succeeded
-    # For the grep exit status, use a temporary variable or file
-    :
+  # Note: This only checks if 'sort' succeeded
+  # For the grep exit status, use a temporary variable or file
+  :
 fi
 
 # More reliable pipeline error handling
 grep 'pattern' file.txt > temp.txt
 grep_status="$?"
 if [ "${grep_status}" -gt 1 ]; then
-    # grep returns 1 for "no matches", 2+ for errors
-    printf '%s\n' 'grep failed' >&2
-    exit 1
+  # grep returns 1 for "no matches", 2+ for errors
+  printf '%s\n' 'grep failed' >&2
+  exit 1
 fi
 sort temp.txt > output.txt || exit 1
 ```
@@ -996,7 +1009,7 @@ sort temp.txt > output.txt || exit 1
 # Arguments:
 #   None
 cleanup_build() {
-    rm -rf "${BUILD_DIR}/tmp"
+  rm -rf "${BUILD_DIR}/tmp"
 }
 
 ###
@@ -1006,13 +1019,13 @@ cleanup_build() {
 # Returns:
 #   0 if file was deleted, 1 if file does not exist, 2 on permission error.
 remove_file() {
-    local file_path="${1}"
+  local file_path="${1}"
 
-    if [ ! -e "${file_path}" ]; then
-        return 1
-    fi
+  if [ ! -e "${file_path}" ]; then
+    return 1
+  fi
 
-    rm "${file_path}" || return 2
+  rm "${file_path}" || return 2
 }
 
 ###
@@ -1024,7 +1037,7 @@ remove_file() {
 # Outputs:
 #   Writes directory path to STDOUT.
 get_config_dir() {
-    printf '%s\n' "${APP_HOME}/config"
+  printf '%s\n' "${APP_HOME}/config"
 }
 ```
 
@@ -1102,16 +1115,16 @@ get_config_dir() {
 ```sh
 # Check if required command is available
 if ! command -v 'jq' > /dev/null 2>&1; then
-    printf '%s: %s\n' 'Error' 'jq is required but not installed' >&2
-    exit 1
+  printf '%s: %s\n' 'Error' 'jq is required but not installed' >&2
+  exit 1
 fi
 
 # Check multiple commands
 for cmd in 'curl' 'jq' 'openssl'; do
-    if ! command -v "${cmd}" > /dev/null 2>&1; then
-        printf '%s: "%s" is required but not installed.\n' 'Error' "${cmd}" >&2
-        exit 1
-    fi
+  if ! command -v "${cmd}" > /dev/null 2>&1; then
+    printf '%s: "%s" is required but not installed.\n' 'Error' "${cmd}" >&2
+    exit 1
+  fi
 done
 
 # Check using our boilerplate (FIXME see ...)
@@ -1126,14 +1139,14 @@ sudo dnf install dash busybox oksh
 
 # Test script.sh syntax with multiple shells
 for shell in dash sh bash oksh; do
-    if command -v "${shell}" >/dev/null 2>&1; then
-        printf 'Syntax check with %s: ' "${shell}"
-        if "${shell}" -n ./script.sh 2>&1; then
-            printf 'OK\n'
-        else
-            printf 'FAILED\n'
-        fi
+  if command -v "${shell}" >/dev/null 2>&1; then
+    printf 'Syntax check with %s: ' "${shell}"
+    if "${shell}" -n ./script.sh 2>&1; then
+      printf 'OK\n'
+    else
+      printf 'FAILED\n'
     fi
+  fi
 done
 ```
 
@@ -1165,14 +1178,14 @@ Common POSIX utilities that can be relied upon (see [Open Group Base Specificati
 
 - On **POSIX** scripts (shebang `#!/usr/bin/env sh`):
   - Run [`shfmt`](https://github.com/mvdan/sh):
-    - `shfmt --indent 4 --case-indent --simplify --language-dialect=posix --diff script.sh`
-    - `shfmt --indent 4 --case-indent --simplify --language-dialect=posix --write script.sh`
+    - `shfmt --indent 2 --case-indent --simplify --language-dialect posix --diff script.sh`
+    - `shfmt --indent 2 --case-indent --simplify --language-dialect posix --write script.sh`
   - Run [`shellcheck`](https://www.shellcheck.net/): `shellcheck --shell=sh --severity=style --exclude=SC3043 script.sh`
   - Run [`checkbashisms`](https://tracker.debian.org/pkg/devscripts): `checkbashisms script.sh`
 - On **Bash** scripts (shebang `#!/usr/bin/env bash`):
   - Run [`shfmt`](https://github.com/mvdan/sh):
-    - `shfmt --indent 4 --case-indent --simplify --language-dialect=bash --diff script.sh`
-    - `shfmt --indent 4 --case-indent --simplify --language-dialect=bash --write script.sh`
+    - `shfmt --indent 2 --case-indent --simplify --language-dialect bash --diff script.sh`
+    - `shfmt --indent 2 --case-indent --simplify --language-dialect bash --write script.sh`
   - Run [`shellcheck`](https://www.shellcheck.net/): `shellcheck --shell=bash --severity=style script.sh`
 - Fix all errors and warnings. If a warning must be silenced, add a comment explaining why:
   ```sh
