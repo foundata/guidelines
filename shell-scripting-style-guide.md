@@ -1061,12 +1061,11 @@ get_config_dir() {
 **You SHOULD:**
 
 - Use only POSIX-defined utilities and their POSIX-defined options when possible.
-- Set `LANG` and `LC_ALL` to get predictable behavior:
+- Set `LC_ALL` to get predictable behavior:
   ```sh
-  LANG=en_US.UTF-8
   LC_ALL='en_US.UTF-8'
   ```
-  Do so until your script explicitly has to follow a systems localization.
+  Do so until your script explicitly has to follow a system's localization.
 - Test scripts with `dash` during development (it is stricter about POSIX compliance).
 - Avoid GNU-specific options (long options like `--verbose` are often not portable even if they are improving readability).
 - Document any required non-POSIX features or tools.
@@ -1093,7 +1092,7 @@ get_config_dir() {
       process_file "${file}"
   done
   ```
-
+- Setting `LC_ALL` ensures predictable sorting, character classification, and text processing. Without explicit [locale](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/locale.html) settings, script behavior may vary between systems. `LC_ALL` overrides all other locale variables (`LANG` and individual `LC_*` settings), so it alone is sufficient.
 
 
 ### Hints
@@ -1199,4 +1198,5 @@ This guide was written by [foundata](https://foundata.com/) to produce robust, r
 
 - [Google: Shell Style Guide](https://google.github.io/styleguide/shellguide.html)
 - [The Open Group (POSIX): Shell & Utilities — Detailed Table of Contents](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/contents.html)
-- [Greg’s Wiki: Bash Frequently Asked Questions](https://mywiki.wooledge.org/BashFAQ)
+- [Greg's Wiki: Bash Frequently Asked Questions](https://mywiki.wooledge.org/BashFAQ)
+- [Greg's Wiki: Bash Pitfalls](https://mywiki.wooledge.org/BashPitfalls)
