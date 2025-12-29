@@ -151,6 +151,8 @@ Library files should not have execute permission to prevent accidental direct ex
 - Using `env` ensures the script finds the interpreter in the user's `PATH`, making it portable across systems where shell locations differ (e.g., `/bin/sh` vs `/usr/bin/sh`).
 - The `sh` interpreter provides maximum portability when writing POSIX-compliant scripts.
 - Explicitly requiring Bash should be a conscious decision, documented for future maintainers.
+- Tangential note (not a shebang issue): some environments bypass or ignore `env(1)` entirely (e.g., [Ansible's `shell` module](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/shell_module.html) with [`args: executable:`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/shell_module.html#parameter-executable)). In such cases, fall back to the most widespread direct paths: `/bin/sh`, `/bin/bash`.
+
 
 
 
