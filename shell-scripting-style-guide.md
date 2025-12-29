@@ -182,9 +182,9 @@ if [ -f "${config_file}" ]; then
   process_config "${config_file}"
 fi
 
-# Multi-line conditions (operator at end of line)
-if [ -n "${foo}" ] ||
-  [ -n "${bar}" ]; then
+# Multi-line conditions (operator at start of continuation line)
+if [ -n "${foo}" ] \
+  || [ -n "${bar}" ]; then
   printf '%s\n' 'At least one is set'
 fi
 
@@ -237,8 +237,7 @@ fi
 **Reasoning:**
 
 - Spaces ensure consistent display across all editors and terminals regardless of tab width settings.
-- 4 spaces provide clear visual hierarchy without excessive horizontal scrolling.
-- Consistent indentation makes the code structure immediately visible.
+- Using two spaces aligns us with the broader shell and container ecosystem (cf. [Google](https://google.github.io/styleguide/shellguide.html#s5.1-indentation), [Kubernetes](https://www.kubernetes.dev/docs/guide/coding-convention/), [Bash Hacker's Wiki](https://web.archive.org/web/20220512181003/https://wiki.bash-hackers.org/scripting/style)) and provides a good enough visual hierarchy as most shell scripts should not have deeply nesting logic.
 
 
 
@@ -249,8 +248,8 @@ fi
 **You MUST:**
 
 - Keep lines under 120 characters whenever technically possible.
-- Break long pipelines after the pipe character (`|`), with the continuation indented.
-- Break long logical expressions after the operator (`&&`, `||`), with the continuation indented.
+- Break long pipelines before the pipe character (`|`), with the continuation indented.
+- Break long logical expressions before the operator (`&&`, `||`), with the continuation indented.
 
 
 **You SHOULD:**
@@ -267,22 +266,22 @@ curl --silent --location --retry 3 \
   --output "${download_dir}/${filename}" \
   "${download_url}"
 
-# Breaking a pipeline: pipe at end of line, continuation indented
-find "${source_dir}" -type f -name '*.txt' |
-  grep -v 'backup' |
-  sort |
-  head -n 10
+# Breaking a pipeline: pipe at start of continuation line
+find "${source_dir}" -type f -name '*.txt' \
+  | grep -v 'backup' \
+  | sort \
+  | head -n 10
 
 # Complex pipeline with clear structure
-cat "${input_file}" |
-  grep -E '^[0-9]+' |
-  awk '{ sum += $1 } END { print sum }' |
-  tee "${output_file}"
+cat "${input_file}" \
+  | grep -E '^[0-9]+' \
+  | awk '{ sum += $1 } END { print sum }' \
+  | tee "${output_file}"
 
-# Breaking logical expressions: operator at end of line
-if [ -f "${config_file}" ] &&
-  [ -r "${config_file}" ] &&
-  [ -s "${config_file}" ]; then
+# Breaking logical expressions: operator at start of continuation line
+if [ -f "${config_file}" ] \
+  && [ -r "${config_file}" ] \
+  && [ -s "${config_file}" ]; then
   process_config "${config_file}"
 fi
 
@@ -298,10 +297,10 @@ printf '%s\n' 'This is a single parameter '\
 # Excessively long line
 curl --silent --location --retry 3 --output "${download_dir}/${filename}" --connect-timeout 30 --max-time 300 "${download_url}"
 
-# Operator at start of line (not compatible with shfmt)
-find "${source_dir}" -type f -name '*.txt' \
-    | grep -v 'backup' \
-    | sort
+# Operator at end of line
+find "${source_dir}" -type f -name '*.txt' |
+    grep -v 'backup' |
+    sort
 
 # Backslash with space after it (causes syntax error)
 curl --silent \·
@@ -312,8 +311,7 @@ curl --silent \·
 **Reasoning:**
 
 - Shorter lines are easier to read, especially in side-by-side diffs or on smaller screens.
-- Placing operators at the end of lines is the convention enforced by `shfmt` and ensures consistent automated formatting.
-- Pipelines do not need explicit backslash continuation; the shell knows to continue after `|`.
+- Placing operators at the start of continuation lines improves readability by making the logical structure immediately visible when scanning the left edge of the code.
 
 
 
@@ -424,9 +422,10 @@ printf '%s\n' 'it\'s working'
 
 - Use lowercase with underscores for local variables: `my_variable`.
 - Use UPPERCASE for exported environment variables: `MY_ENV_VAR`.
-- Use UPPERCASE for constants (`readlonly`): `MY_ENV_VAR`.
+- Use UPPERCASE for constants (`readonly` / `local -r`): `MY_ENV_VAR`.
 - Always wrap variable names in braces: `${variable}`, not `$variable`.
 - Quote variable assignments: `foo='bar'` or `bar="${baz}"`.
+- Use `set -u` and initialize variables before use.
 - Declare and assign separately when assigning a command substitution with an independent return value to avoid masking return values:
   ```sh
   foo="$(mycmd)"
@@ -444,7 +443,6 @@ printf '%s\n' 'it\'s working'
 
 - Use `readonly` for constants and configuration values.
 - Use `local` for function-local variables (note: not POSIX, but widely supported).
-- Use `set -u` and initialize variables before use.
 - Use meaningful, descriptive variable names.
 
 
@@ -1178,14 +1176,14 @@ Common POSIX utilities that can be relied upon (see [Open Group Base Specificati
 
 - On **POSIX** scripts (shebang `#!/usr/bin/env sh`):
   - Run [`shfmt`](https://github.com/mvdan/sh):
-    - `shfmt --indent 2 --case-indent --simplify --language-dialect posix --diff script.sh`
-    - `shfmt --indent 2 --case-indent --simplify --language-dialect posix --write script.sh`
+    - `shfmt --indent 2 --case-indent --binary-next-line --simplify --language-dialect posix --diff script.sh`
+    - `shfmt --indent 2 --case-indent --binary-next-line --simplify --language-dialect posix --write script.sh`
   - Run [`shellcheck`](https://www.shellcheck.net/): `shellcheck --shell=sh --severity=style --exclude=SC3043 script.sh`
   - Run [`checkbashisms`](https://tracker.debian.org/pkg/devscripts): `checkbashisms script.sh`
 - On **Bash** scripts (shebang `#!/usr/bin/env bash`):
   - Run [`shfmt`](https://github.com/mvdan/sh):
-    - `shfmt --indent 2 --case-indent --simplify --language-dialect bash --diff script.sh`
-    - `shfmt --indent 2 --case-indent --simplify --language-dialect bash --write script.sh`
+    - `shfmt --indent 2 --case-indent --binary-next-line --simplify --language-dialect bash --diff script.sh`
+    - `shfmt --indent 2 --case-indent --binary-next-line --simplify --language-dialect bash --write script.sh`
   - Run [`shellcheck`](https://www.shellcheck.net/): `shellcheck --shell=bash --severity=style script.sh`
 - Fix all errors and warnings. If a warning must be silenced, add a comment explaining why:
   ```sh
