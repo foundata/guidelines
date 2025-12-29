@@ -1112,6 +1112,10 @@ get_config_dir() {
   LC_ALL='en_US.UTF-8'
   ```
   Do so until your script explicitly has to follow a system's localization.
+- Set a `PATH` fallback:
+  ```sh
+  PATH="${PATH:-'/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin'}"
+  ```
 - Test scripts with `dash` during development (it is stricter about POSIX compliance).
 - Avoid GNU-specific options (long options like `--verbose` are often not portable even if they are improving readability).
 - Document any required non-POSIX features or tools.
