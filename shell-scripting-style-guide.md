@@ -7,7 +7,6 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 
 ## Table of contents
 
-- [Table of contents](#table-of-contents)
 - [When to use shell](#when-to-use-shell)
 - [File format and permission](#file-format-and-permission)
 - [Shebang](#shebang)
@@ -67,7 +66,7 @@ Shell scripting is a *portable* tool when following some rules, but it is not su
 - Shell is good at orchestrating other programs but lacks features for complex programming (proper data structures, exception handling, testing frameworks).
 - Shell's quoting rules, word splitting, and glob expansion create numerous pitfalls that grow with script complexity.
 - Debugging and testing shell scripts is significantly harder than in languages with proper tooling.
-- The same task that takes 20 lines of shell might take 10 lines of Python with better error handling and readability. But Python surely is not as portable because of package dependencies etc., especially of it comes to OCI containers.
+- The same task that takes 20 lines of shell might take 10 lines of Python with better error handling and readability. But Python surely is not as portable because of package dependencies etc., especially if it comes to OCI containers.
 
 
 
@@ -203,7 +202,7 @@ case "${option}" in
 esac
 
 # Nested blocks
-for file in "/file1 /foo/file2 ./file-3"; do
+for file in '/file1' '/foo/file2' './file-3'; do
   if [ -r "${file}" ]; then
     process_file "${file}"
   fi
@@ -299,12 +298,12 @@ curl --silent --location --retry 3 --output "${download_dir}/${filename}" --conn
 
 # Operator at end of line
 find "${source_dir}" -type f -name '*.txt' |
-    grep -v 'backup' |
-    sort
+  grep -v 'backup' |
+  sort
 
 # Backslash with space after it (causes syntax error)
 curl --silent \·
-    --location
+  --location
 ```
 
 
@@ -364,12 +363,6 @@ fi
 
 # Mixed quoting to prevent complicated escaping
 printf '%s\n' "it's working"
-
-# Correctly escaped quotes (prevent if possible)
-printf '%s\n' 'This "is" correct and it'\''s working'
-printf '%s\n' "This "\""is"\"" correct and it's working"
-printf '%s\n' "The word for today is "\"Foo\"   # these are...
-printf '%s\n' "The word for today is "\""Foo"\" # ...the same
 ```
 
 
@@ -392,14 +385,20 @@ readonly log_level="info"             # Single quotes preferred
 # Missing quotes in command substitution argument
 result="$(cat ${input_file})"         # Should be "${input_file}"
 
-# Needles escaping single quotes within single-quoted strings
+# Needless escaping single quotes within single-quoted strings
 printf '%s\n' 'it'\''s working'
 
-# Does not work in a C shell, only in Bash
+# Does only work in Bash
 printf '%s\n' "The word for today is \"Foo\""
 
 # Does not work in any shell
 printf '%s\n' 'it\'s working'
+
+# Technically working but complicated escaping. Prevent if possible.
+printf '%s\n' 'This "is" correct and it'\''s working' # even breaks some syntax highlighters
+printf '%s\n' "This "\""is"\"" correct and it's working"
+printf '%s\n' "The word for today is "\"Foo\"   # these are...
+printf '%s\n' "The word for today is "\""Foo"\" # ...the same
 ```
 
 
@@ -410,7 +409,7 @@ printf '%s\n' 'it\'s working'
 - Single quotes are safer for static strings as they prevent any form of expansion.
 - Proper quoting is essential for handling filenames with spaces and special characters.
 - Unquoted variables in test expressions can cause syntax errors or unexpected behavior when empty.
-- [Escaping / including identical quotes within quotes in shell](https://www.grymoire.com/Unix/Quote.html#uh-8) is not working as expected many programmers used to other languages
+- [Escaping / including identical quotes within quotes in shell](https://www.grymoire.com/Unix/Quote.html#uh-8) is not working as expected for programmers used to other languages.
 
 
 
@@ -428,15 +427,15 @@ printf '%s\n' 'it\'s working'
 - Use `set -u` and initialize variables before use.
 - Declare and assign separately when assigning a command substitution with an independent return value to avoid masking return values:
   ```sh
-  foo="$(mycmd)"
-  export foo
+  FOO="$(mycmd)"
+  export FOO
 
-  local config_file
-  config_file = foobar
-  readonly config_file
+  local CONFIG_FILE
+  CONFIG_FILE='/etc/foobar'
+  readonly CONFIG_FILE
 
-  bar='baz'
-  ``
+  local bar='baz'
+  ```
 
 
 **You SHOULD:**
@@ -448,14 +447,13 @@ printf '%s\n' 'it\'s working'
 
 **You MUST NOT:**
 
-- Use UPPERCASE for local script variables (risk of overwriting environment variables like `PATH`, `HOME`, `USER`).
+- Use UPPERCASE for local script variables (avoid accidental conflicts with environment variables such as `PATH`, `HOME`, `USER`).
 
 
 **Good examples:**
 
 ```sh
 # Local variables: lowercase with underscores
-readonly config_file='/etc/myapp.conf'
 log_level='info'
 user_count="${1:-0}"
 
@@ -466,9 +464,23 @@ export DATABASE_URL="${db_host}:${db_port}"
 # Always use braces
 message="${greeting}, ${user_name}!"
 
-# Using readonly for constants
-readonly CFG_SCRIPT_NAME="$(basename "${0}")"
-readonly CFG_SCRIPT_DIRr="$(dirname "${0}")"
+# Using readonly and UPPERCASE for constants
+readonly CFG_WORKINGDIR="/tmp"
+
+
+# Declare and assign in the same line is OK here because the values are literals
+# and not a command substitution with an independent return value.
+export FOOBAR='baz'
+readonly CONFIG_FILE='/etc/myapp.conf'
+
+# Declare and assign separately when assigning a command substitution
+FOO="$(mycmd)"
+export FOO
+readonly FOO
+
+local bar
+bar="$(mycmd)"
+readonly bar
 
 # Check if variable is set (compatible with set -u)
 if [ -z "${CONFIG_PATH:-}" ]; then
@@ -492,6 +504,11 @@ foo=bar                  # Works, but inconsistent with other assignments
 
 # Missing braces causes wrong interpolation
 file="$name_backup.txt"  # Tries to expand $name_backup, not $name
+
+# Return value of mycmd is ignored, export/local will always return true.
+# This may prevent conditionals and traps from working correctly.
+export FOO="$(mycmd)"
+local bar="$(mycmd)"
 ```
 
 
@@ -502,6 +519,7 @@ file="$name_backup.txt"  # Tries to expand $name_backup, not $name
 - Quoting assignments is technically optional in most cases, but consistent quoting prevents edge-case bugs and improves readability.
 - Using `${var:-}` allows checking for unset variables even with `set -u` enabled.
 - Since `local` is widely supported (`bash`, `dash`, `ash`, `zsh`, FreeBSD `sh`) and `ksh` compatibility is rarely required, using `local` is acceptable for most use cases. Document the limitation if `ksh` support is needed.
+- Combining declaration and assignment (`export foo="$(cmd)"` or `local foo="$(cmd)"`) masks the command's return value because `export`/`local` always return true, breaking error handling via conditionals, `set -e`, and traps (cf. [SC2155](https://www.shellcheck.net/wiki/SC2155)).
 
 
 
@@ -784,6 +802,20 @@ fi
 | `INT1 -ge INT2` | True if INT1 >= INT2 |
 
 
+**POSIX character classes for `grep`, `sed`, `tr`:**
+
+| Class | Equivalent | Description |
+|-------|------------|-------------|
+| `[:alnum:]` | `[A-Za-z0-9]` | Letters and digits |
+| `[:alpha:]` | `[A-Za-z]` | Letters |
+| `[:lower:]` | `[a-z]` | Lowercase letters |
+| `[:upper:]` | `[A-Z]` | Uppercase letters |
+| `[:digit:]` | `[0-9]` | Digits |
+| `[:xdigit:]` | `[A-Fa-f0-9]` | Hexadecimal digits |
+| `[:space:]` | `[ \t\r\n\v\f]` | Whitespace characters |
+| `[:blank:]` | `[ \t]` | Space and tab only |
+
+
 **Reasoning:**
 
 - The `[[ ]]` syntax is a Bash/Zsh extension not available in POSIX shells.
@@ -959,7 +991,7 @@ sort temp.txt > output.txt || exit 1
   - Does not trigger in pipelines (only checks last command): `false | true` succeeds.
   - Disabled in `if`, `while`, `until` conditions, and `&&`/`||` lists.
   - Behavior varies between shells and shell versions.
-  - If you still want to use `set -e`, be aware of these limitations and combine it with explicit error handling for critical operations. When Bash is required and you choose to use `set -e`, these additional options help:
+  - If you still want to use `set -e`, be aware of these limitations and combine it with explicit error handling for critical operations. When Bash is required and you choose to use `set -e` (for whatever reason), these additional options help:
     ```bash
     #!/usr/bin/env bash
     set -e           # Exit on error
@@ -969,6 +1001,7 @@ sort temp.txt > output.txt || exit 1
     ```
     Note: `pipefail` and `inherit_errexit` are Bash-specific and not POSIX-compliant.
 - `set -a` exports all subsequently defined variables to the environment, which can pollute child processes and cause unexpected behavior.
+
 
 
 ## Comments<a id="comments"></a>
@@ -1099,11 +1132,12 @@ get_config_dir() {
   cat ./*
 
   # Also works with loops
-  if or file in ./*; do
+  for file in ./*; do
       process_file "${file}"
   done
   ```
 - Setting `LC_ALL` ensures predictable sorting, character classification, and text processing. Without explicit [locale](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/locale.html) settings, script behavior may vary between systems. `LC_ALL` overrides all other locale variables (`LANG` and individual `LC_*` settings), so it alone is sufficient.
+
 
 
 ### Hints
@@ -1153,20 +1187,6 @@ done
 Common POSIX utilities that can be relied upon (see [Open Group Base Specifications, IEEE Std 1003.1-2017: Shell & Utilities](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/contents.html): [4. Utilities](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap04.html)): `awk`, `basename`, `cat`, `chmod`, `chown`, `compress`, `cp`, `cut`, `date`, `dirname`, `env`, `expr`, `find`, `grep`, `head`, `id`, `kill`, `ln`, `ls`, `mkdir`, `mkfifo`, `mv`, `od`, `paste`, `printf`, `pwd`, `read`, `rm`, `rmdir`, `sed`, `sleep`, `sort`, `tail`, `tee`, `test`, `touch`, `tr`, `true`, `false`, `umask`, `uname`, `uncompress`, `uniq`, `wc`, `xargs`, `zcat`.
 
 
-**POSIX character classes for grep, sed, tr:**
-
-| Class | Equivalent | Description |
-|-------|------------|-------------|
-| `[:alnum:]` | `[A-Za-z0-9]` | Letters and digits |
-| `[:alpha:]` | `[A-Za-z]` | Letters |
-| `[:lower:]` | `[a-z]` | Lowercase letters |
-| `[:upper:]` | `[A-Z]` | Uppercase letters |
-| `[:digit:]` | `[0-9]` | Digits |
-| `[:xdigit:]` | `[A-Fa-f0-9]` | Hexadecimal digits |
-| `[:space:]` | `[ \t\r\n\v\f]` | Whitespace characters |
-| `[:blank:]` | `[ \t]` | Space and tab only |
-
-
 
 ## Linting and automatic formatting<a id="linting-formatting"></a>
 
@@ -1176,15 +1196,28 @@ Common POSIX utilities that can be relied upon (see [Open Group Base Specificati
 
 - On **POSIX** scripts (shebang `#!/usr/bin/env sh`):
   - Run [`shfmt`](https://github.com/mvdan/sh):
-    - `shfmt --indent 2 --case-indent --binary-next-line --simplify --language-dialect posix --diff script.sh`
-    - `shfmt --indent 2 --case-indent --binary-next-line --simplify --language-dialect posix --write script.sh`
-  - Run [`shellcheck`](https://www.shellcheck.net/): `shellcheck --shell=sh --severity=style --exclude=SC3043 script.sh`
-  - Run [`checkbashisms`](https://tracker.debian.org/pkg/devscripts): `checkbashisms script.sh`
+    ```sh
+    shfmt --language-dialect posix --indent 2 --case-indent --binary-next-line --simplify --diff script.sh
+    shfmt --language-dialect posix --indent 2 --case-indent --binary-next-line --simplify --write script.sh
+    ```
+  - Run [`shellcheck`](https://www.shellcheck.net/):
+    ```sh
+    shellcheck --shell=sh --severity=style --exclude=SC3043 script.sh
+    ```
+  - Run [`checkbashisms`](https://tracker.debian.org/pkg/devscripts):
+    ```sh
+    checkbashisms script.sh
+    ```
 - On **Bash** scripts (shebang `#!/usr/bin/env bash`):
   - Run [`shfmt`](https://github.com/mvdan/sh):
-    - `shfmt --indent 2 --case-indent --binary-next-line --simplify --language-dialect bash --diff script.sh`
-    - `shfmt --indent 2 --case-indent --binary-next-line --simplify --language-dialect bash --write script.sh`
-  - Run [`shellcheck`](https://www.shellcheck.net/): `shellcheck --shell=bash --severity=style script.sh`
+    ```sh
+    shfmt --language-dialect bash --indent 2 --case-indent --binary-next-line --simplify --diff script.sh
+    shfmt --language-dialect bash --indent 2 --case-indent --binary-next-line --simplify --write script.sh
+    ```
+  - Run [`shellcheck`](https://www.shellcheck.net/):
+    ```sh
+    shellcheck --shell=bash --severity=style script.sh
+    ```
 - Fix all errors and warnings. If a warning must be silenced, add a comment explaining why:
   ```sh
   # shellcheck disable=SC2034  # Variable is exported for use by sourcing script
