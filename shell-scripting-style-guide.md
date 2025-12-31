@@ -540,7 +540,9 @@ local bar="$(mycmd)"
 
 - Group `local` variable declarations at the beginning of functions.
 - Return explicit exit codes from functions.
-- Use a `main` function for scripts with multiple functions, called as `main "$@"` at the end of the file.
+- For scripts with multiple functions (not required on very short scripts with simple linear flow):
+  - Use `main()` as the bottom-most function.
+  - Last non-comment line should call it: `main "$@"`
 
 
 **Good examples:**
@@ -636,6 +638,7 @@ printf '%s\n' 'Processing...'
 - The `function` keyword is a Bash extension not available in POSIX shells like dash.
 - Explicit return codes make error handling predictable and testable.
 - The `local` keyword is not POSIX but is widely supported (bash, dash, ash, zsh). For maximum portability with ksh, group variable declarations visibly so they can be easily converted.
+- `main()` provides consistency and allows to define more variables as local (which can't be done outside of functions).
 
 
 
@@ -1208,7 +1211,7 @@ Common POSIX utilities that can be relied upon (see [Open Group Base Specificati
     ```
   - Run [`shellcheck`](https://www.shellcheck.net/):
     ```sh
-    shellcheck --shell=sh --severity=style --exclude=SC3043 script.sh
+    shellcheck --shell=sh --severity=style --exclude=SC3043 --exclude=SC2292 --enable=all script.sh
     ```
   - Run [`checkbashisms`](https://tracker.debian.org/pkg/devscripts):
     ```sh
@@ -1222,7 +1225,7 @@ Common POSIX utilities that can be relied upon (see [Open Group Base Specificati
     ```
   - Run [`shellcheck`](https://www.shellcheck.net/):
     ```sh
-    shellcheck --shell=bash --severity=style script.sh
+    shellcheck --shell=bash --severity=style --exclude=SC3043 --exclude=SC2292 --enable=all script.sh
     ```
 - Fix all errors and warnings. If a warning must be silenced, add a comment explaining why:
   ```sh
