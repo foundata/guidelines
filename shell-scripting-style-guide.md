@@ -1120,6 +1120,10 @@ get_config_dir() {
   PATH="${PATH:-'/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin'}"
   ```
 - Test scripts with `dash` during development (it is stricter about POSIX compliance).
+- Avoid / disable the `pipefail` option and do not base script logic on it:
+  ```sh
+  set -o 2>/dev/null | grep -Fq pipefail && set +o pipefail # disable, non-POSIX
+  ```
 - Avoid GNU-specific options (long options like `--verbose` are often not portable even if they are improving readability).
 - Document any required non-POSIX features or tools.
 
@@ -1146,6 +1150,7 @@ get_config_dir() {
   done
   ```
 - Setting `LC_ALL` ensures predictable sorting, character classification, and text processing. Without explicit [locale](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/locale.html) settings, script behavior may vary between systems. `LC_ALL` overrides all other locale variables (`LANG` and individual `LC_*` settings), so it alone is sufficient.
+- The `pipefail` option is a Bash extension not defined by POSIX. Scripts relying on it will fail or behave unexpectedly on POSIX shells like `dash` or `ash`. For portable error handling in pipelines, check exit statuses explicitly or use temporary files.
 
 
 
@@ -1211,7 +1216,7 @@ Common POSIX utilities that can be relied upon (see [Open Group Base Specificati
     ```
   - Run [`shellcheck`](https://www.shellcheck.net/):
     ```sh
-    shellcheck --shell=sh --severity=style --exclude=SC3043 --exclude=SC2292 --enable=all script.sh
+    shellcheck --shell=sh --severity=style --exclude=SC2292 --exclude=SC3040 --exclude=SC3043 --enable=all script.sh
     ```
   - Run [`checkbashisms`](https://tracker.debian.org/pkg/devscripts):
     ```sh
@@ -1225,7 +1230,7 @@ Common POSIX utilities that can be relied upon (see [Open Group Base Specificati
     ```
   - Run [`shellcheck`](https://www.shellcheck.net/):
     ```sh
-    shellcheck --shell=bash --severity=style --exclude=SC3043 --exclude=SC2292 --enable=all script.sh
+    shellcheck --shell=bash --severity=style --exclude=SC2292 --exclude=SC3040 --exclude=SC3043 --enable=all script.sh
     ```
 - Fix all errors and warnings. If a warning must be silenced, add a comment explaining why:
   ```sh
