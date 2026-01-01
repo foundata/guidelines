@@ -23,6 +23,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 - [Portability](#portability)
   - [Hints](#hints)
 - [Linting and automatic formatting](#linting-and-automatic-formatting)
+- [`shell-boilerplate.sh`](#shell-boilerplate)
 - [Author information](#author-information)
 
 
@@ -1245,6 +1246,26 @@ Common POSIX utilities that can be relied upon (see [Open Group Base Specificati
 - Automated tools catch errors that humans miss and enforce consistency without manual effort:
   - `shellcheck` identifies bugs, security issues, and portability problems. See the [ShellCheck Wiki](https://www.shellcheck.net/wiki/) for a complete list of checks.
   - `checkbashisms` catches many (not all) bash-specific constructs that break POSIX compatibility (note: it has some false positives and does not catch all issues).
+
+
+
+## `shell-boilerplate.sh`<a id="shell-boilerplate"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+The [`shell-boilerplate.sh`](./shell-boilerplate.sh) file provides a starting point for new scripts. It includes environment setup, utility functions, and a structured `main()` pattern that follows this style guide.
+
+The code between the `--- BOILERPLATE START|END v<version> ---` markers is designed as a minimal inline library to be used across all our scripts. It provides:
+
+- Consistent environment setup (`PATH` fallback, `LC_ALL`, `set -u`, `pipefail` disabled).
+- ANSI formatting codes respecting [`NO_COLOR`](https://no-color.org/).
+- `say()` for formatted output (errors, warnings, success, info, debug) with optional timestamps.
+- `check_cmd()` and `require_cmd()` for checking command availability.
+- `ensure()` for running commands that must not fail.
+
+Keep the version markers intact. They enable programmatic updates of the boilerplate section across multiple scripts.
+
+See [`shell-boilerplate.sh`](./shell-boilerplate.sh).
 
 
 
