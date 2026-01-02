@@ -808,7 +808,7 @@ fi
 | `INT1 -ge INT2` | True if INT1 >= INT2 |
 
 
-**POSIX character classes for `grep`, `sed`, `tr`:**
+**[POSIX character classes](https://pubs.opengroup.org/onlinepubs/9799919799.2024edition/basedefs/V1_chap07.html#tag_07_03_01) for `grep`, `sed`, `tr`:**
 
 | Class | Equivalent | Description |
 |-------|------------|-------------|
@@ -820,7 +820,9 @@ fi
 | `[:xdigit:]` | `[A-Fa-f0-9]` | Hexadecimal digits |
 | `[:space:]` | `[ \t\r\n\v\f]` | Whitespace characters |
 | `[:blank:]` | `[ \t]` | Space and tab only |
-
+| `[:cntrl:]` | `[\x00-\x1F\x7F]` | [Control characters](https://en.wikipedia.org/wiki/Control_character) |
+| `[:graph:]` | `[\x21-\x7E]` | Printable characters, not including space |
+| `[:print:]` | `[\x20-\x7E]` | Printable characters, including space |
 
 **Reasoning:**
 
