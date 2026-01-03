@@ -1,4 +1,5 @@
 #!/usr/bin/env sh
+#
 # FIXME Script for reasons
 #
 # SPDX-FileCopyrightText: 2026, foundata GmbH (https://foundata.com)
@@ -6,15 +7,15 @@
 
 # --- BOILERPLATE START v1.0.0 ---
 # Consistent environment for predictable tool and shell behavior
-PATH="${PATH:-'/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin'}"
-LC_ALL='en_US.UTF-8'
-set -u # prevent use of uninitialized variables
-set -o 2>/dev/null | grep -Fq pipefail && set +o pipefail # disable, non-POSIX
+export PATH="${PATH:-'/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin'}"
+export LC_ALL='en_US.UTF-8'
+set -u                                                      # no uninitialized vars
+set -o 2>/dev/null | grep -Fq 'pipefail' && set +o pipefail # disable, non-POSIX
 
-# Config say() messages (override via environment or inline where needed)
+# Config msg() messages (override via environment or inline where needed)
 : "${DEBUG:=0}"          # 0: No debug messages. 1: Print debug messages.
-: "${SAY_TIMESTAMP:=0}"  # 0: No timestamp (TS) prefix 1: Unix TS. 2: ISO TS
-: "${SAY_SCRIPTNAME:=0}" # 0: No scriptname prefix. 1: Enable scriptname prefix
+: "${MSG_TIMESTAMP:=0}"  # 0: No timestamp (TS) prefix 1: Unix TS. 2: ISO TS
+: "${MSG_SCRIPTNAME:=0}" # 0: No scriptname prefix. 1: Enable scriptname prefix
 
 # Formatting codes (ANSI if STDOUT is TTY and NO_COLOR empty; empty otherwise)
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
@@ -37,6 +38,107 @@ fi
 readonly FMT_RESET FMT_BOLD FMT_UL FMT_SO FMT_RED FMT_GREEN FMT_YELLOW FMT_BLUE
 
 ###
+# Print formatted messages to STDOUT or STDERR.
+# Options:
+#   -e, --error     Print error message (bold red) to STDERR.
+#   -w, --warning   Print warning message (bold yellow) to STDERR.
+#   -s, --success   Print success message (bold green) to STDOUT.
+#   -i, --info      Print info message (bold blue) to STDOUT.
+#   -d, --debug     Print debug message (standout) to STDOUT (only if DEBUG=1).
+# Globals:
+#   DEBUG          - If 0, suppresses -d/--debug messages.
+#   MSG_TIMESTAMP  - 1: Enable unix timestamp as prefix.
+#                    2: Enable ISO timestamp as prefix.
+#   MSG_SCRIPTNAME - 1: Enable script name as prefix.
+# Arguments:
+#   $1 - Optional flag (see "Options").
+#   $@ - Message to print.
+# Outputs:
+#   Formatted message to STDOUT or STDERR depending on flag.
+msg() {
+  local _msg_fd='1' _msg_color='' _msg_prefix='' _msg_fmt=''
+  case "${1:-}" in
+    '-e' | '--error')
+      _msg_fd='2'
+      _msg_color="${FMT_BOLD}${FMT_RED}"
+      ;;
+    '-w' | '--warning')
+      _msg_fd='2'
+      _msg_color="${FMT_BOLD}${FMT_YELLOW}"
+      ;;
+    '-s' | '--success')
+      _msg_fd='1'
+      _msg_color="${FMT_BOLD}${FMT_GREEN}"
+      ;;
+    '-i' | '--info')
+      _msg_fd='1'
+      _msg_color="${FMT_BOLD}${FMT_BLUE}"
+      ;;
+    '-d' | '--dbg' | '--debug')
+      [ "${DEBUG:-0}" = 0 ] && return 0
+      _msg_fd='1'
+      _msg_color="${FMT_SO}"
+      ;;
+    *) false ;;
+  esac && shift
+  case "${MSG_TIMESTAMP:-0}" in
+    '1') _msg_prefix="[$(date '+%s')] " ;;                  # non-POSIX but widely available: %s
+    '2') _msg_prefix="[$(date '+%Y-%m-%dT%H:%M:%S%z')] " ;; # non-POSIX but widely available: z
+    *) ;;
+  esac
+  case "${MSG_SCRIPTNAME:-0}" in
+    '1') _msg_prefix="[${0##*/}] ${_msg_prefix}" ;;
+    *) ;;
+  esac
+  _msg_fmt="${_msg_color}${_msg_prefix}$*${FMT_RESET}"
+  [ "${_msg_fd}" = '2' ] && printf '%s\n' "${_msg_fmt}" >&2 || printf '%s\n' "${_msg_fmt}"
+}
+
+###
+# Manage cleanup commands on exit/interrupt (LIFO order).
+# Globals:
+#   _TRAP_STACK - Newline-separated list of commands (newest first).
+#                 Modified by push/pop/run operations.
+# Arguments:
+#   $1      - Action: push (add to stack), pop (remove last (no execute)),
+#             or run (execute all & clear).
+#   $2      - Command to register (required for push).
+# Returns:
+#   0 on success, 1 on invalid usage.
+# Example:
+#   trap_stack push 'rm -rf "/tmp/mydir"'
+#   trap_stack pop
+#   trap_stack run
+_TRAP_STACK=''
+trap_stack() {
+  case "${1:-}" in
+    'push')
+      # linebreak is needed (stack delimiter)
+      _TRAP_STACK="${2:?Command required}${_TRAP_STACK:+
+${_TRAP_STACK}}"
+      trap 'trap_stack run' EXIT
+      trap 'trap_stack run; exit 130' INT
+      trap 'trap_stack run; exit 143' TERM
+      ;;
+    'pop')
+      _TRAP_STACK="$(printf '%s\n' "${_TRAP_STACK}" | tail -n +2)"
+      [ -z "${_TRAP_STACK}" ] && trap - EXIT INT TERM
+      ;;
+    'run')
+      while [ -n "${_TRAP_STACK}" ]; do
+        eval "$(printf '%s\n' "${_TRAP_STACK}" | head -n 1)" || true
+        _TRAP_STACK="$(printf '%s\n' "${_TRAP_STACK}" | tail -n +2)"
+      done
+      trap - EXIT INT TERM
+      ;;
+    *)
+      printf 'Usage: trap_stack push|pop|run [cmd]\n' >&2
+      return 1
+      ;;
+  esac
+}
+
+###
 # Check if commands are available.
 # Options:
 #   -r  Required mode: exit with error if any command is missing.
@@ -51,65 +153,9 @@ check_cmd() {
   for cmd; do
     command -v "${cmd}" >/dev/null 2>&1 && continue
     [ "${required}" = 1 ] || return 1
-    say -e "Required command not found: ${cmd}"
+    msg -e "Required command not found: ${cmd}"
     exit 1
   done
-}
-
-###
-# Print formatted messages to STDOUT or STDERR.
-# Options:
-#   -e, --error     Print error message (bold red) to STDERR.
-#   -w, --warning   Print warning message (bold yellow) to STDERR.
-#   -s, --success   Print success message (bold green) to STDOUT.
-#   -i, --info      Print info message (bold blue) to STDOUT.
-#   -d, --debug     Print debug message (standout) to STDOUT (only if DEBUG=1).
-# Globals:
-#   DEBUG          - If 0, suppresses -d/--debug messages.
-#   SAY_TIMESTAMP  - 1: Enable unix timestamp as prefix.
-#                    2: Enable ISO timestamp as prefix.
-#   SAY_SCRIPTNAME - 1: Enable script name as prefix.
-# Arguments:
-#   $1 - Optional flag (see "Options").
-#   $@ - Message to print.
-# Outputs:
-#   Formatted message to STDOUT or STDERR depending on flag.
-say() {
-  local out_stream_fd='1' out_color='' out_pre=''
-  case "${1:-}" in
-    '-e' | '--error')
-      out_stream_fd='2'
-      out_color="${FMT_BOLD}${FMT_RED}"
-      ;;
-    '-w' | '--warning')
-      out_stream_fd='2'
-      out_color="${FMT_BOLD}${FMT_YELLOW}"
-      ;;
-    '-s' | '--success')
-      out_stream_fd='1'
-      out_color="${FMT_BOLD}${FMT_GREEN}"
-      ;;
-    '-i' | '--info')
-      out_stream_fd='1'
-      out_color="${FMT_BOLD}${FMT_BLUE}"
-      ;;
-    '-d' | '--dbg' | '--debug')
-      [ "${DEBUG:-0}" = 0 ] && return 0
-      out_stream_fd='1'
-      out_color="${FMT_SO}"
-      ;;
-    *) false ;;
-  esac && shift
-  case "${SAY_TIMESTAMP:-0}" in
-    '1') out_pre="[$(date '+%s')] " ;;                  # non-POSIX but widely available: %s
-    '2') out_pre="[$(date '+%Y-%m-%dT%H:%M:%S%z')] " ;; # non-POSIX but widely available: z
-    *) ;;
-  esac
-  case "${SAY_SCRIPTNAME:-0}" in
-    '1') out_pre="[${0##*/}] ${out_pre}" ;;
-    *) ;;
-  esac
-  printf '%s%s%s%s\n' "${out_color}" "${out_pre}" "$*" "${FMT_RESET}" >&"${out_stream_fd}"
 }
 
 ###
@@ -127,7 +173,7 @@ ensure() {
   "$@"
   exit_code="$?"
   if [ "${exit_code}" -ne 0 ]; then
-    say -e "Command failed (exit code ${exit_code}): $*"
+    msg -e "Command failed (exit code ${exit_code}): $*"
     exit "${exit_code}"
   fi
   return 0
@@ -137,15 +183,7 @@ ensure() {
 require_cmd() { check_cmd -r "$@"; }
 # --- BOILERPLATE END v1.0.0 ---
 
-###### FIXME additional snippets follow
-
-###
-# Clean up on exit (e.g. temporary files)
-# Globals:
-#   tmp_file - Temporary file path (if set).
-cleanup() {
-  rm -f "${tmp_file:-}"
-}
+###### FIXME additional /optional but often useful boilerplate follow
 
 ###
 # Parse command line arguments.
@@ -174,7 +212,7 @@ parse_args() {
         opt_foo="${OPTARG}"
         if ! printf '%s' "${opt_foo}" | grep -E -q -e '^[[:digit:]]*$'; then
           opt_foo=''
-          say -w "Invalid value for '-${OPT}', ignoring it."
+          msg -w "Invalid value for '-${OPT}', ignoring it."
         fi
         ;;
 
@@ -234,7 +272,7 @@ DELIM
         elif check_cmd 'groff'; then
           printf '%s' "${mantext}" | groff -Tascii -man | more
         else
-          say -e "Neither 'mandoc' nor 'groff' is available, cannot display help"
+          msg -e "Neither 'mandoc' nor 'groff' is available, cannot display help"
           exit 1
         fi
         unset filename mantext
@@ -242,7 +280,7 @@ DELIM
         ;;
 
       *)
-        say -e "Unknown option '${OPTARG}' (or missing option value). Use '-h' to get usage instructions."
+        msg -e "Unknown option '${OPTARG}' (or missing option value). Use '-h' to get usage instructions."
         exit 2
         ;;
     esac
@@ -256,14 +294,14 @@ DELIM
 # Arguments:
 #   $@ - Command line arguments.
 main() {
-  trap cleanup EXIT
+  trap_stack 'push' "rm -f '${tmp_file:-}'"
 
   parse_args "$@"
 
   # FIXME Main script logic goes here
-  say "opt_bar=${opt_bar}"
-  say "opt_foo=${opt_foo}"
-  say -s 'Script executed successfully.'
+  msg "opt_bar=${opt_bar}"
+  msg "opt_foo=${opt_foo}"
+  msg -s 'Script executed successfully.'
 }
 
 main "$@"

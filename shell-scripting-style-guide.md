@@ -24,6 +24,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
   - [Hints](#hints)
 - [Linting and automatic formatting](#linting-and-automatic-formatting)
 - [`shell-boilerplate.sh`](#shell-boilerplate)
+- [`shell-snippets.sh`](#shell-snippets)
 - [Author information](#author-information)
 
 
@@ -124,6 +125,7 @@ Library files should not have execute permission to prevent accidental direct ex
 
 ```sh
 #!/usr/bin/env sh
+#
 # This is a very cool script
 
 #!/usr/bin/env bash
@@ -1115,12 +1117,12 @@ get_config_dir() {
 - Use only POSIX-defined utilities and their POSIX-defined options when possible.
 - Set `LC_ALL` to get predictable behavior:
   ```sh
-  LC_ALL='en_US.UTF-8'
+  export LC_ALL='en_US.UTF-8'
   ```
   Do so until your script explicitly has to follow a system's localization.
 - Set a [`PATH`](https://en.wikipedia.org/wiki/PATH_(variable)) fallback:
   ```sh
-  PATH="${PATH:-'/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin'}"
+  export PATH="${PATH:-'/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin'}"
   ```
 - Test scripts with `dash` during development (it is stricter about POSIX compliance).
 - Avoid / disable the `pipefail` option and do not base script logic on it:
@@ -1261,13 +1263,36 @@ The code between the `--- BOILERPLATE START|END v<version> ---` markers is desig
 
 - Consistent environment setup (`PATH` fallback, `LC_ALL`, `set -u`, `pipefail` disabled).
 - ANSI formatting codes respecting [`NO_COLOR`](https://no-color.org/).
-- `say()` for formatted output (errors, warnings, success, info, debug) with optional timestamps.
+- `msg()` for formatted output (errors, warnings, success, info, debug) with optional timestamps.
 - `check_cmd()` and `require_cmd()` for checking command availability.
 - `ensure()` for running commands that must not fail.
 
 Keep the version markers intact. They enable programmatic updates of the boilerplate section across multiple scripts.
 
 See [`shell-boilerplate.sh`](./shell-boilerplate.sh).
+
+
+
+## `shell-snippets.sh`<a id="shell-snippets"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+The [`shell-snippets.sh`](./shell-snippets.sh) file provides a collection of commonly needed shell actions ready for copy & paste. It serves as a reference and quick-start resource for recurring tasks.
+
+**Please note:**
+
+- All simple command snippets are POSIX compatible (except when calling external non-POSIX commands like `curl` or `wget`).
+- Functions may rely on other functions from [`shell-boilerplate.sh`](#shell-boilerplate).
+
+**Categories included:**
+
+- **Variables and string handling:** Case conversion, whitespace trimming, duplicate line removal, string length, list item counting, NUL byte stripping, user input reading, search and replace.
+- **Environment:** Retrieving user home directories reliably across different environments.
+- **Process control:** Ensuring single script instance execution, timeout handling for stale processes.
+- **User interaction:** Reading user input, prompts with defaults, yes/no confirmation dialogs, path validation.
+- **Files:** Directory copying with `rsync`, file downloads with `curl`/`wget` fallback.
+
+See [`shell-snippets.sh`](./shell-snippets.sh).
 
 
 
