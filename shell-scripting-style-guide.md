@@ -8,6 +8,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 ## Table of contents
 
 - [When to use shell](#when-to-use-shell)
+- [Linting and automatic formatting](#linting-and-automatic-formatting)
 - [File format and permission](#file-format-and-permission)
 - [Shebang](#shebang)
 - [Indentation](#indentation)
@@ -22,7 +23,6 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 - [Comments](#comments)
 - [Portability](#portability)
   - [Hints](#hints)
-- [Linting and automatic formatting](#linting-and-automatic-formatting)
 - [`shell-boilerplate.sh`](#shell-boilerplate)
 - [`shell-snippets.sh`](#shell-snippets)
 - [Author information](#author-information)
@@ -69,6 +69,52 @@ Shell scripting is a *portable* tool when following some rules, but it is not su
 - Shell's quoting rules, word splitting, and glob expansion create numerous pitfalls that grow with script complexity.
 - Debugging and testing shell scripts is significantly harder than in languages with proper tooling.
 - The same task that takes 20 lines of shell might take 10 lines of Python with better error handling and readability. But Python surely is not as portable because of package dependencies etc., especially if it comes to OCI containers.
+
+
+
+## Linting and automatic formatting<a id="linting-formatting"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+**You MUST:**
+
+- On **POSIX** scripts (shebang `#!/usr/bin/env sh`):
+  - Run [`shfmt`](https://github.com/mvdan/sh):
+    ```sh
+    shfmt --language-dialect posix --indent 2 --case-indent --binary-next-line --simplify --diff script.sh
+    shfmt --language-dialect posix --indent 2 --case-indent --binary-next-line --simplify --write script.sh
+    ```
+  - Run [`shellcheck`](https://www.shellcheck.net/):
+    ```sh
+    shellcheck --shell=sh --severity=style --exclude=SC2292 --exclude=SC3040 --exclude=SC3043 --enable=all script.sh
+    ```
+  - Run [`checkbashisms`](https://tracker.debian.org/pkg/devscripts):
+    ```sh
+    checkbashisms script.sh
+    ```
+- On **Bash** scripts (shebang `#!/usr/bin/env bash`):
+  - Run [`shfmt`](https://github.com/mvdan/sh):
+    ```sh
+    shfmt --language-dialect bash --indent 2 --case-indent --binary-next-line --simplify --diff script.sh
+    shfmt --language-dialect bash --indent 2 --case-indent --binary-next-line --simplify --write script.sh
+    ```
+  - Run [`shellcheck`](https://www.shellcheck.net/):
+    ```sh
+    shellcheck --shell=bash --severity=style --exclude=SC2292 --exclude=SC3040 --exclude=SC3043 --enable=all script.sh
+    ```
+- Fix all errors and warnings. If a warning must be silenced, add a comment explaining why:
+  ```sh
+  # shellcheck disable=SC2034  # Variable is exported for use by sourcing script
+  unused_but_exported_var='value'
+  ```
+
+
+**Reasoning:**
+
+- `shfmt` eliminates style debates by providing a single, deterministic format.
+- Automated tools catch errors that humans miss and enforce consistency without manual effort:
+  - `shellcheck` identifies bugs, security issues, and portability problems. See the [ShellCheck Wiki](https://www.shellcheck.net/wiki/) for a complete list of checks.
+  - `checkbashisms` catches many (not all) bash-specific constructs that break POSIX compatibility (note: it has some false positives and does not catch all issues).
 
 
 
@@ -1204,52 +1250,6 @@ done
 **POSIX-compliant utilities:**
 
 Common POSIX utilities that can be relied upon (see [Open Group Base Specifications, IEEE Std 1003.1-2017: Shell & Utilities](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/contents.html): [4. Utilities](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap04.html)): `awk`, `basename`, `cat`, `chmod`, `chown`, `compress`, `cp`, `cut`, `date`, `dirname`, `env`, `expr`, `find`, `grep`, `head`, `id`, `kill`, `ln`, `ls`, `mkdir`, `mkfifo`, `mv`, `od`, `paste`, `printf`, `pwd`, `read`, `rm`, `rmdir`, `sed`, `sleep`, `sort`, `tail`, `tee`, `test`, `touch`, `tr`, `true`, `false`, `umask`, `uname`, `uncompress`, `uniq`, `wc`, `xargs`, `zcat`.
-
-
-
-## Linting and automatic formatting<a id="linting-formatting"></a>
-
-[*⇑ Back to TOC ⇑*](#table-of-contents)
-
-**You MUST:**
-
-- On **POSIX** scripts (shebang `#!/usr/bin/env sh`):
-  - Run [`shfmt`](https://github.com/mvdan/sh):
-    ```sh
-    shfmt --language-dialect posix --indent 2 --case-indent --binary-next-line --simplify --diff script.sh
-    shfmt --language-dialect posix --indent 2 --case-indent --binary-next-line --simplify --write script.sh
-    ```
-  - Run [`shellcheck`](https://www.shellcheck.net/):
-    ```sh
-    shellcheck --shell=sh --severity=style --exclude=SC2292 --exclude=SC3040 --exclude=SC3043 --enable=all script.sh
-    ```
-  - Run [`checkbashisms`](https://tracker.debian.org/pkg/devscripts):
-    ```sh
-    checkbashisms script.sh
-    ```
-- On **Bash** scripts (shebang `#!/usr/bin/env bash`):
-  - Run [`shfmt`](https://github.com/mvdan/sh):
-    ```sh
-    shfmt --language-dialect bash --indent 2 --case-indent --binary-next-line --simplify --diff script.sh
-    shfmt --language-dialect bash --indent 2 --case-indent --binary-next-line --simplify --write script.sh
-    ```
-  - Run [`shellcheck`](https://www.shellcheck.net/):
-    ```sh
-    shellcheck --shell=bash --severity=style --exclude=SC2292 --exclude=SC3040 --exclude=SC3043 --enable=all script.sh
-    ```
-- Fix all errors and warnings. If a warning must be silenced, add a comment explaining why:
-  ```sh
-  # shellcheck disable=SC2034  # Variable is exported for use by sourcing script
-  unused_but_exported_var='value'
-  ```
-
-
-**Reasoning:**
-
-- `shfmt` eliminates style debates by providing a single, deterministic format.
-- Automated tools catch errors that humans miss and enforce consistency without manual effort:
-  - `shellcheck` identifies bugs, security issues, and portability problems. See the [ShellCheck Wiki](https://www.shellcheck.net/wiki/) for a complete list of checks.
-  - `checkbashisms` catches many (not all) bash-specific constructs that break POSIX compatibility (note: it has some false positives and does not catch all issues).
 
 
 
