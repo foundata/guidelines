@@ -287,6 +287,7 @@ fi
 **Reasoning:**
 
 - Spaces ensure consistent display across all editors and terminals regardless of tab width settings.
+- Pasting functions with tabs into an interactive shell can cause all kinds of weird errors.
 - Using two spaces aligns us with the broader shell and container ecosystem (cf. [Google](https://google.github.io/styleguide/shellguide.html#s5.1-indentation), [Kubernetes](https://www.kubernetes.dev/docs/guide/coding-convention/), [Bash Hacker's Wiki](https://web.archive.org/web/20220512181003/https://wiki.bash-hackers.org/scripting/style)) and provides a good enough visual hierarchy as most shell scripts should not have deeply nesting logic.
 
 

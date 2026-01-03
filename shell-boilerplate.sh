@@ -34,7 +34,7 @@ if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
 else
   FMT_RESET='' FMT_BOLD='' FMT_UL='' FMT_SO='' FMT_RED='' FMT_GREEN='' FMT_YELLOW='' FMT_BLUE=''
 fi
-# shellcheck disable=SC2034
+# shellcheck disable=SC2034 # boilerplate vars, needed "on stockpile"
 readonly FMT_RESET FMT_BOLD FMT_UL FMT_SO FMT_RED FMT_GREEN FMT_YELLOW FMT_BLUE
 
 ###

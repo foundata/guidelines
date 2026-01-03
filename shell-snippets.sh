@@ -103,7 +103,7 @@ get_home() {
 ensure_single() {
   # Require '--' sentinel to ensure caller passes "${@}"
   if [ "${1:-}" != '--' ]; then
-    # shellcheck disable=SC2016
+    # shellcheck disable=SC2016 # needed as literal example without expansion
     msg -e 'must be called as: ensure_single_instance -- "${@}"'
     exit 97
   fi
@@ -121,7 +121,7 @@ ensure_single() {
     }
   # lsof fallback (imperfect: false positives if editor/less has script open)
   elif check_cmd 'lsof' 'wc'; then
-    # shellcheck disable=SC2312
+    # shellcheck disable=SC2312 # best effort, usage of '| true' complicated
     if [ "$(lsof -t "${0}" 2>/dev/null | wc -l)" -gt 1 ]; then
       MSG_SCRIPTNAME='1' msg -e "Another instance is running (lsof fallback; consider installing flock)"
       exit 99
