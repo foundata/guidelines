@@ -16,6 +16,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 * [Maps (`key: value`)](#maps)
   * [Value retrieval: bracket notation](#value-retrieval)
 * [Facts](#facts)
+* [Conditionals](#conditionals)
 * [Tasks and play declaration](#tasks-plays)
 * [Comments](#comments)
 * [Linting](#linting)
@@ -701,6 +702,101 @@ Following the spacing rules produces consistent code that is easy to read.
 * Gathering only specific facts using `ansible.builtin.setup` with `gather_subset` makes roles more robust and faster, as they explicitly declare and load their dependencies.
 * The `ansible_<factname>` variables are legacy convenience variables. Using `ansible_facts['<factname>']` is the modern, explicit approach and makes it clear that you are accessing facts rather than regular variables.
 * The conditional `when: not (__used_facts is subset(ansible_facts.keys()))` ensures facts are only gathered if they are not already available, preventing redundant operations if another role or the playbook already gathered them.
+
+
+
+## Conditionals<a id="conditionals"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+**You MUST:**
+
+* Ensure all conditional expressions (`when`, `changed_when`, `failed_when`, `assert.that`) evaluate to actual boolean values, not truthy/falsy values.
+* Use explicit boolean predicates instead of relying on implicit truthiness:
+  * `myvar | length > 0` instead of just `myvar`
+  * `myvar is defined` for existence checks
+  * `myvar is truthy` or `myvar | bool` for explicit truthiness conversion
+  * `myvar == 'value'` for string comparisons
+* Quote conditional expressions containing `: ` (colon followed by space) to prevent YAML from parsing them as mappings.
+* Use parentheses to control Jinja2 order of operations when using operators like `~` (concatenation) with tests.
+
+
+**You MUST NOT:**
+
+* Rely on implicit truthy evaluation of strings, lists, or dictionaries.
+* Accidentally quote sub-expressions within a conditional (the quoted part becomes a literal string and is always truthy).
+
+
+**Good examples:**
+
+```yaml
+- name: "Check if hostname is set"
+  ansible.builtin.assert:
+    that:
+      - inventory_hostname is defined
+      - inventory_hostname | length > 0
+
+
+- name: "Check message content"
+  ansible.builtin.assert:
+    that:
+      # quote the whole expression to prevent YAML parsing ": " as a mapping
+      - "result.msg == 'some_key: some_value'"
+
+
+- name: "Check hostname contains pattern"
+  ansible.builtin.assert:
+    that:
+      # parentheses ensure concatenation happens before the test
+      - inventory_hostname is contains("local" ~ "host")
+
+
+- name: "Run only if list is not empty"
+  ansible.builtin.debug:
+    msg: "List has items"
+  when:
+    - my_list | length > 0
+```
+
+
+**Bad examples:**
+
+```yaml
+# BAD: Relies on implicit truthy evaluation of a string
+- name: "Check if hostname is set"
+  ansible.builtin.assert:
+    that:
+      - inventory_hostname # this would be only valid if this variable would be a boolean
+
+
+# BAD: Second part is accidentally quoted, always evaluates to True
+- name: "Check if hostname is valid"
+  ansible.builtin.assert:
+    that:
+      - inventory_hostname is defined and 'inventory_hostname | length > 0'
+
+
+# BAD: Unquoted colon+space is parsed as YAML mapping, always truthy
+- name: "Check message content"
+  ansible.builtin.assert:
+    that:
+      - result.msg == "some_key: some_value"
+
+
+# BAD: Without parentheses, ~ is evaluated after the test, result is "Truehost"
+- name: "Check hostname contains pattern"
+  ansible.builtin.assert:
+    that:
+      - inventory_hostname is contains "local" ~ "host"
+```
+
+
+**Reasoning:**
+
+* Python and Jinja2 provide implicit "truthy" evaluation of most non-empty, non-boolean values. While sometimes convenient, this often masks serious logic errors.
+* Ansible 12 enforces boolean results for conditionals by default. Non-boolean results now [raise an error (like `Conditional result (<True|False>) was derived from value of type '<Type>'`)]((https://docs.ansible.com/ansible/latest/porting_guides/porting_guide_12.html#broken-conditionals)) instead of being silently evaluated as truthy.
+* Writing explicit boolean predicates makes the intent clear and prevents subtle bugs that are hard to diagnose.
+* YAML interprets unquoted strings containing `: ` as mappings. Since non-empty mappings are truthy, this silently breaks comparisons. Quoting the entire expression prevents this.
 
 
 
