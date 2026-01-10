@@ -21,6 +21,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 * [Tasks and play declaration](#tasks-plays)
   * [Handlers](#handlers)
 * [External commands](#external-commands)
+  * [Scripts](#scripts)
 * [Comments](#comments)
 * [Linting](#linting)
 * [Miscellaneous](#misc)
@@ -1309,6 +1310,124 @@ This section covers the use of [`ansible.builtin.command`](https://docs.ansible.
 * [`ansible.builtin.shell`](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/shell_module.html) spawns a shell process, which is necessary for shell features but introduces security risks if variables are not properly quoted.
 * The `argv` attribute passes arguments directly to the executable without shell parsing, eliminating all quoting issues and making the command structure explicit.
 * The [`quote` filter](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/quote_filter.html) escapes special characters to prevent command injection when variables contain user-controlled or untrusted data.
+
+
+
+### Scripts<a id="scripts"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+This subsection covers shell scripts used with Ansible, including inline scripts embedded in `ansible.builtin.shell` tasks and standalone scripts executed via `ansible.builtin.script`.
+
+
+**You MUST:**
+
+* Write POSIX-compliant scripts (avoid Bashisms) for maximum portability, even when executing with Bash.
+* Use `executable: "/bin/bash"` with `ansible.builtin.shell` since there is no way to define a shebang for inline scripts.
+* Use block scalar style (`|`) for multi-line scripts and the chomping indicator (`|-`) when trailing newlines matter.
+* Follow applicable parts of the [Shell scripting style guide](./shell-scripting-style-guide.md)
+* Use `changed_when` and/or `failed_when` to properly reflect script outcomes.
+* Start *inline* scripts with:
+  ```sh
+  set -u # no uninitialized vars
+  ```
+
+
+**You SHOULD:**
+
+* Keep inline scripts short (roughly 50 lines maximum).
+* Start *inline* scripts with:
+  ```sh
+  set -u              # no uninitialized vars
+  set -e -o pipefail  # exit on (pipeline) errors
+  ```
+  This deviates from the usual [Shell scripting style guide](./shell-scripting-style-guide.md) for *stand alone* script recommendations (where `set -e` is prohibited) but simplifies inline scripts by providing automatic error handling without complex failure logic.
+* For complex logic, use the [`ansible.builtin.script`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/script_module.html) module, which allows maintaining the script as a standalone file that can be linted, tested, and version-controlled separately.
+* Lint and format scripts as standalone files before transferring them into an Ansible task.
+* Prefer [`ansible.builtin.raw`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/raw_module.html) over `ansible.builtin.shell` when no Python is available on the target (e.g., during bootstrapping).
+
+
+**Good examples:**
+
+```yaml
+# Short inline script with proper structure
+- name: "Check and report service status"
+  ansible.builtin.shell:
+    executable: "/bin/bash"
+    cmd: |
+      set -e
+      service_status="$(systemctl is-active myservice 2>/dev/null || true)"
+      printf '%s\n' "${service_status}"
+  changed_when: false
+  register: __service_result
+
+
+# Using ansible.builtin.script for complex logic - script can be linted/tested standalone
+- name: "Run complex data migration"
+  ansible.builtin.script:
+    cmd: "files/scripts/migrate_data.sh {{ source_dir | ansible.builtin.quote }} {{ dest_dir | ansible.builtin.quote }}"
+    executable: "/bin/bash"
+  changed_when:
+    - __migration_result is success
+    - "'Changes applied' in __migration_result['stdout']"
+  register: __migration_result
+```
+
+```bash
+#!/usr/bin/env sh
+#
+# files/scripts/migrate_data.sh - standalone file, can be linted with shellcheck
+
+export PATH="${PATH:-'/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin'}"
+export LC_ALL='en_US.UTF-8'
+set -u                                                      # no uninitialized vars
+set -o 2>/dev/null | grep -Fq 'pipefail' && set +o pipefail # disable, non-POSIX
+
+source_dir="${1}"
+dest_dir="${2}"
+
+# Complex logic with proper error handling, functions, etc.
+if [ ! -d "${source_dir}" ]; then
+    printf 'Error: Source directory does not exist: %s\n' "${source_dir}" >&2
+    exit 1
+fi
+
+# ... more logic ...
+printf 'Changes applied\n'
+```
+
+
+**Bad examples:**
+
+```yaml
+# BAD: Missing executable, using Bashisms
+- name: "Process files"
+  ansible.builtin.shell:
+    cmd: "for f in /tmp/*.txt; do [[ -f $f ]] && cat $f; done"  # Bashism: [[ ]]
+  # no executable defined, no error handling
+
+
+# BAD: Complex script that should be in a separate file
+- name: "Complex inline script"
+  ansible.builtin.shell:
+    executable: "/bin/bash"
+    cmd: |
+      set -u
+      # 150+ lines of complex logic... his should use ansible.builtin.script instead
+      function process_data() { # function keyword is a Bashism
+        # ...
+      }
+      # ... many more lines ...
+```
+
+
+**Reasoning:**
+
+* It is generally preferable to write Ansible modules rather than using scripts. Modules provide better integration with Ansible's features (check mode, diff mode, proper return values, documentation). However, scripting is an acceptable approach when you are not yet capable of writing modules (yet). It is better to implement needed functionality via high-quality scripts than to not implement it at all.
+* A well-parameterized, linted standalone script (used with `ansible.builtin.script`) is a better intermediate step towards a fully-featured Ansible module than inline scripting. It encourages proper structure, parameters, testability, and can later be converted to a module.
+* POSIX-compliant scripts maximize portability across different systems and shells. Even when executing with Bash, avoiding Bashisms ensures scripts can be reused (partially) in other contexts.
+* The `ansible.builtin.script` module transfers a local script to the remote host, executes it, and removes it afterward. This allows complex scripts to be maintained as proper files with syntax highlighting, linting (shellcheck), testing, and version control benefits.
+* Block scalar style (`|`) preserves line breaks and makes scripts readable within YAML.
 
 
 
