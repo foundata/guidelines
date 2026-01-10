@@ -17,6 +17,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
   * [Value retrieval: bracket notation](#value-retrieval)
 * [Facts](#facts)
 * [Conditionals](#conditionals)
+  * [Formatting](#conditionals-formatting)
 * [Tasks and play declaration](#tasks-plays)
 * [Comments](#comments)
 * [Linting](#linting)
@@ -48,11 +49,10 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 * Start files with comments explaining their purpose, including example usage if reasonable.
 * Include blank lines before and after the `---` separator, followed by the rest of the file.
 * Check all [`YAML_FILENAME_EXTENSIONS`](https://docs.ansible.com/ansible/latest/reference_appendices/config.html#yaml-filename-extensions) when searching for files (e.g., `vars_files`, `include_vars`, plugins, or similar functions).
-* If a `when:` condition contains only `and` expressions, break it into a list of conditions for better readability.
 * Keep content around 80 characters in length, and ensure the overall line length, including indentation, stays below 120 characters.
   * Use [block scalars](https://yaml-multiline.info/#block-scalars) (`>` and `|`) as needed to manage long strings.
   * Include a chomping indicator (`-`) behind [block scalars](https://yaml-multiline.info/#block-scalars) (`>` and `|`) when it is important to exclude the trailing newline from the string (e.g., when defining a string variable).
-* Use parentheses and new lines to group conditions when it helps to clarify the logic. When in doubt, use parentheses if there are multiple `and` or `or` operators.
+* Refer to [Conditional formatting](#conditionals-formatting) for rules on writing `when`, `changed_when`, and `failed_when` clauses.
 
 
 
@@ -809,6 +809,101 @@ Following the spacing rules produces consistent code that is easy to read.
 * Ansible 12 enforces boolean results for conditionals by default. Non-boolean results now [raise an error (like `Conditional result (<True|False>) was derived from value of type '<Type>'`)]((https://docs.ansible.com/ansible/latest/porting_guides/porting_guide_12.html#broken-conditionals)) instead of being silently evaluated as truthy.
 * Writing explicit boolean predicates makes the intent clear and prevents subtle bugs that are hard to diagnose.
 * YAML interprets unquoted strings containing `: ` as mappings. Since non-empty mappings are truthy, this silently breaks comparisons. Quoting the entire expression prevents this.
+
+
+
+### Formatting<a id="conditionals-formatting"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+**You MUST:**
+
+* Always use the list format for `when`, `changed_when`, and `failed_when` conditions, even for single conditions.
+* Place the pipe operator (`|`) at the beginning of continuation lines for long piped expressions.
+* Break lines after unparenthesized `or` operators.
+* Avoid chaining unparenthesized `and` operators; use separate list entries instead.
+
+
+**Good examples:**
+
+```yaml
+# Single condition in list format
+- name: "Check Ansible version"
+  ansible.builtin.assert:
+    that:
+      - ansible_version['full'] is version(foobar_meta['galaxy_info']['min_ansible_version'], "<")
+
+
+# Multiple 'or' conditions with line breaks after each 'or'
+- name: "Check distribution info"
+  ansible.builtin.debug:
+    msg: "Distribution info missing or no platforms defined"
+  when:
+    - ansible_facts['distribution'] is not defined or
+      ansible_facts['distribution_version'] is not defined or
+      (foobar_meta['galaxy_info']['platforms'] | length) < 1
+
+
+# Complex piped expressions with '|' at the beginning of continuation lines
+- name: "Check platform support"
+  ansible.builtin.fail:
+    msg: "Platform not supported"
+  when:
+    - (foobar_meta['galaxy_info']['platforms'] | length) > 0
+    - ansible_facts['distribution'] is not defined or
+      ansible_facts['distribution_version'] is not defined or
+      (foobar_meta['galaxy_info']['platforms'] | length) < 1
+    - (foobar_meta['galaxy_info']['platforms']
+       | selectattr('name', 'match', '^' ~ ansible_facts['distribution'] ~ '$')
+       | map(attribute='versions') | flatten
+       | select('match', '^(' ~ ansible_facts['distribution_version'] ~ '|all)$', ignorecase=true)
+       | list | length) < 1
+
+
+# Multiple 'and' conditions as separate list entries
+- name: "Run when all conditions are met"
+  ansible.builtin.debug:
+    msg: "All conditions met"
+  when:
+    - condition_a
+    - condition_b
+    - condition_c
+```
+
+
+**Bad examples:**
+
+```yaml
+# BAD: Not using list format
+- name: "Check Ansible version"
+  ansible.builtin.assert:
+    that:
+      - ansible_version['full'] is version(foobar_meta['galaxy_info']['min_ansible_version'], "<")
+  when: ansible_facts['distribution'] is defined
+
+
+# BAD: Chaining 'and' in a single line instead of separate list entries
+- name: "Run when all conditions are met"
+  ansible.builtin.debug:
+    msg: "All conditions met"
+  when: condition_a and condition_b and condition_c
+
+
+# BAD: Pipe at end of line instead of beginning of continuation line, missing line breaks
+- name: "Check platform support"
+  ansible.builtin.fail:
+    msg: "Platform not supported"
+  when:
+    - (foobar_meta['galaxy_info']['platforms'] | selectattr('name', 'match', '^' ~ ansible_facts['distribution'] ~ '$') |
+       map(attribute='versions') | flatten | list | length) < 1
+```
+
+
+**Reasoning:**
+
+* Using list format for all conditions ensures cleaner diffs when adding or removing conditions, making changes more readable and easier to review.
+* Placing the pipe operator at the beginning of continuation lines improves readability by making the data flow through filters immediately visible.
+* Breaking lines after `or` operators and using separate list entries for `and` conditions creates a consistent, scannable structure that reflects the logical grouping.
 
 
 
