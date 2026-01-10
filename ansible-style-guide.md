@@ -20,6 +20,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
   * [Formatting](#conditionals-formatting)
 * [Tasks and play declaration](#tasks-plays)
   * [Handlers](#handlers)
+* [External commands](#external-commands)
 * [Comments](#comments)
 * [Linting](#linting)
 * [Miscellaneous](#misc)
@@ -1199,6 +1200,115 @@ Following the spacing rules produces consistent code that is easy to read.
 * Using `listen` decouples the trigger mechanism from the display name, making maintenance easier and allowing names to follow their own readability rules without affecting notification logic.
 * List notation signals that multiple trigger aliases are supported and maintains consistency with other list-based attributes.
 * Lowercase values prevent case-sensitivity issues and ensure consistent matching across the codebase.
+
+
+
+## External commands<a id="external-commands"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+This section covers the use of [`ansible.builtin.command`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/command_module.html) and [`ansible.builtin.shell`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/shell_module.html) modules.
+
+
+**You MUST:**
+
+* Use dedicated Ansible modules instead of shell commands when available (e.g., `ansible.builtin.apt` instead of `apt-get`, `ansible.builtin.file` instead of `mkdir`).
+* Prefer `ansible.builtin.command` over `ansible.builtin.shell` unless shell features (pipes, redirects, globbing, environment variable expansion) are required.
+* When using the `cmd` attribute with variables, apply the [`quote` filter](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/quote_filter.html) to prevent command injection: `{{ myvar | ansible.builtin.quote }}`
+* Include a comment explaining why `command` or `shell` is necessary instead of a dedicated module (see [Comments](#comments)).
+
+
+**You SHOULD:**
+
+* Use the `argv` attribute (list) instead of `cmd` for `ansible.builtin.command`:
+  * Avoids quoting issues entirely.
+  * Allows comments above individual parameters.
+  * Easier to build command arguments conditionally from variables.
+* Use `creates` or `removes` parameters to achieve idempotency when the command creates or removes files.
+* Set `changed_when` and/or `failed_when` to properly reflect command outcomes.
+
+
+**Good examples:**
+
+```yaml
+# Using argv with list - preferred for ansible.builtin.command:
+# Easy to comment on parameter. Easy to define as dedicated variable if needed
+- name: "Create a backup archive"
+  ansible.builtin.command:
+    argv:
+      - "tar"
+      - "-czf"
+      # destination archive
+      - "/backup/data.tar.gz"
+      # source directory
+      - "/var/lib/myapp/data"
+    creates: "/backup/data.tar.gz"
+
+# Building argv from variable - easy to modify conditionally (e.g. as fact)
+- name: "Run database migration"
+  ansible.builtin.command:
+    argv: "{{ __migration_cmd }}"
+  vars:
+    __migration_cmd:
+      - "/usr/bin/myapp"
+      - "migrate"
+      - "--database={{ database_name }}"  # argv doesn't need quote filter - no shell parsing involved
+  changed_when:
+    - __migration_result is success
+    - "'No migrations to apply' not in __migration_result['stdout']"
+  register: __migration_result
+
+
+# When shell is necessary (pipes, redirects) - use quote filter for variables
+- name: "Find and count log files"
+  ansible.builtin.shell:
+    cmd: >-
+      find /var/log -name '*.log' -mtime +{{ log_retention_days | ansible.builtin.quote }} | wc -l
+  changed_when: false
+  register: __log_count_result
+
+
+# Using creates for idempotency
+- name: "Initialize application database"
+  ansible.builtin.command:
+    argv:
+      - "/usr/bin/myapp"
+      - "db"
+      - "init"
+    creates: "/var/lib/myapp/.db_initialized"
+```
+
+
+**Bad examples:**
+
+```yaml
+# BAD: Using shell command instead of dedicated module
+- name: "Install nginx"
+  ansible.builtin.command:
+    cmd: "apt-get install -y nginx"  # use ansible.builtin.apt instead
+
+
+# BAD: Using shell without necessity
+- name: "Apply sysctl settings"
+  ansible.builtin.shell:
+    cmd: "sysctl --system"  # no shell features needed, use command
+
+
+# BAD: Using cmd string instead of argv list, missing quote filter for variables in cmd
+- name: "Run command with complex arguments"
+  ansible.builtin.command:
+    cmd: "myapp --config '/path/with spaces/config.yml' --name '{{ app_name }}'"  # injection risk!
+    # quoting is error-prone, use argv instead
+```
+
+
+**Reasoning:**
+
+* Dedicated Ansible modules are idempotent by design, provide better error handling, and integrate properly with Ansible's change detection and check mode.
+* [`ansible.builtin.command`](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/command_module.html) executes commands directly without a shell, avoiding shell injection vulnerabilities and unexpected shell interpretation.
+* [`ansible.builtin.shell`](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/shell_module.html) spawns a shell process, which is necessary for shell features but introduces security risks if variables are not properly quoted.
+* The `argv` attribute passes arguments directly to the executable without shell parsing, eliminating all quoting issues and making the command structure explicit.
+* The [`quote` filter](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/quote_filter.html) escapes special characters to prevent command injection when variables contain user-controlled or untrusted data.
 
 
 
