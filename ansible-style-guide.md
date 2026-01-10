@@ -650,6 +650,7 @@ Following the spacing rules produces consistent code that is easy to read.
 
 **You MUST NOT:**
 
+* Rely on the [`INJECT_FACTS_AS_VARS`](https://docs.ansible.com/ansible/latest/reference_appendices/config.html#inject-facts-as-vars) setting being enabled.
 * Use `ansible_<factname>` legacy variables (e.g., `ansible_distribution`) to access facts.
 
 
@@ -701,6 +702,7 @@ Following the spacing rules produces consistent code that is easy to read.
 * Fact gathering is slow and consumes resources. Disabling it globally with `gather_facts: false` is a legitimate optimization for administrators. Your code should not depend on externally defined behavior and should gather only the facts it needs.
 * Gathering only specific facts using `ansible.builtin.setup` with `gather_subset` makes roles more robust and faster, as they explicitly declare and load their dependencies.
 * The `ansible_<factname>` variables are legacy convenience variables. Using `ansible_facts['<factname>']` is the modern, explicit approach and makes it clear that you are accessing facts rather than regular variables.
+* Compatibility with `INJECT_FACTS_AS_VARS = false` ensures playbooks work regardless of the Ansible configuration.
 * The conditional `when: not (__used_facts is subset(ansible_facts.keys()))` ensures facts are only gathered if they are not already available, preventing redundant operations if another role or the playbook already gathered them.
 
 
@@ -730,6 +732,16 @@ Following the spacing rules produces consistent code that is easy to read.
 **Good examples:**
 
 ```yaml
+- name: "Using real booleans (no truthiness conversion involved)"
+  ansible.builtin.assert:
+    that:
+      - foo
+      - not bar
+  vars:
+    foo: true
+    bar: false
+
+
 - name: "Check if hostname is set"
   ansible.builtin.assert:
     that:
