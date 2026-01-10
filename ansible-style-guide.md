@@ -57,7 +57,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 **Good examples:**
 
 ```yaml
-# Connect to the host and checks for an Python installation. Show demo tasks.
+# Connect to the host and check for a Python installation. Show demo tasks.
 #
 # Example usage:
 #   ansible-playbook -e ping_data_return="pong" playbook.yml
@@ -203,11 +203,11 @@ Following the indentation rules produces consistent code that is easy to read.
 * Add at least one blank line between:
   * Two host blocks.
   * Host and include blocks.
-* Add at least two blank line between:
+* Add at least two blank lines between:
   * Two task blocks.
 * Use a single space to separate Jinja2 template markers from variable names or expressions.
 * Break up lengthy Jinja templates into multiple templates when they contain distinct logical sections.
-* Avoid Jinja templates for generating text and semi-structured data, not for creating structured data.
+* Use Jinja templates for generating text and semi-structured data, not for creating structured data.
 
 
 **Reasoning:**
@@ -358,7 +358,7 @@ Following the spacing rules produces consistent code that is easy to read.
   * [Ansible FAQ: "When should I use {{ }}? Also, how to interpolate variables or dynamic variable names"](https://docs.ansible.com/ansible/latest/reference_appendices/faq.html#when-should-i-use-also-how-to-interpolate-variables-or-dynamic-variable-names)
   * [Ansible Lint rule: `risky-octal`](https://ansible.readthedocs.io/projects/lint/rules/risky-octal/)
 * Further discussion:
-  * [Ansible Lint: add rule to prefer double quotes intead of single (like black) #584](https://github.com/ansible/ansible-lint/discussions/584)
+  * [Ansible Lint: add rule to prefer double quotes instead of single (like black) #584](https://github.com/ansible/ansible-lint/discussions/584)
   * [YAML: Do I need quotes for strings in YAML?](https://stackoverflow.com/questions/19109912/yaml-do-i-need-quotes-for-strings-in-yaml)
 
 
@@ -660,7 +660,7 @@ Following the spacing rules produces consistent code that is easy to read.
        * Arrange all other, optional module parameters in alphabetical order, unless doing so negatively impacts readability or logic.
      - `args`: If using the args syntax for complex module parameters.
      - `vars`: If using additional or inline variables to the module.
-     - `environment`: If settingenvironment variables for an action.
+     - `environment`: If setting environment variables for an action.
   2. Attributes defining when to run or fail, control attributes:
      - `when`
      - `changed_when`
@@ -895,7 +895,7 @@ Excerpt of the **most important rules**:
 * Headers should be written in sentence case. For example, this section's title is `Header case`, not `Header Case` or `HEADER CASE`.
 * [Stylistic cheat-sheet](https://docs.ansible.com/ansible/latest/dev_guide/style_guide/index.html#stylistic-cheat-sheet):
 
-  | Rule                  | Good Exmaple            | Bad Example                |
+  | Rule                  | Good Example            | Bad Example                |
   |-----------------------|-------------------------|----------------------------|
   | Use active voice      | You can run a task by   | A task can be run by       |
   | Use the present tense | This command creates a  | This command will create a |
