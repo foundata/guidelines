@@ -19,6 +19,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 * [Conditionals](#conditionals)
   * [Formatting](#conditionals-formatting)
 * [Tasks and play declaration](#tasks-plays)
+  * [Handlers](#handlers)
 * [Comments](#comments)
 * [Linting](#linting)
 * [Miscellaneous](#misc)
@@ -945,8 +946,9 @@ Following the spacing rules produces consistent code that is easy to read.
   4. Attributes defining how to process results:
      - `register`
      - `no_log`
-  5. Attributes defining what to do afterwards:
+  5. Attributes defining what to do afterwards or to get triggered by:
      - `notify`
+     - `listen`
   6. `tags`
 * Always use a list format for `when`, `changed_when`, and `failed_when`, even if there is only one condition.
 * If it is necessary to make task names dynamic, do so by appending `{{ variables }}` at the end of the string.
@@ -1095,6 +1097,108 @@ Following the spacing rules produces consistent code that is easy to read.
 * The reasoning of the [Ansible Lint rule: `key-order`](https://ansible.readthedocs.io/projects/lint/rules/key-order/#correct-code).
 * Further discussion:
   * [Ansible Lint: ansible lint should check order of tasks attributes for when and name #578](https://github.com/ansible/ansible-lint/issues/578). Many people at Red Hat place `when:` immediately after `name:`. This is a subjective choice and we think our approach of grouping it with other control attributes is logical and the `name:` as well as the module describe what is done *together* as a unit.
+
+
+
+### Handlers<a id="handlers"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+**You MUST:**
+
+* Use `listen` to trigger handlers instead of relying on the handler's `name`.
+* Always use list notation for `listen` values.
+* Use all lowercase for `listen` values.
+
+
+**You SHOULD:**
+
+* When refactoring existing code that uses different notation, add the old value as an alias with a comment for backwards compatibility.
+
+
+**Good examples:**
+
+```yaml
+# In handlers/main.yml
+- name: "Restart NGINX service"
+  ansible.builtin.service:
+    name: "nginx"
+    state: "restarted"
+  listen:
+    - "restart nginx"
+
+
+- name: "Reload NGINX configuration"
+  ansible.builtin.service:
+    name: "nginx"
+    state: "reloaded"
+  listen:
+    - "reload nginx"
+
+
+# Handler with backwards-compatible alias during refactoring
+- name: "Restart application service"
+  ansible.builtin.service:
+    name: "myapp"
+    state: "restarted"
+  listen:
+    - "restart myapp"
+    - "Restart MyApp"  # legacy alias, remove after full migration
+
+
+# In tasks/main.yml - triggering handlers via listen value
+- name: "Update NGINX configuration"
+  ansible.builtin.template:
+    src: "nginx.conf.j2"
+    dest: "/etc/nginx/nginx.conf"
+  notify:
+    - "reload nginx"
+```
+
+
+**Bad examples:**
+
+```yaml
+# BAD: Triggering handler by name instead of listen value
+- name: "Restart NGINX service"
+  ansible.builtin.service:
+    name: "nginx"
+    state: "restarted"
+  # no listen defined, relies on name matching
+
+# In tasks - triggering by handler name (fragile)
+- name: "Update NGINX configuration"
+  ansible.builtin.template:
+    src: "nginx.conf.j2"
+    dest: "/etc/nginx/nginx.conf"
+  notify:
+    - "Restart nginx service"  # coupled to handler's name
+
+
+# BAD: Non-list notation for listen
+- name: "Restart NGINX service"
+  ansible.builtin.service:
+    name: "nginx"
+    state: "restarted"
+  listen: "restart nginx"  # should be a list
+
+
+# BAD: Mixed case in listen value
+- name: "Restart NGINX service"
+  ansible.builtin.service:
+    name: "nginx"
+    state: "restarted"
+  listen:
+    - "Restart Nginx"  # should be all lowercase
+```
+
+
+**Reasoning:**
+
+* Handler names must be unique within a play, while multiple handlers can share the same `listen` value. This allows one notification to trigger multiple handlers.
+* Using `listen` decouples the trigger mechanism from the display name, making maintenance easier and allowing names to follow their own readability rules without affecting notification logic.
+* List notation signals that multiple trigger aliases are supported and maintains consistency with other list-based attributes.
+* Lowercase values prevent case-sensitivity issues and ensure consistent matching across the codebase.
 
 
 
