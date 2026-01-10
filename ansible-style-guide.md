@@ -15,6 +15,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 * [Booleans](#booleans)
 * [Maps (`key: value`)](#maps)
   * [Value retrieval: bracket notation](#value-retrieval)
+* [Facts](#facts)
 * [Tasks and play declaration](#tasks-plays)
 * [Comments](#comments)
 * [Linting](#linting)
@@ -632,7 +633,74 @@ Following the spacing rules produces consistent code that is easy to read.
 
 * Bracket notation makes it easier to distinguish between keys and attributes or methods of Python dictionaries. It also usually results in better editor highlighting.
 * Bracket notation allows for seamless use of variables as keys.
-* Dot notation can lead to issues because keys may collide with attributes or methods of Python dictionaries (e.g., `count`, `copy`, `title`, and others). Consistency is crucial, so it’s better to stick with bracket notation rather than switching between the two options within a playbook.
+* Dot notation can lead to issues because keys may collide with attributes or methods of Python dictionaries (e.g., `count`, `copy`, `title`, and others). Consistency is crucial, so it's better to stick with bracket notation rather than switching between the two options within a playbook.
+
+
+
+## Facts<a id="facts"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+**You MUST:**
+
+* Ensure roles and collections are compatible with playbooks using `gather_facts: false`.
+* Use the `ansible_facts` dictionary to access facts (e.g., `ansible_facts['distribution']`).
+
+
+**You MUST NOT:**
+
+* Use `ansible_<factname>` legacy variables (e.g., `ansible_distribution`) to access facts.
+
+
+**Good examples:**
+
+```yaml
+- name: "Init | Gather role-specific facts"
+  ansible.builtin.setup:
+    gather_subset: "{{ __used_facts }}"
+  vars:
+    __used_facts:
+      # from subset "distribution"
+      - "distribution"
+      - "distribution_major_version"
+      - "distribution_version"
+      - "os_family"
+      # from subset "virtual"
+      - "virtualization_role"
+      - "virtualization_type"
+  when:
+    - not (__used_facts is subset(ansible_facts.keys()))
+
+
+- name: "Debug | System introduction"
+  ansible.builtin.debug:
+    msg: >
+      Hello 👋
+      I am a {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }}
+      (major {{ ansible_facts['distribution_major_version'] }}) box from the {{ ansible_facts['os_family'] }} family.
+      I am running as a {{ ansible_facts['virtualization_role'] | default('bare-metal') }} on
+      {{ ansible_facts['virtualization_type'] | default('physical hardware') }}.
+```
+
+
+**Bad examples:**
+
+```yaml
+# BAD: Assumes gather_facts: true was run, uses legacy variable names
+- name: "Debug | System introduction"
+  ansible.builtin.debug:
+    msg: >
+      I am a {{ ansible_distribution }} {{ ansible_distribution_version }}
+      (major {{ ansible_distribution_major_version }}) box from the {{ ansible_os_family }} family.
+```
+
+
+**Reasoning:**
+
+* Fact gathering is slow and consumes resources. Disabling it globally with `gather_facts: false` is a legitimate optimization for administrators. Your code should not depend on externally defined behavior and should gather only the facts it needs.
+* Gathering only specific facts using `ansible.builtin.setup` with `gather_subset` makes roles more robust and faster, as they explicitly declare and load their dependencies.
+* The `ansible_<factname>` variables are legacy convenience variables. Using `ansible_facts['<factname>']` is the modern, explicit approach and makes it clear that you are accessing facts rather than regular variables.
+* The conditional `when: not (__used_facts is subset(ansible_facts.keys()))` ensures facts are only gathered if they are not already available, preventing redundant operations if another role or the playbook already gathered them.
 
 
 
@@ -876,7 +944,6 @@ Following the spacing rules produces consistent code that is easy to read.
 * When using the [`ansible.builtin.template`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/template_module.html) module, append `.j2` to the template file name for clarity and convention.
 * [Use tags with caution](https://redhat-cop.github.io/automation-good-practices/#_use_tags_cautiously_either_for_roles_or_for_complete_purposes).
 * [Use the verbosity parameter with debug statements](https://redhat-cop.github.io/automation-good-practices/#_use_the_verbosity_parameter_with_debug_statements).
-
 
 
 
