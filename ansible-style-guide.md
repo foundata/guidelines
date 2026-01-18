@@ -1253,7 +1253,11 @@ This section covers the use of [`ansible.builtin.command`](https://docs.ansible.
 * Use dedicated Ansible modules instead of shell commands when available (e.g., `ansible.builtin.apt` instead of `apt-get`, `ansible.builtin.file` instead of `mkdir`).
 * Prefer `ansible.builtin.command` over `ansible.builtin.shell` unless shell features (pipes, redirects, globbing, environment variable expansion) are required.
 * When using the `cmd` attribute with variables, apply the [`quote` filter](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/quote_filter.html) to prevent command injection: `{{ myvar | ansible.builtin.quote }}`
-* Include a comment explaining why `command` or `shell` is necessary instead of a dedicated module (see [Comments](#comments)).
+* Include a comment explaining why `command` or `shell` is necessary instead of a dedicated module (see [Comments](#comments)). Example:
+  ```
+  # The command or shell module is used intentionally:
+  # Ansible provides no dedicated module to perform this operation.
+  ```
 
 
 **You SHOULD:**
