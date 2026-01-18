@@ -18,6 +18,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 * [Facts](#facts)
 * [Conditionals](#conditionals)
   * [Formatting](#conditionals-formatting)
+* [Loops](#loops)
 * [Tasks and play declaration](#tasks-plays)
   * [Handlers](#handlers)
 * [External commands](#external-commands)
@@ -946,6 +947,70 @@ Following the spacing rules produces consistent code that is easy to read.
 
 
 
+## Loops<a id="loops"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+**You MUST:**
+
+* Use `loop` for iterating over simple lists and variables.
+* Migrate `with_*` constructs to loop if listed at "[Migrating from with_X to loop](https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_loops.html#migrating-from-with-x-to-loop)", especially `with_items` and `with_list`.
+
+
+**You SHOULD NOT:**
+
+* Convert `with_*` to `loop` statements that requires using `lookup()` within a `loop` to use the loop keyword.
+
+
+**Good examples:**
+
+```yaml
+# Simple list - use loop
+- name: "Install packages"
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: "present"
+  loop:
+    - "nginx"
+    - "curl"
+
+
+# Lookup-based - keep with_fileglob if there is no additional filtering needed
+- name: "Include cleanup tasks"
+  ansible.builtin.include_tasks:
+    file: "{{ item }}"
+  with_fileglob:
+    - "../tasks/cleanup/*.yml"
+
+
+# Lookup-based, but no with_fileglob as alphabetical order has to be guaranteed
+- name: "Include additional tasks from foo/ in alphabetical order"
+  ansible.builtin.include_tasks:
+    file: "{{ loop_item }}"
+  when:
+    - item is file
+  loop: "{{ lookup('fileglob', 'foo/*.yml', wantlist=True) | sort }}"
+```
+
+
+**Bad examples:**
+
+```yaml
+# BAD: Unnecessarily complex if file order does not matter - keep with_fileglob instead
+- name: "Include cleanup tasks"
+  ansible.builtin.include_tasks:
+    file: "{{ item }}"
+  loop: "{{ lookup('fileglob', '../tasks/cleanup/*.yml', wantlist=True) }}"
+```
+
+
+**Reasoning:**
+
+* [Ansible documentation: Comparing loops](https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_loops.html#comparing-loops)
+* The Ansible team has not deprecated `with_<lookup>` in general, the syntax remains valid. https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_loops.html#migrating-from-with-x-to-loop
+
+
+
 ## Tasks and play declaration<a id="tasks-plays"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
@@ -1506,8 +1571,7 @@ printf 'Changes applied\n'
 
 * Ansible Lint is an official project by the Ansible Core Team and is widely adopted. It can be run offline and provides a command-line tool for linting playbooks, helping to identify areas for potential improvement. Following its recommendations promotes consistent, high-quality code.
 * Ansible Lint automatically [runs `ansible-playbook --syntax-check`](https://ansible.readthedocs.io/projects/lint/rules/syntax-check/).
-* `with_*` deprecation is still [under discussion](https://github.com/ansible/ansible-lint/issues/2204).
-
+* The `with_<lookup>` syntax is not deprecated and remains valid. See the [Loops](#loops) section for when to use `with_*` vs `loop`. The ansible-lint behaviour is [still discussed](https://github.com/ansible/ansible-lint/issues/2204).
 
 
 ## Miscellaneous<a id="misc"></a>
