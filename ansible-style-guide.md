@@ -205,14 +205,14 @@ Following the indentation rules produces consistent code that is easy to read.
 
 **You SHOULD:**
 
-* Add at least one blank line between:
-  * Two host blocks.
-  * Host and include blocks.
-* Add at least two blank lines between:
-  * Two task blocks.
+* Add one blank line:
+  * After `pre_tasks:`, `tasks:`, `post_tasks:`, or `block:`
+  * Before and after the YAML `---` document separator
+  * At the end of a file
+* Add two blank lines:
+  * After each task block
 * Use a single space to separate Jinja2 template markers from variable names or expressions.
 * Break up lengthy Jinja templates into multiple templates when they contain distinct logical sections.
-* Use Jinja templates for generating text and semi-structured data, not for creating structured data.
 
 
 **Reasoning:**
@@ -223,26 +223,62 @@ Following the spacing rules produces consistent code that is easy to read.
 **Good examples:**
 
 ```yaml
-- name: "Set a variable"
-  ansible.builtin.set_fact:
-    foo: "{{ bar | default('baz') }}"
+
+---
+
+- name: "Molecule | Prepare"
+  hosts: "molecule"
+  gather_facts: false
+  pre_tasks:
+
+    - name: "Molecule | Prepare | Basic self-checks for the testing infrastructure"
+      block:
+
+        - name: "Molecule | Prepare | Fail if MOLECULE_SCENARIO_DIRECTORY is not set or empty"
+          ansible.builtin.fail:
+            msg: "MOLECULE_SCENARIO_DIRECTORY env var is not set or empty"
+          when:
+            - (lookup('env', 'MOLECULE_SCENARIO_DIRECTORY') | trim) | length == 0
+
+  task:
+
+    - name: "Set a variable"
+      ansible.builtin.set_fact:
+        foo: "{{ bar | default('baz') }}"
 
 
-- name: "Set another variable"
-  ansible.builtin.set_fact:
-    bar: "{{ baz | default('foo, barbaz') }}"
+    - name: "Set another variable"
+      ansible.builtin.set_fact:
+        bar: "{{ baz | default('foo, barbaz') }}"
 ```
 
 
 **Bad examples:**
 
 ```yaml
-- name: "Set a variable"
-    ansible.builtin.set_fact:
-        foo: "{{bar|default('baz')}}"
-- name: "Set another variable"
-    ansible.builtin.set_fact:
-        bar: "{{baz|default('foo,barbaz')}}"
+
+---
+- name: "Molecule | Prepare"
+  hosts: "molecule"
+  gather_facts: false
+
+
+  pre_tasks:
+    - name: "Molecule | Prepare | Basic self-checks for the testing infrastructure"
+      run_once: true # noqa: run-once[task]
+      block:
+        - name: "Molecule | Prepare | Fail if MOLECULE_SCENARIO_DIRECTORY is not set or empty"
+          ansible.builtin.fail:
+            msg: "MOLECULE_SCENARIO_DIRECTORY env var is not set or empty"
+          when:
+            - (lookup('env', 'MOLECULE_SCENARIO_DIRECTORY') | trim) | length == 0
+  task:
+    - name: "Set a variable"
+        ansible.builtin.set_fact:
+            foo: "{{bar|default('baz')}}"
+    - name: "Set another variable"
+        ansible.builtin.set_fact:
+            bar: "{{baz|default('foo,barbaz')}}"
 ```
 
 
@@ -967,6 +1003,7 @@ Following the spacing rules produces consistent code that is easy to read.
 
 ```yaml
 ---
+
 - name: "A cool playbook"
   hosts: "localhost"
   tasks:
@@ -1480,6 +1517,7 @@ printf 'Changes applied\n'
 * When using the [`ansible.builtin.template`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/template_module.html) module, append `.j2` to the template file name for clarity and convention.
 * [Use tags with caution](https://redhat-cop.github.io/automation-good-practices/#_use_tags_cautiously_either_for_roles_or_for_complete_purposes).
 * [Use the verbosity parameter with debug statements](https://redhat-cop.github.io/automation-good-practices/#_use_the_verbosity_parameter_with_debug_statements).
+* Use Jinja templates for generating text and semi-structured data, not for creating structured data.
 
 
 
