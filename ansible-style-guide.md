@@ -21,6 +21,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 * [Loops](#loops)
 * [Tasks and play declaration](#tasks-plays)
   * [Handlers](#handlers)
+  * [Roles](#roles)
 * [External commands](#external-commands)
   * [Scripts](#scripts)
 * [Comments](#comments)
@@ -108,8 +109,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
         - (ansible_distribution == 'CentOS' and ansible_distribution_version is version('8.0.0', '>=')) or
           (ansible_distribution == 'Debian' and ansible_distribution_major_version == '10')
       changed_when:
-        - __shutdown_result.rc is defined
-        - __shutdown_result.rc == 0
+        - __shutdown_result is success
       register: __shutdown_result
 
 
@@ -769,6 +769,11 @@ Following the spacing rules produces consistent code that is easy to read.
 * Accidentally quote sub-expressions within a conditional (the quoted part becomes a literal string and is always truthy).
 
 
+**You SHOULD:**
+
+* Use the [`success`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/success_test.html) and [`failed`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/failed_test.html) tests instead of comparing return codes directly (e.g., `['rc'] == 0` or `['rc'] != 0`).
+
+
 **Good examples:**
 
 ```yaml
@@ -808,6 +813,33 @@ Following the spacing rules produces consistent code that is easy to read.
     msg: "List has items"
   when:
     - my_list | length > 0
+
+
+# Using success/failed tests for return code checks
+- name: "Run a command and check result"
+  ansible.builtin.command:
+    argv:
+    - "/usr/bin/myapp"
+    - "--check"
+  changed_when:
+    - false
+  failed_when:
+    - false
+  register: __myapp_check_result
+
+
+- name: "Handle command result"
+  ansible.builtin.debug:
+    msg: "Command succeeded"
+  when:
+    - __myapp_check_result is success
+
+
+- name: "Handle command failure"
+  ansible.builtin.fail:
+    msg: "Command failed: {{ __myapp_check_result['stderr'] }}"
+  when:
+    - __myapp_check_result is failed
 ```
 
 
@@ -840,6 +872,21 @@ Following the spacing rules produces consistent code that is easy to read.
   ansible.builtin.assert:
     that:
       - inventory_hostname is contains "local" ~ "host"
+
+
+# BAD: Comparing return codes directly instead of using success/failed tests
+- name: "Handle command result"
+  ansible.builtin.debug:
+    msg: "Command succeeded"
+  when:
+    - __myapp_check_result['rc'] == 0  # use "is success" instead
+
+
+- name: "Handle command failure"
+  ansible.builtin.fail:
+    msg: "Command failed"
+  when:
+    - __myapp_check_result['rc'] != 0  # use "is failed" instead
 ```
 
 
@@ -849,6 +896,7 @@ Following the spacing rules produces consistent code that is easy to read.
 * Ansible 12 enforces boolean results for conditionals by default. Non-boolean results now [raise an error (like `Conditional result (<True|False>) was derived from value of type '<Type>'`)]((https://docs.ansible.com/ansible/latest/porting_guides/porting_guide_12.html#broken-conditionals)) instead of being silently evaluated as truthy.
 * Writing explicit boolean predicates makes the intent clear and prevents subtle bugs that are hard to diagnose.
 * YAML interprets unquoted strings containing `: ` as mappings. Since non-empty mappings are truthy, this silently breaks comparisons. Quoting the entire expression prevents this.
+* The `success` and `failed` tests are semantic, self-documenting, and work consistently across modules. They abstract the implementation detail of return codes, making conditionals more readable and resilient to future changes in how modules report status.
 
 
 
@@ -1007,7 +1055,7 @@ Following the spacing rules produces consistent code that is easy to read.
 **Reasoning:**
 
 * [Ansible documentation: Comparing loops](https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_loops.html#comparing-loops)
-* The Ansible team has not deprecated `with_<lookup>` in general, the syntax remains valid. https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_loops.html#migrating-from-with-x-to-loop
+* The Ansible team has not deprecated `with_<lookup>` in general (even though there [was](https://github.com/ansible/ansible/issues/51153#issuecomment-456219258) [discussion](https://github.com/ansible/ansible-lint/issues/2204#issue-1266269947)), the syntax remains valid.
 
 
 
@@ -1306,6 +1354,59 @@ Following the spacing rules produces consistent code that is easy to read.
 
 
 
+### Roles<a id="roles"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+**You MUST:**
+
+* Use [`meta/argument_specs.yml`](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_reuse_roles.html#specification-format) to describe role parameters.
+
+
+**Good examples:**
+
+```yaml
+# meta/argument_specs.yml
+---
+
+argument_specs:
+  main:
+    short_description: "Install and configure the example application, main entry point of the role"
+    description:
+      - "This role installs and configures the example application."
+      - "It supports Debian and RedHat-based systems."
+    author: "Your Name"
+    options:
+
+      example_version:
+        type: "str"
+        required: false
+        default: "latest"
+        description: "Version of the example application to install."
+
+      example_config_path:
+        type: "path"
+        required: false
+        default: "/etc/example/config.yml"
+        description: "Path to the configuration file."
+
+      example_enabled:
+        type: "bool"
+        required: false
+        default: true
+        description: "Whether to enable the example service."
+```
+
+
+**Reasoning:**
+
+* The `argument_specs.yml` file provides a standardized way to document role parameters, including types, defaults, and descriptions.
+* It enables automatic documentation generation using tools like [DocSmith for Ansible](https://github.com/foundata/ansible-docsmith).
+* Ansible uses this specification to validate role arguments at runtime, catching configuration errors early.
+* It serves as authoritative, machine-readable documentation that stays in sync with the actual role implementation.
+
+
+
 ## External commands<a id="external-commands"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
@@ -1586,6 +1687,7 @@ printf 'Changes applied\n'
 * [Use tags with caution](https://redhat-cop.github.io/automation-good-practices/#_use_tags_cautiously_either_for_roles_or_for_complete_purposes).
 * [Use the verbosity parameter with debug statements](https://redhat-cop.github.io/automation-good-practices/#_use_the_verbosity_parameter_with_debug_statements).
 * Use Jinja templates for generating text and semi-structured data, not for creating structured data.
+* Specify file permissions using symbolic notation with the octal equivalent as a trailing comment for clarity. Example: `mode: "u=rw,g=r,o=r" # 0644`. This improves readability by showing intent (who can do what) while preserving the familiar numeric representation for quick reference.
 
 
 
