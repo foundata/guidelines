@@ -94,8 +94,8 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
           sanctus est Lorem ipsum dolor sit amet.
       when:
         # when clause is a raw Jinja2 expression without double curly braces or quoting
-        - foo is not defined
-        - bar is not defined
+        - foo is not ansible.builtin.defined
+        - bar is not ansible.builtin.defined
 
 
     # Use parentheses and new lines to group conditions when it helps to understand the
@@ -104,12 +104,12 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
       ansible.builtin.command:
         cmd: "/sbin/shutdown -t now"
       when:
-        - ansible_distribution is defined
-        - ansible_distribution_major_version is defined
+        - ansible_distribution is ansible.builtin.defined
+        - ansible_distribution_major_version is ansible.builtin.defined
         - (ansible_distribution == 'CentOS' and ansible_distribution_version is version('8.0.0', '>=')) or
           (ansible_distribution == 'Debian' and ansible_distribution_major_version == '10')
       changed_when:
-        - __shutdown_result is success
+        - __shutdown_result is ansible.builtin.success
       register: __shutdown_result
 
 
@@ -137,7 +137,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
     - name: "Print a very long line"
       ansible.builtin.debug:
         msg: "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet."
-      when: foo is not defined and bar is not defined
+      when: foo is not ansible.builtin.defined and bar is not ansible.builtin.defined
 
 
     - name: "Include OS vars"
@@ -239,7 +239,7 @@ Following the spacing rules produces consistent code that is easy to read.
           ansible.builtin.fail:
             msg: "MOLECULE_SCENARIO_DIRECTORY env var is not set or empty"
           when:
-            - (lookup('env', 'MOLECULE_SCENARIO_DIRECTORY') | trim) | length == 0
+            - (lookup('env', 'MOLECULE_SCENARIO_DIRECTORY') | ansible.builtin.trim) | ansible.builtin.length == 0
 
   task:
 
@@ -272,7 +272,7 @@ Following the spacing rules produces consistent code that is easy to read.
           ansible.builtin.fail:
             msg: "MOLECULE_SCENARIO_DIRECTORY env var is not set or empty"
           when:
-            - (lookup('env', 'MOLECULE_SCENARIO_DIRECTORY') | trim) | length == 0
+            - (lookup('env', 'MOLECULE_SCENARIO_DIRECTORY') | ansible.builtin.trim) | ansible.builtin.length == 0
   task:
     - name: "Set a variable"
         ansible.builtin.set_fact:
@@ -411,6 +411,7 @@ Following the spacing rules produces consistent code that is easy to read.
 
 **You MUST:**
 
+* Use Fully Qualified Collection Names (FQCN) for all modules, plugins, tests, filters, and lookups (e.g., `ansible.builtin.copy` instead of `copy`).
 * Use [`snake_case`](https://en.wikipedia.org/wiki/Snake_case) for variables, roles, collections and modules.
 * Only use characters from the set `[a-z0-9_]`.
 * Start variable names with a letter or underscore.
@@ -474,6 +475,7 @@ Following the spacing rules produces consistent code that is easy to read.
 
 **Reasoning:**
 
+* Using FQCN prevents ambiguity when multiple collections provide modules with the same name, ensures consistent behavior across different Ansible configurations, and makes dependencies explicit. Ansible recommends FQCN as a best practice.
 * Ansible uses `snake_case` for module names and parameters. As this convention influences a wide range of playbooks, it is logical to extend it to variable names, even though they are not technically restricted to this format.
 * Names of plugins, roles, and most parts of Ansible must follow Python namespace rules, which disallow certain characters, such as hyphens  (`-`) or dots (`.`). See [StackOverflow](https://stackoverflow.com/a/37831973), [Galaxy Issue 775](https://github.com/ansible/galaxy/issues/775), and a [comment from Issue 779](https://github.com/ansible/galaxy/issues/779#issuecomment-401632750) for more information:
   > For that to work, namespaces need to be Python compatible, which means they can’t contain ‘-’.
@@ -755,9 +757,9 @@ Following the spacing rules produces consistent code that is easy to read.
 
 * Ensure all conditional expressions (`when`, `changed_when`, `failed_when`, `assert.that`) evaluate to actual boolean values, not truthy/falsy values.
 * Use explicit boolean predicates instead of relying on implicit truthiness:
-  * `myvar | length > 0` instead of just `myvar`
-  * `myvar is defined` for existence checks
-  * `myvar is truthy` or `myvar | bool` for explicit truthiness conversion
+  * `myvar | ansible.builtin.length > 0` instead of just `myvar`
+  * `myvar is ansible.builtin.defined` for existence checks
+  * `myvar is ansible.builtin.truthy` or `myvar | ansible.builtin.bool` for explicit truthiness conversion
   * `myvar == 'value'` for string comparisons
 * Quote conditional expressions containing `: ` (colon followed by space) to prevent YAML from parsing them as mappings.
 * Use parentheses to control Jinja2 order of operations when using operators like `~` (concatenation) with tests.
@@ -771,7 +773,7 @@ Following the spacing rules produces consistent code that is easy to read.
 
 **You SHOULD:**
 
-* Use the [`success`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/success_test.html) and [`failed`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/failed_test.html) tests instead of comparing return codes directly (e.g., `['rc'] == 0` or `['rc'] != 0`).
+* Use the [`ansible.builtin.success`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/success_test.html) and [`ansible.builtin.failed`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/failed_test.html) tests instead of comparing return codes directly (e.g., `['rc'] == 0` or `['rc'] != 0`).
 
 
 **Good examples:**
@@ -790,8 +792,8 @@ Following the spacing rules produces consistent code that is easy to read.
 - name: "Check if hostname is set"
   ansible.builtin.assert:
     that:
-      - inventory_hostname is defined
-      - inventory_hostname | length > 0
+      - inventory_hostname is ansible.builtin.defined
+      - inventory_hostname | ansible.builtin.length > 0
 
 
 - name: "Check message content"
@@ -805,14 +807,14 @@ Following the spacing rules produces consistent code that is easy to read.
   ansible.builtin.assert:
     that:
       # parentheses ensure concatenation happens before the test
-      - inventory_hostname is contains("local" ~ "host")
+      - inventory_hostname is ansible.builtin.contains("local" ~ "host")
 
 
 - name: "Run only if list is not empty"
   ansible.builtin.debug:
     msg: "List has items"
   when:
-    - my_list | length > 0
+    - my_list | ansible.builtin.length > 0
 
 
 # Using success/failed tests for return code checks
@@ -832,14 +834,14 @@ Following the spacing rules produces consistent code that is easy to read.
   ansible.builtin.debug:
     msg: "Command succeeded"
   when:
-    - __myapp_check_result is success
+    - __myapp_check_result is ansible.builtin.success
 
 
 - name: "Handle command failure"
   ansible.builtin.fail:
     msg: "Command failed: {{ __myapp_check_result['stderr'] }}"
   when:
-    - __myapp_check_result is failed
+    - __myapp_check_result is ansible.builtin.failed
 ```
 
 
@@ -853,11 +855,11 @@ Following the spacing rules produces consistent code that is easy to read.
       - inventory_hostname # this would be only valid if this variable would be a boolean
 
 
-# BAD: Second part is accidentally quoted, always evaluates to True
+# BAD: Second part is not a list item and accidentally quoted, always evaluates to True
 - name: "Check if hostname is valid"
   ansible.builtin.assert:
     that:
-      - inventory_hostname is defined and 'inventory_hostname | length > 0'
+      - inventory_hostname is ansible.builtin.defined and 'inventory_hostname | ansible.builtin.length > 0'
 
 
 # BAD: Unquoted colon+space is parsed as YAML mapping, always truthy
@@ -879,14 +881,14 @@ Following the spacing rules produces consistent code that is easy to read.
   ansible.builtin.debug:
     msg: "Command succeeded"
   when:
-    - __myapp_check_result['rc'] == 0  # use "is success" instead
+    - __myapp_check_result['rc'] == 0  # use "is ansible.builtin.success" instead
 
 
 - name: "Handle command failure"
   ansible.builtin.fail:
     msg: "Command failed"
   when:
-    - __myapp_check_result['rc'] != 0  # use "is failed" instead
+    - __myapp_check_result['rc'] != 0  # use "is ansible.builtin.failed" instead
 ```
 
 
@@ -927,9 +929,9 @@ Following the spacing rules produces consistent code that is easy to read.
   ansible.builtin.debug:
     msg: "Distribution info missing or no platforms defined"
   when:
-    - ansible_facts['distribution'] is not defined or
-      ansible_facts['distribution_version'] is not defined or
-      (foobar_meta['galaxy_info']['platforms'] | length) < 1
+    - ansible_facts['distribution'] is not ansible.builtin.defined or
+      ansible_facts['distribution_version'] is not ansible.builtin.defined or
+      (foobar_meta['galaxy_info']['platforms'] | ansible.builtin.length) < 1
 
 
 # Complex piped expressions with '|' at the beginning of continuation lines
@@ -937,15 +939,15 @@ Following the spacing rules produces consistent code that is easy to read.
   ansible.builtin.fail:
     msg: "Platform not supported"
   when:
-    - (foobar_meta['galaxy_info']['platforms'] | length) > 0
-    - ansible_facts['distribution'] is not defined or
-      ansible_facts['distribution_version'] is not defined or
-      (foobar_meta['galaxy_info']['platforms'] | length) < 1
+    - (foobar_meta['galaxy_info']['platforms'] | ansible.builtin.length) > 0
+    - ansible_facts['distribution'] is not ansible.builtin.defined or
+      ansible_facts['distribution_version'] is not ansible.builtin.defined or
+      (foobar_meta['galaxy_info']['platforms'] | ansible.builtin.length) < 1
     - (foobar_meta['galaxy_info']['platforms']
-       | selectattr('name', 'match', '^' ~ ansible_facts['distribution'] ~ '$')
-       | map(attribute='versions') | flatten
-       | select('match', '^(' ~ ansible_facts['distribution_version'] ~ '|all)$', ignorecase=true)
-       | list | length) < 1
+       | ansible.builtin.selectattr('name', 'match', '^' ~ ansible_facts['distribution'] ~ '$')
+       | ansible.builtin.map(attribute='versions') | ansible.builtin.flatten
+       | ansible.builtin.select('match', '^(' ~ ansible_facts['distribution_version'] ~ '|all)$', ignorecase=true)
+       | ansible.builtin.list | ansible.builtin.length) < 1
 
 
 # Multiple 'and' conditions as separate list entries
@@ -967,7 +969,7 @@ Following the spacing rules produces consistent code that is easy to read.
   ansible.builtin.assert:
     that:
       - ansible_version['full'] is version(foobar_meta['galaxy_info']['min_ansible_version'], "<")
-  when: ansible_facts['distribution'] is defined
+  when: ansible_facts['distribution'] is ansible.builtin.defined
 
 
 # BAD: Chaining 'and' in a single line instead of separate list entries
@@ -982,8 +984,8 @@ Following the spacing rules produces consistent code that is easy to read.
   ansible.builtin.fail:
     msg: "Platform not supported"
   when:
-    - (foobar_meta['galaxy_info']['platforms'] | selectattr('name', 'match', '^' ~ ansible_facts['distribution'] ~ '$') |
-       map(attribute='versions') | flatten | list | length) < 1
+    - (foobar_meta['galaxy_info']['platforms'] | ansible.builtin.selectattr('name', 'match', '^' ~ ansible_facts['distribution'] ~ '$') |
+       map(attribute='versions') | ansible.builtin.flatten | ansible.builtin.list | ansible.builtin.length) < 1
 ```
 
 
@@ -1154,9 +1156,9 @@ Following the spacing rules produces consistent code that is easy to read.
               Host: {{ result.item }} - {{ result.stdout_lines | default(['No output']) | join(', ') }}
               {% endfor %}
           when:
-            - __basicinfo_result is defined
-            - __basicinfo_result.results is defined
-            - __basicinfo_result.results[0].stdout_lines is defined
+            - __basicinfo_result is ansible.builtin.defined
+            - __basicinfo_result.results is ansible.builtin.defined
+            - __basicinfo_result.results[0].stdout_lines is ansible.builtin.defined
           run_once: true
 
 
@@ -1462,7 +1464,7 @@ This section covers the use of [`ansible.builtin.command`](https://docs.ansible.
       - "migrate"
       - "--database={{ database_name }}"  # argv doesn't need quote filter - no shell parsing involved
   changed_when:
-    - __migration_result is success
+    - __migration_result is ansible.builtin.success
     - "'No migrations to apply' not in __migration_result['stdout']"
   register: __migration_result
 
@@ -1575,7 +1577,7 @@ This subsection covers shell scripts used with Ansible, including inline scripts
     cmd: "files/scripts/migrate_data.sh {{ source_dir | ansible.builtin.quote }} {{ dest_dir | ansible.builtin.quote }}"
     executable: "/bin/bash"
   changed_when:
-    - __migration_result is success
+    - __migration_result is ansible.builtin.success
     - "'Changes applied' in __migration_result['stdout']"
   register: __migration_result
 ```
