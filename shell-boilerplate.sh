@@ -5,10 +5,21 @@
 # SPDX-FileCopyrightText: 2026, foundata GmbH (https://foundata.com)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# --- BOILERPLATE START v1.0.0 ---
+# --- BOILERPLATE START v1.1.0 ---
 # Consistent environment for predictable tool and shell behavior
 export PATH="${PATH:-'/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin'}"
-export LC_ALL='en_US.UTF-8'
+if command -v locale >/dev/null 2>&1; then
+  for locale_candidate in 'C.UTF-8' 'C.utf8' 'en_US.UTF-8' 'UTF-8' 'C'; do
+    if LC_ALL="${locale_candidate}" locale charmap >/dev/null 2>&1; then
+      export LC_ALL="${locale_candidate}"
+      break
+    fi
+  done
+else
+  export LC_ALL='C'
+fi
+readonly LC_ALL
+unset locale_candidate
 set -u                                                      # no uninitialized vars
 set -o 2>/dev/null | grep -Fq 'pipefail' && set +o pipefail # disable, non-POSIX
 
@@ -181,7 +192,7 @@ ensure() {
 
 # Convenience wrappers (see the used functions for documentation)
 require_cmd() { check_cmd -r "$@"; }
-# --- BOILERPLATE END v1.0.0 ---
+# --- BOILERPLATE END v1.1.0 ---
 
 ###### FIXME additional /optional but often useful boilerplate follow
 

@@ -1162,9 +1162,19 @@ get_config_dir() {
 **You SHOULD:**
 
 - Use only POSIX-defined utilities and their POSIX-defined options when possible.
-- Set `LC_ALL` to get predictable behavior:
+- Set `LC_ALL` to a locale that actually exists on the target system. Prefer a
+  UTF-8 locale, but fall back to `C` if none is available:
   ```sh
-  export LC_ALL='en_US.UTF-8'
+  if command -v locale >/dev/null 2>&1; then
+    for locale_candidate in 'C.UTF-8' 'C.utf8' 'en_US.UTF-8' 'UTF-8' 'C'; do
+      if LC_ALL="${locale_candidate}" locale charmap >/dev/null 2>&1; then
+        export LC_ALL="${locale_candidate}"
+        break
+      fi
+    done
+  else
+    export LC_ALL='C'
+  fi
   ```
   Do so until your script explicitly has to follow a system's localization.
 - Set a [`PATH`](https://en.wikipedia.org/wiki/PATH_(variable)) fallback:
@@ -1202,6 +1212,8 @@ get_config_dir() {
   done
   ```
 - Setting `LC_ALL` ensures predictable sorting, character classification, and text processing. Without explicit [locale](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/locale.html) settings, script behavior may vary between systems. `LC_ALL` overrides all other locale variables (`LANG` and individual `LC_*` settings), so it alone is sufficient.
+- Hard-coding `en_US.UTF-8` is fragile on minimal containers and embedded systems because that locale is often not generated there. Probing for a working locale avoids noisy warnings such as `setlocale: LC_ALL: cannot change locale`.
+- `C.UTF-8` is commonly available on modern minimal systems and keeps Unicode handling predictable. Falling back to plain `C` still gives deterministic byte-oriented behavior when no UTF-8 locale exists.
 - The `pipefail` option is a Bash extension not defined by POSIX. Scripts relying on it will fail or behave unexpectedly on POSIX shells like `dash` or `ash`. For portable error handling in pipelines, check exit statuses explicitly or use temporary files.
 
 
@@ -1262,7 +1274,7 @@ The [`shell-boilerplate.sh`](./shell-boilerplate.sh) file provides a starting po
 
 The code between the `--- BOILERPLATE START|END v<version> ---` markers is designed as a minimal inline library to be used across all our scripts. It provides:
 
-- Consistent environment setup (`PATH` fallback, `LC_ALL`, `set -u`, `pipefail` disabled).
+- Consistent environment setup (`PATH` fallback, locale probe with `LC_ALL` fallback, `set -u`, `pipefail` disabled).
 - ANSI formatting codes respecting [`NO_COLOR`](https://no-color.org/).
 - `msg()` for formatted output (errors, warnings, success, info, debug) with optional timestamps.
 - `check_cmd()` and `require_cmd()` for checking command availability.
