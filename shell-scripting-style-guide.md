@@ -124,11 +124,11 @@ Shell scripting is a *portable* tool when following some rules, but it is not su
 
 **You MUST:**
 
-- Use [UTF-8 encoding](https://en.wikipedia.org/wiki/UTF-8) without a [Byte Order Mark (BOM)](https://en.wikipedia.org/wiki/Byte_order_mark).
+- Use [UTF-8 encoding](https://en.wikipedia.org/wiki/UTF-8). Do not use a [Byte Order Mark (BOM)](https://en.wikipedia.org/wiki/Byte_order_mark).
 - Use Unix line endings (LF, `\n`). Do not use Windows (CRLF) or old Mac (CR) line endings.
 - End files with a single trailing newline.
 - Trim trailing whitespace from lines.
-- Never use [SUID or SGID permissions](https://en.wikipedia.org/wiki/Setuid) on shell scripts (security risk). Use `sudo` to provide elevated access if needed.
+- Never use [SUID or SGID permissions](https://en.wikipedia.org/wiki/Setuid) on shell scripts. Use `sudo` to provide elevated access if needed.
 
 
 **Reasoning:**
