@@ -544,9 +544,9 @@ Following the spacing rules produces consistent code that is easy to read.
 
 - name: "Create filter.d directory for easier fail2ban extension"
   ansible.builtin.file:
+    owner: "fail2ban"
     group: "fail2ban"
     mode: "0755"
-    owner: "fail2ban"
     path: "/etc/fail2ban/filter.d"
     state: "directory"
 
@@ -569,7 +569,7 @@ Following the spacing rules produces consistent code that is easy to read.
 
 
 - name: "Create filter.d directory for easier fail2ban extension"
-  ansible.builtin.file: "path:=/etc/fail2ban/filter.d state=directory group=fail2ban mode=0755 owner=fail2ban"
+  ansible.builtin.file: "path:=/etc/fail2ban/filter.d state=directory owner=fail2ban group=fail2ban mode=0755"
 
 
 - name: "Copy sshd.conf to /etc/fail2ban/filter.d/"
@@ -765,7 +765,7 @@ Following the spacing rules produces consistent code that is easy to read.
 * Use parentheses to control Jinja2 order of operations when using operators like `~` (concatenation) with tests.
 
 
-**You MUST NOT:**
+**You MUST NOT:**:
 
 * Rely on implicit truthy evaluation of strings, lists, or dictionaries.
 * Accidentally quote sub-expressions within a conditional (the quoted part becomes a literal string and is always truthy).
@@ -821,8 +821,8 @@ Following the spacing rules produces consistent code that is easy to read.
 - name: "Run a command and check result"
   ansible.builtin.command:
     argv:
-    - "/usr/bin/myapp"
-    - "--check"
+      - "/usr/bin/myapp"
+      - "--check"
   changed_when:
     - false
   failed_when:
@@ -1082,6 +1082,7 @@ Following the spacing rules produces consistent code that is easy to read.
      - `become`
      - `module`: The actual action.
        * Place primary, mandatory module parameters (e.g., `name`, `state`, `path`) directly under the module name for clarity.
+       * Place `owner`, `group` and `mode` together (in this order).
        * Arrange all other, optional module parameters in alphabetical order, unless doing so negatively impacts readability or logic.
      - `args`: If using the args syntax for complex module parameters.
      - `vars`: If using additional or inline variables to the module.
