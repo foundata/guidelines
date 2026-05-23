@@ -5,7 +5,7 @@
 # SPDX-FileCopyrightText: 2026, foundata GmbH (https://foundata.com)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# --- BOILERPLATE START v1.1.0 ---
+# --- BOILERPLATE START v1.1.1 ---
 # Consistent environment for predictable tool and shell behavior
 export PATH="${PATH:-'/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin'}"
 if command -v locale >/dev/null 2>&1; then
@@ -20,15 +20,15 @@ else
 fi
 readonly LC_ALL
 unset locale_candidate
-set -u                                                      # no uninitialized vars
-set -o 2>/dev/null | grep -Fq 'pipefail' && set +o pipefail # disable, non-POSIX
+set -u                                                      # no uninitialized variables
+set -o 2>/dev/null | grep -Fq 'pipefail' && set +o pipefail # disable pipefail as it's non-POSIX
 
-# Config msg() messages (override via environment or inline where needed)
+# Configure msg() messages (override via environment or inline where needed)
 : "${DEBUG:=0}"          # 0: No debug messages. 1: Print debug messages.
-: "${MSG_TIMESTAMP:=0}"  # 0: No timestamp (TS) prefix 1: Unix TS. 2: ISO TS
-: "${MSG_SCRIPTNAME:=0}" # 0: No scriptname prefix. 1: Enable scriptname prefix
+: "${MSG_TIMESTAMP:=0}"  # 0: No timestamp (TS) prefix. 1: Unix TS. 2: ISO TS.
+: "${MSG_SCRIPTNAME:=0}" # 0: No script name prefix. 1: Enable script name prefix
 
-# Formatting codes (ANSI if STDOUT is TTY and NO_COLOR empty; empty otherwise)
+# Formatting codes (ANSI if STDOUT is TTY and NO_COLOR is empty; empty otherwise)
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
   x1b=$(printf '\033') # escape byte (0x1b) (shown as ^[ in most editors)
   # terminfo|termcap comments for reference; alternative for ancient systems:
@@ -45,7 +45,7 @@ if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
 else
   FMT_RESET='' FMT_BOLD='' FMT_UL='' FMT_SO='' FMT_RED='' FMT_GREEN='' FMT_YELLOW='' FMT_BLUE=''
 fi
-# shellcheck disable=SC2034 # boilerplate vars, needed "on stockpile"
+# shellcheck disable=SC2034 # boilerplate variables, needed but may be unused
 readonly FMT_RESET FMT_BOLD FMT_UL FMT_SO FMT_RED FMT_GREEN FMT_YELLOW FMT_BLUE
 
 ###
@@ -58,7 +58,7 @@ readonly FMT_RESET FMT_BOLD FMT_UL FMT_SO FMT_RED FMT_GREEN FMT_YELLOW FMT_BLUE
 #   -d, --debug     Print debug message (standout) to STDOUT (only if DEBUG=1).
 # Globals:
 #   DEBUG          - If 0, suppresses -d/--debug messages.
-#   MSG_TIMESTAMP  - 1: Enable unix timestamp as prefix.
+#   MSG_TIMESTAMP  - 1: Enable Unix timestamp as prefix.
 #                    2: Enable ISO timestamp as prefix.
 #   MSG_SCRIPTNAME - 1: Enable script name as prefix.
 # Arguments:
@@ -94,7 +94,7 @@ msg() {
   esac && shift
   case "${MSG_TIMESTAMP:-0}" in
     '1') _msg_prefix="[$(date '+%s')] " ;;                  # non-POSIX but widely available: %s
-    '2') _msg_prefix="[$(date '+%Y-%m-%dT%H:%M:%S%z')] " ;; # non-POSIX but widely available: z
+    '2') _msg_prefix="[$(date '+%Y-%m-%dT%H:%M:%S%z')] " ;; # non-POSIX but widely available: %z
     *) ;;
   esac
   case "${MSG_SCRIPTNAME:-0}" in
@@ -124,7 +124,7 @@ _TRAP_STACK=''
 trap_stack() {
   case "${1:-}" in
     'push')
-      # linebreak is needed (stack delimiter)
+      # line break is needed (stack delimiter)
       _TRAP_STACK="${2:?Command required}${_TRAP_STACK:+
 ${_TRAP_STACK}}"
       trap 'trap_stack run' EXIT
@@ -178,7 +178,7 @@ check_cmd() {
 #   Error message to STDERR on failure.
 # Returns:
 #   0 on success.
-#   >0 (the original exitcode of the command) on failure.
+#   >0 (the original exit code of the command) on failure.
 ensure() {
   local exit_code
   "$@"
@@ -192,9 +192,9 @@ ensure() {
 
 # Convenience wrappers (see the used functions for documentation)
 require_cmd() { check_cmd -r "$@"; }
-# --- BOILERPLATE END v1.1.0 ---
+# --- BOILERPLATE END v1.1.1 ---
 
-###### FIXME additional /optional but often useful boilerplate follow
+###### FIXME Optional but often useful boilerplate follows.
 
 ###
 # Parse command line arguments.
@@ -209,16 +209,16 @@ parse_args() {
   opt_bar='0'
   opt_foo=''
 
-  # getopts format string: '^:' silence STDERR, 'x:' needs value, 'x' is a flag
+  # Leading ':' silences STDERR, 'x:' needs value, 'x' is a flag.
   OPTIND='1' OPTARG='' OPT=''
   while getopts ':bf:h' OPT; do
     case "${OPT}" in
-      # FIXME short desc of the flag
+      # FIXME short description of the flag
       'b')
         opt_bar='1'
         ;;
 
-      # FIXME short desc of the parameter
+      # FIXME short description of the parameter
       'f')
         opt_foo="${OPTARG}"
         if ! printf '%s' "${opt_foo}" | grep -E -q -e '^[[:digit:]]*$'; then
@@ -230,7 +230,7 @@ parse_args() {
       # show help
       'h')
         filename="${0##*/}"
-        # <<- allows tab-indentation (stripped by the shell; no spaces). The
+        # <<- allows tab indentation (stripped by the shell; no spaces). The
         # text is left unindented to avoid formatter/linter issues with mixed
         # tabs and spaces as content uses spaces for mandoc/groff formatting.
         mantext="$(
@@ -255,10 +255,10 @@ amet, consetetur.
 .SH OPTIONS
 .TP
 .B -b
-FIXME Long desc of the flag "-b".
+FIXME Long description of the flag "-b".
 .TP
 .B -f foo
-FIXME Long desc of parameter "-f".
+FIXME Long description of parameter "-f".
 .TP
 .B -h
 Print this help.
@@ -270,9 +270,8 @@ This program uses the following environment variables:
 Allows the specification of a default value for FIXME.
 
 .SH EXIT STATUS
-This program returns an exit status of zero if it succeeds. Non zero
-is returned in case of failure. 2 will be returned for command line
-syntax errors (e.g. usage of an unknown option).
+This program returns 0 if it succeeds. It returns a nonzero status on failure
+and 2 for command-line syntax errors (e.g. usage of an unknown option).
 
 .SH AUTHOR
 John "FIXME" Doe <john@example.com>
