@@ -8,6 +8,7 @@ This repository collects recommendations and rules [foundata](https://foundata.c
 Topics (in alphabetical order):
 * [Ansible](#ansible)
 * [Git](#git)
+* [PowerShell scripting](#powershell-scripting)
 * [Shell scripting](#shell-scripting)
 * [Licensing](#licensing)
 
@@ -38,6 +39,13 @@ Resources on how to work with, maintain and host Git repositories.
 
 * [How to name Git repositories (`git-repository-naming.md`)](./git-repository-naming.md)
 * [`gitignore` configuration (`git-gitignore.md`)](./git-gitignore.md)
+
+
+## PowerShell Scripting<a id="powershell-scripting"></a>
+
+Resources on how to develop and maintain PowerShell scripts:
+
+* [PowerShell style guide (`powershell-style-guide.md`)](./powershell-style-guide.md)
 
 
 ## Shell Scripting<a id="shell-scripting"></a>
