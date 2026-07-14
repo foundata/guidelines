@@ -12,6 +12,7 @@ The `gitignore` config is used to specify intentionally untracked files. There a
 - [Ecosystem-specific `.gitignore` additions](#gitignore-ecosystem-specific)
   - [Ansible](#type-ansible)
   - [Django](#type-django)
+  - [Go](#type-go)
   - [Hugo](#type-hugo)
 
 
@@ -94,6 +95,18 @@ For Django-based projects, it is recommended to extend [our default `.gitignore`
 - `django`
 
 URL: <https://www.toptal.com/developers/gitignore/api/git,vim,linux,macos,windows,jetbrains+all,visualstudiocode,python,django>
+
+
+
+#### Go<a id="type-go"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+For Go-based projects, it is recommended to extend [our default `.gitignore`](#gitignore-file-default) with the following templates:
+
+- `go`
+
+URL: <https://www.toptal.com/developers/gitignore/api/git,vim,linux,macos,windows,jetbrains+all,visualstudiocode,go>
 
 
 
