@@ -6,13 +6,13 @@ The `gitignore` config is used to specify intentionally untracked files. There a
 
 ## Table of contents
 
-* [Default starting point for a repository's `.gitignore`](#gitignore-file-default)
-  * [Reasoning](#gitignore-file-default-reasoning)
-* [Repository-specific files to ignore](#gitignore-repository-specific)
-* [Ecosystem-specific `.gitignore` additions](#gitignore-ecosystem-specific)
-  * [Ansible](#type-ansible)
-  * [Django](#type-django)
-  * [Hugo](#type-hugo)
+- [Default starting point for a repository's `.gitignore`](#gitignore-file-default)
+  - [Reasoning](#gitignore-file-default-reasoning)
+- [Repository-specific files to ignore](#gitignore-repository-specific)
+- [Ecosystem-specific `.gitignore` additions](#gitignore-ecosystem-specific)
+  - [Ansible](#type-ansible)
+  - [Django](#type-django)
+  - [Hugo](#type-hugo)
 
 
 
@@ -35,13 +35,13 @@ Every developer is primarily responsible for avoiding the inclusion of unwanted 
 
 After reviewing development environments within our organization and among our peers, we have decided to ignore likely unwanted files from the following components by default:
 
-* [Git](https://git-scm.com/)
-* Linux and common tools (e.g., [Thunar](https://docs.xfce.org/xfce/thunar/start), [Nautilus](https://apps.gnome.org/Nautilus/))
-* macOS and common tools (e.g., [Finder](https://en.wikipedia.org/wiki/Finder_(software)))
-* Microsoft Windows and common tools (e.g., File Explorer)
-* [Vim](https://www.vim.org/)
-* [Microsoft Visual Studio Code](https://code.visualstudio.com/)
-* [JetBrains Toolset (complete suite / all IDEs)](https://www.jetbrains.com/products)
+- [Git](https://git-scm.com/)
+- Linux and common tools (e.g., [Thunar](https://docs.xfce.org/xfce/thunar/start), [Nautilus](https://apps.gnome.org/Nautilus/))
+- macOS and common tools (e.g., [Finder](https://en.wikipedia.org/wiki/Finder_(software)))
+- Microsoft Windows and common tools (e.g., File Explorer)
+- [Vim](https://www.vim.org/)
+- [Microsoft Visual Studio Code](https://code.visualstudio.com/)
+- [JetBrains Toolset (complete suite / all IDEs)](https://www.jetbrains.com/products)
 
 
 
@@ -55,7 +55,8 @@ Add repository-specific excludes below the end of the Toptal templates:
 # End of https://www.toptal.com/developers/gitignore[...]
 
 ### Repository-specific files
-...
+
+[... # none right now ...]
 ```
 
 Use this section **only for files that are *not* covered by Toptal's general-purpose templates**.
@@ -76,8 +77,8 @@ Extend the `.gitignore` file as needed for your project, based on the tools you 
 
 For Ansible-based projects (including roles and collections), it is recommended to extend [our default `.gitignore`](#gitignore-file-default) with the following templates:
 
-* `python`
-* `ansible`
+- `python`
+- `ansible`
 
 URL: <https://www.toptal.com/developers/gitignore/api/git,vim,linux,macos,windows,jetbrains+all,visualstudiocode,python,ansible>
 
@@ -89,8 +90,8 @@ URL: <https://www.toptal.com/developers/gitignore/api/git,vim,linux,macos,window
 
 For Django-based projects, it is recommended to extend [our default `.gitignore`](#gitignore-file-default) with the following templates:
 
-* `python`
-* `django`
+- `python`
+- `django`
 
 URL: <https://www.toptal.com/developers/gitignore/api/git,vim,linux,macos,windows,jetbrains+all,visualstudiocode,python,django>
 
@@ -102,8 +103,7 @@ URL: <https://www.toptal.com/developers/gitignore/api/git,vim,linux,macos,window
 
 For Hugo-based projects (content as well as templates), it is recommended to extend [our default `.gitignore`](#gitignore-file-default) with the following templates:
 
-* `node` (because we usually use [Tailwind CSS](https://tailwindcss.com/) for template development)
-* `hugo`
+- `node` (because we usually use [Tailwind CSS](https://tailwindcss.com/) for template development)
+- `hugo`
 
 URL: <https://www.toptal.com/developers/gitignore/api/git,vim,linux,macos,windows,jetbrains+all,visualstudiocode,node,hugo>
-
