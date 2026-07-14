@@ -5,30 +5,30 @@ MUST, SHOULD and other key words are used as defined in [RFC 2119](https://datat
 
 ## Table of contents
 
-* [General rules](#general-rules)
-* [Semantic naming schema](#semantic-naming-schema)
-  * [Explanation](#explanation)
-    * [`<prefix>`](#explanation-prefix)
-    * [`<category>`](#explanation-category)
-    * [`<resource-name>`](#explanation-resource)
-  * [Edge cases](#edge-cases)
-    * [Duplication](#duplication)
-* [Stand-alone projects](#stand-alone-projects)
-  * [Reasoning](#stand-alone-projects-reasoning)
-* [AI-related repositories](#ai-repositories)
-  * [AI categories](#ai-categories)
-    * [AI harness-locked variants](#ai-harness-variants)
+- [General rules](#general-rules)
+- [Semantic naming schema](#semantic-naming-schema)
+  - [Explanation](#explanation)
+    - [`<prefix>`](#explanation-prefix)
+    - [`<category>`](#explanation-category)
+    - [`<resource-name>`](#explanation-resource)
+  - [Edge cases](#edge-cases)
+    - [Duplication](#duplication)
+- [Stand-alone projects](#stand-alone-projects)
+  - [Reasoning](#stand-alone-projects-reasoning)
+- [AI-related repositories](#ai-repositories)
+  - [AI categories](#ai-categories)
+    - [AI harness-locked variants](#ai-harness-variants)
 
 
 ## General rules<a id="general-rules"></a>
 
 A repository name
 
-* MUST start with a letter or number.
-* MUST NOT contain any whitespace character.
-* MUST use the dash `-` as the delimiter for name parts.
-* SHOULD only contain lowercase letters (`a-z`), numbers (`0-9`)
-  * The characters `.`, and `_` are deprecated
+- MUST start with a letter or number.
+- MUST NOT contain any whitespace character.
+- MUST use the dash `-` as the delimiter for name parts.
+- SHOULD only contain lowercase letters (`a-z`), numbers (`0-9`)
+  - The characters `.`, and `_` are deprecated
 
 
 ## Semantic naming schema<a id="semantic-naming-schema"></a>
@@ -41,40 +41,40 @@ There is probably information to be included in the repository name itself. Addi
 
 ### Examples
 
-* `roundcube-plugin-foo`
-* `roundcube-plugin-bar-baz`
-* `dokuwiki-template-vector`
-* `chocolatey-extension-usewindow` (cf. note about [duplications](#duplication))
-* `ansible-role-http`
-* `ansible-collection-acme`
+- `roundcube-plugin-foo`
+- `roundcube-plugin-bar-baz`
+- `dokuwiki-template-vector`
+- `chocolatey-extension-usewindow` (cf. note about [duplications](#duplication))
+- `ansible-role-http`
+- `ansible-collection-acme`
 
 
 ### Explanation<a id="explanation"></a>
 
 #### `<prefix>`<a id="explanation-prefix"></a>
 
-* For easy filtering and grouping of repositories belonging to a certain ecosystem or language.
-* Only lowerchase characters `[a-z]` and numbers `[0-9]` allowed.
-* Optional as there might be no senseful prefix or ecosystem. This is often the case for non-programming in-house repositories like [`guidelines`](./README.md).
-* Examples: `ansible`, `proxmox`, `python`, `roundcube`.
+- For easy filtering and grouping of repositories belonging to a certain ecosystem or language.
+- Only lowerchase characters `[a-z]` and numbers `[0-9]` allowed.
+- Optional as there might be no senseful prefix or ecosystem. This is often the case for non-programming in-house repositories like [`guidelines`](./README.md).
+- Examples: `ansible`, `proxmox`, `python`, `roundcube`.
 
 
 #### `<category>`<a id="explanation-category"></a>
 
-* An optional category, specific to a certain ecosystem.
-* Only lowerchase characters `[a-z]` and numbers `[0-9]` allowed.
-* Optional if there is no senseful category. This is often the case if there is only one kind of resource in a ecosystem.
-* Examples: `plugin`, `skin`, `template`, `role`, `collection`
+- An optional category, specific to a certain ecosystem.
+- Only lowerchase characters `[a-z]` and numbers `[0-9]` allowed.
+- Optional if there is no senseful category. This is often the case if there is only one kind of resource in a ecosystem.
+- Examples: `plugin`, `skin`, `template`, `role`, `collection`
 
 
 #### `<resource>`:<a id="explanation-resource"></a>
 
-* Mandatory, unique core part of the repository name.
-* Only lowerchase characters `[a-z]`, numbers `[0-9]` and additional `-` as word separator allowed.
-* If there is an obvious name within a certain ecosystem (e.g. an upstream package ID), use it in a sanitized way:
-  * Replace uppercase with lowercase characters
-  * Replace `_` with `-`
-* If there is no obvious ID to be used you are free to choose one following the same rules.
+- Mandatory, unique core part of the repository name.
+- Only lowerchase characters `[a-z]`, numbers `[0-9]` and additional `-` as word separator allowed.
+- If there is an obvious name within a certain ecosystem (e.g. an upstream package ID), use it in a sanitized way:
+  - Replace uppercase with lowercase characters
+  - Replace `_` with `-`
+- If there is no obvious ID to be used you are free to choose one following the same rules.
 
 
 ### Edge cases<a id="edge-cases"></a>
@@ -85,8 +85,8 @@ If a `<prefix>` or `<category>` is also a common part of `<resource>` and this l
 
 Examples:
 
-* If we would maintain the `ansible-lint` package, we would name the repository `ansible-lint` instead of `ansible-ansible-lint`.
-* The `usewindow.extension` repository for Chocolatey is named `chocolatey-extension-usewindow` instead of `chocolatey-extension-usewindow-extension`.
+- If we would maintain the `ansible-lint` package, we would name the repository `ansible-lint` instead of `ansible-ansible-lint`.
+- The `usewindow.extension` repository for Chocolatey is named `chocolatey-extension-usewindow` instead of `chocolatey-extension-usewindow-extension`.
 
 
 ## Stand-alone projects<a id="stand-alone-projects"></a>
@@ -97,17 +97,17 @@ Programming languages, operating systems, protocols, frameworks and other implem
 
 Examples:
 
-* ScanMole, a Python application for Linux: `scanmole`
-* DAVable, a Go CalDAV and CardDAV server with a Python test suite: `davable`
+- ScanMole, a Python application for Linux: `scanmole`
+- DAVable, a Go CalDAV and CardDAV server with a Python test suite: `davable`
 
 
 ### Reasoning<a id="stand-alone-projects-reasoning"></a>
 
 The important distinction is:
 
-* **Belongs to an ecosystem:** `ansible-role-foo`, `roundcube-plugin-bar`
-* **Implemented using a technology:** `scanmole`, not `python-scanmole`
-* **Supports a platform or protocol:** `davable`, not `go-caldav-server-davable`
+- Belongs to an ecosystem: `ansible-role-foo`, `roundcube-plugin-bar`
+- Implemented using a technology: `scanmole`, not `python-scanmole`
+- Supports a platform or protocol: `davable`, not `go-caldav-server-davable`
 
 A programming language or target platform is an implementation detail and can change over the lifetime of a project. A project may also use several languages, as DAVable does by using Go for the server and Python for its test suite. Encoding one language in the repository name would therefore be incomplete and could require a disruptive rename later.
 
