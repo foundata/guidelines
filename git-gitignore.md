@@ -14,7 +14,7 @@ The `gitignore` config is used to specify intentionally untracked files. There a
   - [Django](#type-django)
   - [Go](#type-go)
   - [Hugo](#type-hugo)
-
+  - [Python](#type-python)
 
 
 
@@ -120,3 +120,17 @@ For Hugo-based projects (content as well as templates), it is recommended to ext
 - `hugo`
 
 URL: <https://www.toptal.com/developers/gitignore/api/git,vim,linux,macos,windows,jetbrains+all,visualstudiocode,node,hugo>
+
+
+
+#### Python<a id="type-python"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+For Python-based projects, it is recommended to extend [our default `.gitignore`](#gitignore-file-default) with the following templates:
+
+- `python`
+
+URL: <https://www.toptal.com/developers/gitignore/api/git,vim,linux,macos,windows,jetbrains+all,visualstudiocode,python>
+
+See also: [Django](#type-django)
