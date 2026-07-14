@@ -13,6 +13,8 @@ MUST, SHOULD and other key words are used as defined in [RFC 2119](https://datat
     * [`<resource-name>`](#explanation-resource)
   * [Edge cases](#edge-cases)
     * [Duplication](#duplication)
+* [Stand-alone projects](#stand-alone-projects)
+  * [Reasoning](#stand-alone-projects-reasoning)
 * [AI-related repositories](#ai-repositories)
   * [AI categories](#ai-categories)
     * [AI harness-locked variants](#ai-harness-variants)
@@ -85,6 +87,31 @@ Examples:
 
 * If we would maintain the `ansible-lint` package, we would name the repository `ansible-lint` instead of `ansible-ansible-lint`.
 * The `usewindow.extension` repository for Chocolatey is named `chocolatey-extension-usewindow` instead of `chocolatey-extension-usewindow-extension`.
+
+
+## Stand-alone projects<a id="stand-alone-projects"></a>
+
+Stand-alone applications that are not artifacts of a particular ecosystem SHOULD omit both `<prefix>` and `<category>`. Their repository name SHOULD be the normalized project or product name.
+
+Programming languages, operating systems, protocols, frameworks and other implementation details SHOULD NOT be added merely to classify the project. They MAY be used as a prefix only when the repository is itself an ecosystem-specific artifact rather than an application implemented with that technology.
+
+Examples:
+
+* ScanMole, a Python application for Linux: `scanmole`
+* DAVable, a Go CalDAV and CardDAV server with a Python test suite: `davable`
+
+
+### Reasoning<a id="stand-alone-projects-reasoning"></a>
+
+The important distinction is:
+
+* **Belongs to an ecosystem:** `ansible-role-foo`, `roundcube-plugin-bar`
+* **Implemented using a technology:** `scanmole`, not `python-scanmole`
+* **Supports a platform or protocol:** `davable`, not `go-caldav-server-davable`
+
+A programming language or target platform is an implementation detail and can change over the lifetime of a project. A project may also use several languages, as DAVable does by using Go for the server and Python for its test suite. Encoding one language in the repository name would therefore be incomplete and could require a disruptive rename later.
+
+The capitalization of a project or product name does not affect the repository name. Normalize a single-word name by converting uppercase letters to lowercase; do not introduce artificial word separators. Therefore, use `scanmole` and `davable`, not `scan-mole` or `dav-able`.
 
 
 ## AI-related repositories<a id="ai-repositories"></a>
