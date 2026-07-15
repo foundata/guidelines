@@ -9,6 +9,7 @@ Topics (in alphabetical order):
 * [Ansible](#ansible)
 * [Git](#git)
 * [PowerShell scripting](#powershell-scripting)
+* [Python](#python)
 * [Shell scripting](#shell-scripting)
 * [Licensing](#licensing)
 
@@ -46,6 +47,13 @@ Resources on how to work with, maintain and host Git repositories.
 Resources on how to develop and maintain PowerShell scripts:
 
 * [PowerShell style guide (`powershell-style-guide.md`)](./powershell-style-guide.md)
+
+
+## Python<a id="python"></a>
+
+Resources on how to develop and maintain Python applications, libraries and scripts:
+
+* [Python style guide (`python-style-guide.md`)](./python-style-guide.md)
 
 
 ## Shell Scripting<a id="shell-scripting"></a>
