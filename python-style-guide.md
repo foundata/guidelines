@@ -8,11 +8,13 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 ## Table of contents
 
 - [When to use Python](#when-to-use-python)
+- [Applications vs. libraries](#applications-vs-libraries)
 - [Supported Python versions](#supported-python-versions)
 - [Project structure and metadata](#project-structure-and-metadata)
 - [Linting, formatting and type checking](#linting-formatting-type-checking)
   - [Recommended `pyproject.toml` configuration](#recommended-pyproject-configuration)
   - [Additional Ruff rule categories](#additional-ruff-rule-categories)
+  - [Adopting strict checks in an existing codebase](#adopting-strict-checks)
 - [File format and executable scripts](#file-format-and-executable-scripts)
 - [Formatting and imports](#formatting-and-imports)
 - [Naming](#naming)
@@ -66,6 +68,29 @@ Python is a general-purpose programming language with strong support for automat
 
 
 
+## Applications vs. libraries<a id="applications-vs-libraries"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+Several rules in this guide depend on whether a project is an application or a library. The distinction is stated here once; later sections refer back to it under **"For applications"** and **"For libraries"** headings where their rules diverge. Everything not marked that way applies to both.
+
+- **Applications and services** are deployed as a whole. Optimize for a reproducible, fully resolved environment: commit the lock file so every deployment installs an identical dependency set.
+- **Libraries** are installed *alongside* other code they do not control. Optimize for compatibility: express dependencies as ranges, never pin to exact versions in published metadata, and avoid speculative upper bounds so callers can resolve one shared set.
+
+
+**The axes that differ (and where they are specified):**
+
+- Lock files and dependency pinning, see [Dependencies and environments](#dependencies-and-environments).
+- How `requires-python` is consumed by resolvers, see [Supported Python versions](#supported-python-versions).
+
+
+**Reasoning:**
+
+- An application owns its whole environment, so reproducibility is the priority and exact pins are an asset.
+- A library must coexist with its callers' other dependencies, so a narrow or exact requirement becomes an unsatisfiable-resolver problem for everyone downstream.
+
+
+
 ## Supported Python versions<a id="supported-python-versions"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
@@ -95,6 +120,11 @@ Python is a general-purpose programming language with strong support for automat
 - Lower the minimum version merely because an older interpreter happens to be installed on a development system.
 - Claim compatibility with a Python version that is not tested in CI or an equivalent repeatable test environment.
 - Use the operating system's unversioned `python` command as evidence of the project's supported runtime. Select or provide the required interpreter explicitly on validated target systems.
+
+
+**For libraries:**
+
+- `requires-python` is a compatibility contract consumed by the resolver of every downstream project, not just a local gate. Set it to the true minimum you support and test, and do not raise it without a concrete, tested reason.
 
 
 **Recommended supported-version test matrix:**
@@ -133,9 +163,9 @@ Update the matrix as new stable Python versions are adopted. Do not add a versio
 
 **You SHOULD:**
 
-- Use the `src` layout for installable applications and libraries:
+- Use the `src` layout with `pyproject.toml` at the **repository root**:
   ```text
-  project/
+  project/                     # repository root
   ├── pyproject.toml
   ├── README.md
   ├── src/
@@ -146,7 +176,7 @@ Update the matrix as new stable Python versions are adopted. Do not add a versio
   └── tests/
       ├── integration/
       └── unit/
-    ```
+  ```
 - Use [`uv_build`](https://docs.astral.sh/uv/concepts/build-backend/) as the build backend for ordinary pure-Python packages:
   ```toml
   [build-system]
@@ -172,6 +202,8 @@ Update the matrix as new stable Python versions are adopted. Do not add a versio
 **Reasoning:**
 
 - The `src` layout prevents tests from accidentally importing source files from the repository instead of the installed package.
+- `pyproject.toml` belongs at the repository root. We do not use monorepos, so a single distribution root per repository is always correct and there is no need to nest the package in a subdirectory. Nesting only adds friction (a `README` symlink to satisfy the build root, an extra `cd` for every command, and packaging edge cases) without a compensating benefit.
+- Non-package content may live at the repository root beside `pyproject.toml`. With `uv_build` the source distribution stays clean automatically as it packages only the module plus project metadata (unlike some backends like `setuptools_scm` which include every version-controlled file). Top-level files such as `README`, `assets/` and documentation do not enter the sdist with `uv_build` (verify once with `tar tf dist/*.tar.gz`).
 - Central configuration reduces duplicated or contradictory settings.
 - `uv` is the project manager and build frontend, while `uv_build` is the build backend. `uv_build` is appropriate for pure-Python packages; projects with native extensions, custom build steps or unsupported layouts need another suitable backend.
 - Thin entry points keep framework behavior separate from domain behavior and make tests faster and clearer.
@@ -356,6 +388,17 @@ The following categories and rules are intentionally not part of the baseline:
 - The complete `S` category can be noisy, especially `S101` because pytest uses `assert`. Projects SHOULD evaluate relevant security rules individually and add narrow per-file exceptions for tests where necessary.
 
 Projects MUST NOT enable `ALL` without reviewing and documenting the resulting rule set. Broad prefixes and `ALL` can enable newly added stable rules during a Ruff upgrade; the committed lock file and repeatable checks make such changes reviewable.
+
+
+### Adopting strict checks in an existing codebase<a id="adopting-strict-checks"></a>
+
+Enabling these checks on a new project is cheap; retrofitting strict type checking onto a mature codebase surfaces every latent problem at once, which is hard to manage as a single change. Recommendation: Adopt it incrementally with a **temporary, shrinking ratchet**, kept distinct from the permanent, narrowest-possible suppressions described above:
+
+1- Turn on strict checking globally, then silence only the not-yet-clean modules with a per-module override (for mypy, `[[tool.mypy.overrides]]` with `ignore_errors = true`). The check is green from the first commit and already enforces every module that is clean.
+2. Remove one module from the override list per commit and fix its diagnostics. The list only ever shrinks.
+3. When the list is empty, delete the override block and extend the checked paths (for example from `mypy src` to `mypy src tests`).
+
+The ratchet is a migration technique, not a standing exception. As a worked example, [`ansible-docsmith`](https://github.com/foundata/ansible-docsmith) adopted strict mypy this way: Roughly a hundred initial errors held behind a nine-module ratchet, then cleared [one module per commit, ending by deleting the empty ratchet and extending the gate to `mypy src tests`](https://github.com/foundata/ansible-docsmith/compare/d61071a...57f94b1).
 
 
 
@@ -548,15 +591,16 @@ def checkPDF(filePath):
 
 - Let the type checker infer obvious local variable types.
 - Prefer standard annotations that remain meaningful across type checkers. Use checker-specific directives, helper types or source-level workarounds only when standard annotations cannot express the required behavior.
+- When the project targets a Python version older than a typing feature it needs (for example `@typing.override`, which is standard library only on 3.12+), import that feature from [`typing_extensions`](https://pypi.org/project/typing-extensions/) and declare `typing-extensions` as a direct runtime dependency. Do not guard these imports on `sys.version_info`.
 - Express behavior with protocols or abstract interfaces when callers need a capability rather than a concrete implementation.
 - Use `Any` only at genuinely dynamic boundaries and narrow it to a concrete type as soon as possible.
-- Use `TypedDict`, dataclasses or validated models for structured records instead of untyped dictionaries passed across module boundaries.
+- Use `TypedDict`, dataclasses or validated models for structured records passed between internal modules. `dict[str, Any]` is the honest type for external data that has not yet been validated; convert it to a structured type only after a runtime validation step, not as a way to make unvalidated data look typed.
 
 
 **You MUST NOT:**
 
 - Repeat type information in a function's docstring.
-- Use annotations as a substitute for runtime validation of untrusted input.
+- Use annotations (including `TypedDict`) as a substitute for runtime validation of untrusted input. Annotations are erased at runtime and enforce nothing; a `TypedDict` is especially deceptive because it reads like a validated schema while remaining an unchecked `dict`. Never feed an annotated-but-unvalidated external value into a path, query, template or external command (see [Miscellaneous](#miscellaneous)).
 - Add `cast()` or `Any` merely to silence a valid type error.
 
 
@@ -596,7 +640,7 @@ def find_document(name: Any) -> Optional[Path]:
 **Reasoning:**
 
 - A type checker may skip or weaken checking inside unannotated functions. Complete function signatures therefore provide more value than sporadic hints.
-- Type hints support static analysis and editor tooling; Python remains dynamic at runtime, so external data still requires validation.
+- Type hints support static analysis and editor tooling, but they are erased at runtime and provide no security guarantee. Trusting an annotated type on untrusted data creates injection and path-traversal risks that the type checker will silently approve, so external data must be validated at the boundary regardless of its static type.
 
 
 
@@ -769,7 +813,7 @@ def add_pages(document, pages=[], run_ocr=True):
 **You MUST NOT:**
 
 - Use a bare `except:` clause.
-- Silently discard an exception with `pass`.
+- Silently discard an exception with a bare `pass`. A broad catch is acceptable only when it is a designed fallback or best-effort path *and* it records the swallowed exception (typically `LOGGER.debug(..., exc_info=True)`) so the failure leaves a trace; error-hiding without a fallback and without logging is prohibited.
 - Catch `Exception` around a large block and continue as if the operation succeeded.
 - Use exceptions for ordinary branching when a direct condition is clearer.
 - Expose credentials, tokens or complete untrusted payloads in exception messages.
@@ -1100,7 +1144,6 @@ def test_pdf():
 
 - Develop and run project-installed tools in a virtual environment or another isolated environment.
 - Declare every direct runtime dependency in `pyproject.toml`.
-- Commit the lock file for applications and services when the selected package manager provides one.
 - Review dependency changes and run the full test suite after updating them.
 - Set lower bounds based on features actually required by the project.
 - Add an upper bound only for a known incompatibility, and document or link the reason.
@@ -1119,9 +1162,18 @@ def test_pdf():
 
 - Install project dependencies into the operating system's Python environment with `sudo pip`.
 - Import a package that is available only transitively through another direct dependency. Declare it directly.
-- Pin every runtime dependency to an exact version in published library metadata.
 - Add broad upper bounds speculatively.
 - Commit `.venv`, caches, build output or credentials.
+
+
+**For applications:**
+
+- Commit the lock file (when the package manager provides one) so every deployment installs an identical dependency set; resolving to exact versions is desirable here.
+
+
+**For libraries:**
+
+- Express runtime dependencies as ranges based on the features actually used. Do not pin exact versions in published metadata and do not add speculative upper bounds as both become resolver conflicts for downstream callers. A committed lock file, if present, serves your own development and CI reproducibility, not shipped constraints.
 
 
 **Reasoning:**
