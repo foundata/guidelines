@@ -158,7 +158,6 @@ Update the matrix as new stable Python versions are adopted. Do not add a versio
 - Declare runtime dependencies in `[project.dependencies]` and development-only dependencies in `[dependency-groups]` or the package manager's equivalent.
 - Declare `[build-system]` for every project distributed as a Python package.
 - Keep import package names valid Python identifiers. Use `snake_case` if a distribution name contains dashes.
-- Keep tests outside the import package unless they intentionally form part of a distributed library.
 
 
 **You SHOULD:**
@@ -199,9 +198,20 @@ Update the matrix as new stable Python versions are adopted. Do not add a versio
 - Put substantial application logic in `__main__.py`, a console-script wrapper or framework callback when it can live in a testable function or class.
 
 
+**For libraries:**
+
+- Keep tests outside the import package unless they are intentionally distributed with it.
+
+
+**For applications:**
+
+- Tests MAY be colocated with application packages when this follows an established framework convention or keeps tests with their owning component. For example, Django applications may use an app-local `tests.py`, `test*.py` modules, or `tests/` package.
+
+
 **Reasoning:**
 
 - The `src` layout prevents tests from accidentally importing source files from the repository instead of the installed package.
+- Test location is a distribution concern: shipped library packages should not carry their test suite by accident, but an application that is deployed as a whole gains nothing from forcing tests out of the framework's own layout. Django, for example, generates app-local tests and its test runner discovers them there.
 - `pyproject.toml` belongs at the repository root. We do not use monorepos, so a single distribution root per repository is always correct and there is no need to nest the package in a subdirectory. Nesting only adds friction (a `README` symlink to satisfy the build root, an extra `cd` for every command, and packaging edge cases) without a compensating benefit.
 - Non-package content may live at the repository root beside `pyproject.toml`. With `uv_build` the source distribution stays clean automatically as it packages only the module plus project metadata (unlike some backends like `setuptools_scm` which include every version-controlled file). Top-level files such as `README`, `assets/` and documentation do not enter the sdist with `uv_build` (verify once with `tar tf dist/*.tar.gz`).
 - Central configuration reduces duplicated or contradictory settings.
@@ -394,7 +404,7 @@ Projects MUST NOT enable `ALL` without reviewing and documenting the resulting r
 
 Enabling these checks on a new project is cheap; retrofitting strict type checking onto a mature codebase surfaces every latent problem at once, which is hard to manage as a single change. Recommendation: Adopt it incrementally with a **temporary, shrinking ratchet**, kept distinct from the permanent, narrowest-possible suppressions described above:
 
-1- Turn on strict checking globally, then silence only the not-yet-clean modules with a per-module override (for mypy, `[[tool.mypy.overrides]]` with `ignore_errors = true`). The check is green from the first commit and already enforces every module that is clean.
+1. Turn on strict checking globally, then silence only the not-yet-clean modules with a per-module override (for mypy, `[[tool.mypy.overrides]]` with `ignore_errors = true`). The check is green from the first commit and already enforces every module that is clean.
 2. Remove one module from the override list per commit and fix its diagnostics. The list only ever shrinks.
 3. When the list is empty, delete the override block and extend the checked paths (for example from `mypy src` to `mypy src tests`).
 
@@ -459,9 +469,14 @@ The ratchet is a migration technique, not a standing exception. As a worked exam
 - Keep imports free of side effects.
 
 
+**You MAY:**
+
+- Wildcard-import a project-local base settings module from a framework settings module when complete inheritance of that module is the intended contract, for example Django split settings. Suppress `F403` and any resulting `F405` diagnostics narrowly, with a comment identifying the settings-inheritance convention.
+
+
 **You MUST NOT:**
 
-- Use wildcard imports (`from module import *`).
+- Use wildcard imports (`from module import *`) outside the framework settings-inheritance case described under "You MAY" above.
 - Put several unrelated statements on one line.
 - Use backslashes for routine line continuation.
 - Align assignments or comments with manual padding that Ruff will not preserve.
