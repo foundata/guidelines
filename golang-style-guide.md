@@ -80,7 +80,7 @@ Go is a statically typed, compiled general-purpose language with first-class con
 
 Several rules in this guide depend on whether a module is an application or a library. The distinction is stated here once; later sections refer back to it under **"For applications"** and **"For libraries"** headings where their rules diverge. Everything not marked that way applies to both.
 
-- **Applications and commands** are compiled and deployed as a whole. Optimize for reproducible builds and operational robustness: the module's `go.mod` and `go.sum` fully determine the build, and most code can live in `internal/` packages.
+- **Applications and commands** are compiled and deployed as a whole. Optimize for reproducible builds and operational robustness: the module's `go.mod` and `go.sum` fully determine the dependency set, and most code can live in `internal/` packages.
 - **Libraries** are imported by code we do not control. Optimize for compatibility and a small, stable API surface: keep dependencies minimal, follow the [import compatibility rule](https://go.dev/ref/mod#major-version-suffixes) and never break a tagged version.
 
 A single repository MAY contain both (a library with companion commands under `cmd/`). In that case the library rules apply to the exported packages and the application rules to the commands.
@@ -132,7 +132,7 @@ The [Go release policy](https://go.dev/doc/devel/release#policy) supports each m
 
 **You SHOULD:**
 
-- Omit the `toolchain` directive from committed `go.mod` files. The default (`GOTOOLCHAIN=auto`) already selects or downloads a suitable toolchain when needed, and a committed `toolchain` line forces toolchain switches onto every consumer and contributor without adding compatibility information.
+- Omit the `toolchain` directive from committed `go.mod` files. It only affects builds where the module is the *main module* — contributors and CI working in the repository, never downstream consumers, whose toolchain selection uses their own main module or workspace ([toolchain selection](https://go.dev/doc/toolchain)). Within the repository, the default (`GOTOOLCHAIN=auto`) already selects or downloads a suitable toolchain when needed, so a committed `toolchain` line forces switches onto contributors without adding compatibility information; the `go` directive alone states the actual requirement.
 - Update the minimum version when a new Go major release ships and the previously required one leaves upstream support, as part of ordinary maintenance.
 - Use a full `major.minor.patch` version in the `go` directive (`go 1.25.0`, not `go 1.25`). This is the format written by current toolchains and avoids ambiguity in toolchain selection.
 
@@ -209,11 +209,21 @@ This section is **foundata policy**, not ecosystem consensus: most public Go pro
   ```
 - Write module and import paths without a URL scheme. The public website uses `https://golang.foundata.com/`, but module paths are identifiers, not URLs: `https://` MUST NOT appear in a `module` line or an `import` path.
 - Version modules with semantic version tags (`v0.3.1`, `v1.2.0`); see [Module version numbering](https://go.dev/doc/modules/version-numbers).
+- Set up the vanity mapping *before* the module is published or tagged: `https://golang.foundata.com/<repository-name>?go-get=1` (and every package path below it) must serve a page whose [`go-import` meta tag](https://go.dev/ref/mod#vcs-find) points Go tooling at the current source repository, for example:
+  ```html
+  <meta name="go-import" content="golang.foundata.com/example git https://github.com/foundata/example">
+  ```
+  Only the third field is a repository URL; the first field is the module path and stays stable across hosting changes and major versions (`/v2` resolves through the same mapping, selected by tags).
+- Verify resolution before announcing a new module or tag, bypassing proxy caches:
+  ```sh
+  GOPROXY=direct go list -m golang.foundata.com/<repository-name>@latest
+  ```
+  A correctly named module without a working mapping is undiscoverable for every consumer.
 
 
 **You MUST NOT:**
 
-- Use `github.com/foundata/...` as a first-party module path, even though GitHub currently hosts the repositories. `golang.foundata.com/<repository-name>` is the stable public module identity; the vanity domain redirects Go tooling to whatever source hosting is current (as of Q3-2026, we aiming to switch to [Codeberg](https://codeberg.org/)).
+- Use `github.com/foundata/...` as a first-party module path, even though GitHub currently hosts the repositories. `golang.foundata.com/<repository-name>` is the stable public module identity; the vanity domain redirects Go tooling to whatever source hosting is current, so hosting can change without touching a single consumer.
 - Rename a published module path without treating it as a new module (a path change breaks every consumer; the old path must keep resolving).
 
 
@@ -346,12 +356,12 @@ func run(ctx context.Context, args []string) error {
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-Go resolves dependencies with [minimal version selection](https://go.dev/ref/mod#minimal-version-selection): the build uses the *minimum* version that satisfies all requirements, not the newest available. Builds are therefore reproducible from `go.mod` alone, without a separate lock file — `go.sum` adds cryptographic verification, not version selection.
+Go resolves dependencies with [minimal version selection](https://go.dev/ref/mod#minimal-version-selection): the build uses the *minimum* version that satisfies all requirements, not the newest available. Version selection is therefore reproducible from `go.mod` alone, without a separate lock file — `go.sum` adds cryptographic verification of module content, not version selection.
 
 
 **You MUST:**
 
-- Commit both `go.mod` and `go.sum` for every module, applications and libraries alike.
+- Commit `go.mod`, and commit `go.sum` whenever it exists, for applications and libraries alike. (`go.sum` is generated as soon as the module has dependencies, including tools; a dependency-free module legitimately has none.)
 - Keep the module tidy: `go mod tidy` after dependency changes. CI SHOULD verify this with:
   ```sh
   go mod tidy -diff
@@ -395,7 +405,7 @@ Go resolves dependencies with [minimal version selection](https://go.dev/ref/mod
 
 **Reasoning:**
 
-- Minimal version selection makes Go builds reproducible by design: unlike range-based resolvers, publishing a new upstream version never changes an existing build. This is why the application/library lock-file split from the Python guide has no Go equivalent — `go.mod` plays both roles.
+- Minimal version selection makes Go dependency resolution reproducible by design: unlike range-based resolvers, publishing a new upstream version never changes an existing build's dependency selection. This is why the application/library lock-file split from the Python guide has no Go equivalent — `go.mod` plays both roles.
 - `go.sum` protects against a module version's content being changed after the fact (on the origin server or a proxy). Committing it is what makes `go mod verify` and the checksum database useful.
 - The `tool` directive replaces the older `tools.go` blank-import workaround and gives every contributor and CI the same tool versions through the ordinary module mechanism.
 
@@ -410,9 +420,9 @@ Formatting is not a matter of taste in Go: [`gofmt`](https://pkg.go.dev/cmd/gofm
 
 **You MUST:**
 
-- Format all Go source with `gofmt` (or a formatter producing identical output, such as `goimports` or `gopls`). Unformatted code MUST NOT be committed; CI SHOULD verify:
+- Format all Go source with `gofmt` (or a formatter producing identical output, such as `goimports` or `gopls`). Unformatted code MUST NOT be committed; CI SHOULD verify with `goimports`, which checks formatting *and* the import grouping required below (plain `gofmt -l` cannot check the grouping):
   ```sh
-  test -z "$(gofmt -l .)"
+  test -z "$(go tool goimports -local golang.foundata.com -l .)"
   ```
 - Use UTF-8 without a byte-order mark and Unix line endings (LF, `\n`); this is what all Go tooling produces and expects.
 - Group imports into blocks separated by blank lines, in this order: standard library, third-party, first-party (`golang.foundata.com/...`). `gofmt` sorts within blocks but preserves the blank-line grouping.
@@ -1131,7 +1141,9 @@ Goroutines are cheap to start and impossible to kill from outside: every gorouti
 **Good examples:**
 
 ```go
-// Bounded fan-out with cancellation and a joined error.
+// Bounded fan-out with cancellation and a joined error. On cancellation the
+// returned error is non-nil and results may be partial; callers must not
+// treat them as complete.
 func scanAll(ctx context.Context, s *Scanner, ids []string) (map[string][]Page, error) {
 	var (
 		mu      sync.Mutex
@@ -1147,7 +1159,7 @@ func scanAll(ctx context.Context, s *Scanner, ids []string) (map[string][]Page, 
 			case sem <- struct{}{}:
 				defer func() { <-sem }()
 			case <-ctx.Done():
-				return
+				return // cancellation is recorded once, after wg.Wait
 			}
 			pages, err := s.Scan(ctx, id)
 			mu.Lock()
@@ -1160,6 +1172,9 @@ func scanAll(ctx context.Context, s *Scanner, ids []string) (map[string][]Page, 
 		})
 	}
 	wg.Wait()
+	if err := ctx.Err(); err != nil {
+		errs = append(errs, err) // cancellation may have skipped documents
+	}
 	return results, errors.Join(errs...)
 }
 ```
@@ -1402,7 +1417,7 @@ The baseline is standard tooling: `gofmt`/`goimports` (see [Formatting and impor
 **You MUST:**
 
 - Run `go vet ./...` and fix every diagnostic. Vet reports likely-wrong code (unreachable code, misused `Printf` verbs, copied locks, malformed struct tags); its findings are close to always real bugs. (`go test` runs a subset of vet checks automatically, which is not a substitute for the full run.)
-- Scan for known vulnerabilities with `govulncheck ./...` before every release, and fix findings by updating the affected dependency (or the Go toolchain — the standard library is scanned too). `govulncheck` performs reachability analysis and reports only vulnerabilities in code paths your project actually calls, so findings are actionable, not noise ([Go vulnerability management](https://go.dev/doc/security/vuln/)).
+- Scan for known vulnerabilities with `go tool govulncheck ./...` before every release (track [`govulncheck`](https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck) with the `tool` directive like the other developer tools), and fix findings by updating the affected dependency (or the Go toolchain — the standard library is scanned too). `govulncheck` performs reachability analysis and reports only vulnerabilities in code paths your project actually calls, so findings are actionable, not noise ([Go vulnerability management](https://go.dev/doc/security/vuln/)).
 - Fix every diagnostic of the configured analyzers. A suppression MUST be as narrow as possible and carry a short justification when the reason is not obvious:
   ```go
   //lint:ignore SA1019 vendor API v2 requires the deprecated client until 2026-10, see #123
@@ -1443,11 +1458,11 @@ go get -tool honnef.co/go/tools/cmd/staticcheck
 go tool staticcheck ./...
 ```
 
-The default check set is a good baseline. Adjust it, when needed, in a committed `staticcheck.conf` at the repository root rather than in flags, so every environment runs the same set:
+The default check set is a good baseline, but note it excludes several style checks (`ST1000`, `ST1003` and others). Adjust it in a committed `staticcheck.conf` at the repository root rather than in flags, so every environment runs the same set; at minimum, re-enable `ST1000` so the package-comment requirement from [Packages, APIs, documentation and comments](#packages-apis-documentation) is machine-enforced:
 
 ```toml
 # staticcheck.conf – keep close to defaults; document every deviation.
-checks = ["inherit", "-ST1000"]  # example: don't require package comments in an application
+checks = ["inherit", "ST1000"]  # ST1000: package comments are required by our style guide
 ```
 
 
@@ -1497,15 +1512,21 @@ Install it as a binary release pinned to an exact version (the maintainers do no
 
 **You MUST:**
 
-- Keep every required formatting, analysis, build, test and vulnerability-scanning command executable locally without a CI service. The standard sequence (the Staticcheck line reflects the default analyzer setup, see [Linting, static analysis and vulnerability scanning](#linting-static-analysis)):
+- Keep every required formatting, analysis, build, test and vulnerability-scanning command executable locally without a CI service. Provision the three non-toolchain tools once through the `tool` directive so every environment runs the same pinned versions:
   ```sh
-  test -z "$(gofmt -l .)"          # formatting (gofmt -l lists unformatted files)
+  go get -tool golang.org/x/tools/cmd/goimports
+  go get -tool honnef.co/go/tools/cmd/staticcheck
+  go get -tool golang.org/x/vuln/cmd/govulncheck
+  ```
+  The standard sequence (the Staticcheck line reflects the default analyzer setup, see [Linting, static analysis and vulnerability scanning](#linting-static-analysis)):
+  ```sh
+  test -z "$(go tool goimports -local golang.foundata.com -l .)"  # formatting and import grouping
   go vet ./...                     # toolchain static analysis
   go tool staticcheck ./...        # additional static analysis
   go build ./...                   # everything compiles, including cmd/
   go test -race -shuffle=on ./...  # tests with race detector, shuffled order
   go mod tidy -diff                # go.mod/go.sum are tidy
-  govulncheck ./...                # known-vulnerability scan
+  go tool govulncheck ./...        # known-vulnerability scan
   ```
 - Run all required checks successfully before a release.
 - Test the declared minimum Go version and the current stable release before a release (see [Supported Go versions and toolchains](#supported-go-versions)).
@@ -1582,8 +1603,8 @@ Our usual Linux targets are **Debian 13, CentOS Stream 10 and Fedora 44**. Progr
 
 - Build release binaries with the latest patch release of the current stable Go toolchain (see [Supported Go versions and toolchains](#supported-go-versions)).
 - Test released binaries on every supported target platform (Debian 13, CentOS Stream 10, Fedora 44) — at minimum an automated smoke test of the real artifact on each.
-- When cgo is required: document the resulting libc requirement in the README, build on the oldest supported environment (Debian 13, whose glibc is the oldest of the three), and test the resulting binary on every supported platform. glibc symbol versioning makes binaries built against older glibc run on newer ones, not the reverse.
-- Build with `-trimpath` for releases so binaries do not embed absolute build paths and builds are reproducible across machines.
+- When cgo is required: document the resulting libc requirement in the README, build on the supported platform with the oldest glibc, and test the resulting binary on every supported platform. As of 2026-Q3 that build platform is CentOS Stream 10 (glibc 2.39, the RHEL 10 baseline); [Debian 13 ships glibc 2.41](https://packages.debian.org/trixie/libc6) and [Fedora 44 ships glibc 2.43](https://packages.fedoraproject.org/pkgs/glibc/glibc/). Re-check this ordering whenever the platform set changes instead of assuming any particular distribution is oldest. glibc symbol versioning makes binaries built against older glibc run on newer ones, not the reverse.
+- Build with `-trimpath` for releases so binaries do not embed absolute build paths, which removes one machine-specific input from the build.
 
 
 **You SHOULD:**
@@ -1592,14 +1613,14 @@ Our usual Linux targets are **Debian 13, CentOS Stream 10 and Fedora 44**. Progr
   ```sh
   CGO_ENABLED=0 go build -trimpath ./cmd/example
   ```
-  The result depends only on the kernel ABI and runs on any of our targets and in `FROM scratch` containers. Note the standard library falls back to pure-Go implementations where it otherwise uses the platform's C libraries (most visibly `net`'s DNS resolution and `os/user` lookups): behavior is well-defined but can differ from glibc behavior on hosts with NSS-based setups (LDAP users, unusual resolver configurations); test on the targets when name or user resolution matters.
+  The result depends only on the kernel ABI and runs on any of our targets. It can also run in `FROM scratch` containers, *provided* the image supplies everything else the program needs at runtime — typically CA certificates for TLS verification, timezone data (embeddable via the standard [`time/tzdata`](https://pkg.go.dev/time/tzdata) package) and `/etc/passwd`/`/etc/group` entries when user lookups happen. Note the standard library falls back to pure-Go implementations where it otherwise uses the platform's C libraries (most visibly `net`'s DNS resolution and `os/user` lookups): behavior is well-defined but can differ from glibc behavior on hosts with NSS-based setups (LDAP users, unusual resolver configurations); test on the targets when name or user resolution matters.
 - Cross-compile from any development machine; with cgo disabled this needs nothing but environment variables:
   ```sh
   CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -o dist/example-linux-amd64 ./cmd/example
   CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -o dist/example-linux-arm64 ./cmd/example
   ```
 - Version binaries from build metadata: when building a tagged module checkout, the toolchain stamps the version and VCS revision into the binary (readable via [`runtime/debug.ReadBuildInfo`](https://pkg.go.dev/runtime/debug#ReadBuildInfo) and `go version -m <binary>`; module version stamping since Go 1.24). Add an explicit `-ldflags "-X main.version=..."` only when the build process cannot rely on VCS metadata.
-- Verify what a binary requires and contains before shipping: `go version -m dist/example-linux-amd64` shows toolchain, module versions and build settings (including `CGO_ENABLED`), and `govulncheck -mode=binary` scans a built artifact.
+- Verify what a binary requires and contains before shipping: `go version -m dist/example-linux-amd64` shows toolchain, module versions and build settings (including `CGO_ENABLED`), and `go tool govulncheck -mode=binary` scans a built artifact.
 
 
 **You MAY:**
@@ -1616,8 +1637,8 @@ Our usual Linux targets are **Debian 13, CentOS Stream 10 and Fedora 44**. Progr
 **Reasoning:**
 
 - `CGO_ENABLED=0` decouples the binary from the target's libc entirely, which is what makes "build once, run on Debian, CentOS Stream and Fedora" reliable rather than accidental.
-- Building cgo binaries against the oldest target glibc and testing everywhere mirrors how glibc compatibility actually works (backwards, not forwards).
-- `-trimpath` plus a pinned toolchain gives bit-identical, environment-independent builds, which simplifies both caching and supply-chain verification.
+- Building cgo binaries against the oldest target glibc and testing everywhere mirrors how glibc compatibility actually works (backwards, not forwards). Which platform that is has to be checked, not assumed: distribution release cadences differ, and an enterprise distribution released earlier can carry an older glibc than a "stable" distribution released later.
+- `-trimpath` removes environment-specific paths from binaries and so improves reproducibility. Bit-identical output additionally requires identical toolchain, target, build flags, source state (including VCS metadata that gets stamped into the binary) and — with cgo — an identical C toolchain and libraries; a release pipeline that pins all of these enables supply-chain verification by rebuild.
 
 
 

@@ -8,6 +8,7 @@ This repository collects recommendations and rules [foundata](https://foundata.c
 Topics (in alphabetical order):
 * [Ansible](#ansible)
 * [Git](#git)
+* [Go](#go)
 * [PowerShell scripting](#powershell-scripting)
 * [Python](#python)
 * [Shell scripting](#shell-scripting)
@@ -41,6 +42,13 @@ Resources on how to work with, maintain and host Git repositories.
 * [Git commit message guide (`git-commits.md`)](./git-commits.md)
 * [How to name Git repositories (`git-repository-naming.md`)](./git-repository-naming.md)
 * [`gitignore` configuration (`git-gitignore.md`)](./git-gitignore.md)
+
+
+## Go<a id="go"></a>
+
+Resources on how to develop and maintain Go applications, commands and libraries:
+
+* [Go style guide (`golang-style-guide.md`)](./golang-style-guide.md)
 
 
 ## PowerShell Scripting<a id="powershell-scripting"></a>
