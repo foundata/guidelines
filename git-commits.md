@@ -377,7 +377,9 @@ Git intentionally provides no `commit.signoff` configuration setting because a s
 
 - Take responsibility for the accuracy, relevance and wording of an AI-assisted commit message.
 - Review generated text against both the diff and the reason the change was requested.
-- Apply the same rules to AI-assisted messages as to manually written messages: describe the behavioral or operational result and, when useful, why it was needed.
+- Apply the same rules to AI-assisted messages as to manually written messages. State these expectations explicitly in repository-level agent instructions such as `AGENTS.md`, or include them in the prompt. Suitable wording includes:
+  - Describe the behavioral or operational result and, when useful, why it was needed.
+  - BE CONCISE. Omit the body when the subject is sufficient. Otherwise, use at most one tight paragraph for context and one for the resolution. Do not narrate or repeat the diff. For code comments, document only non-obvious intent or constraints. Treat user rewrites as templates for similar future messages and comments.
 
 
 **You MAY:**
