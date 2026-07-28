@@ -104,10 +104,12 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
       ansible.builtin.command:
         cmd: "/sbin/shutdown -t now"
       when:
-        - ansible_distribution is ansible.builtin.defined
-        - ansible_distribution_major_version is ansible.builtin.defined
-        - (ansible_distribution == 'CentOS' and ansible_distribution_version is version('8.0.0', '>=')) or
-          (ansible_distribution == 'Debian' and ansible_distribution_major_version == '10')
+        - ansible_facts['distribution'] is ansible.builtin.defined
+        - ansible_facts['distribution_major_version'] is ansible.builtin.defined
+        - ((ansible_facts['distribution'] | ansible.builtin.lower) == 'centos' and
+          ansible_facts['distribution_version'] is version('8.0.0', '>=')) or
+          ((ansible_facts['distribution'] | ansible.builtin.lower) == 'debian' and
+          ansible_facts['distribution_major_version'] == '10')
       changed_when:
         - __shutdown_result is ansible.builtin.success
       register: __shutdown_result
@@ -116,7 +118,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
     - name: "Include OS vars (with default fallback)"
       ansible.builtin.include_vars:
         dir: "vars"
-        files_matching: "^({{ ansible_distribution }}|default)(\\{{ lookup('ansible.builtin.config', 'YAML_FILENAME_EXTENSIONS') | join('|\\\\') }})$"
+        files_matching: "^({{ ansible_facts['distribution'] }}|default)(\\{{ lookup('ansible.builtin.config', 'YAML_FILENAME_EXTENSIONS') | join('|\\\\') }})$"
 
 # newline (Unix line feed, \n) at end of file
 
@@ -356,7 +358,7 @@ Following the spacing rules produces consistent code that is easy to read.
     # looking for double interpolation.
     var: foo
   when:
-    - ansible_os_family == 'RedHat'
+    - (ansible_facts['os_family'] | ansible.builtin.lower) == 'redhat'
 
 
 # variables example 3
@@ -765,7 +767,7 @@ Following the spacing rules produces consistent code that is easy to read.
 * Use parentheses to control Jinja2 order of operations when using operators like `~` (concatenation) with tests.
 
 
-**You MUST NOT:**:
+**You MUST NOT:**
 
 * Rely on implicit truthy evaluation of strings, lists, or dictionaries.
 * Accidentally quote sub-expressions within a conditional (the quoted part becomes a literal string and is always truthy).
@@ -774,6 +776,7 @@ Following the spacing rules produces consistent code that is easy to read.
 **You SHOULD:**
 
 * Use the [`ansible.builtin.success`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/success_test.html) and [`ansible.builtin.failed`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/failed_test.html) tests instead of comparing return codes directly (e.g., `['rc'] == 0` or `['rc'] != 0`).
+* Normalize categorical string facts (such as `os_family` or `distribution`) to lowercase at comparison time with [`ansible.builtin.lower`](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/lower_filter.html), and use lowercase comparison values, unless letter case is semantically significant.
 
 
 **Good examples:**
@@ -815,6 +818,20 @@ Following the spacing rules produces consistent code that is easy to read.
     msg: "List has items"
   when:
     - my_list | ansible.builtin.length > 0
+
+
+- name: "Handle SUSE systems"
+  ansible.builtin.debug:
+    msg: "The operating-system family is SUSE"
+  when:
+    - (ansible_facts['os_family'] | ansible.builtin.lower) == 'suse'
+
+
+- name: "Handle supported operating-system families"
+  ansible.builtin.debug:
+    msg: "The operating-system family is supported"
+  when:
+    - (ansible_facts['os_family'] | ansible.builtin.lower) in ['redhat', 'suse']
 
 
 # Using success/failed tests for return code checks
@@ -876,6 +893,22 @@ Following the spacing rules produces consistent code that is easy to read.
       - inventory_hostname is contains "local" ~ "host"
 
 
+# BAD: Couples the comparison to the capitalization supplied by the fact source
+- name: "Handle SUSE systems"
+  ansible.builtin.debug:
+    msg: "The operating-system family is SUSE"
+  when:
+    - ansible_facts['os_family'] == 'Suse'
+
+
+# BAD: Mixes externally supplied capitalization into the comparison interface
+- name: "Handle supported operating-system families"
+  ansible.builtin.debug:
+    msg: "The operating-system family is supported"
+  when:
+    - ansible_facts['os_family'] in ['RedHat', 'Suse']
+
+
 # BAD: Comparing return codes directly instead of using success/failed tests
 - name: "Handle command result"
   ansible.builtin.debug:
@@ -899,6 +932,7 @@ Following the spacing rules produces consistent code that is easy to read.
 * Writing explicit boolean predicates makes the intent clear and prevents subtle bugs that are hard to diagnose.
 * YAML interprets unquoted strings containing `: ` as mappings. Since non-empty mappings are truthy, this silently breaks comparisons. Quoting the entire expression prevents this.
 * The `success` and `failed` tests are semantic, self-documenting, and work consistently across modules. They abstract the implementation detail of return codes, making conditionals more readable and resilient to future changes in how modules report status.
+* Facts are external inputs. Normalizing categorical values only at the comparison boundary gives conditional logic a canonical interface and prevents capitalization differences from changing control flow, while preserving the original fact value for display, file names, or other case-sensitive uses.
 
 
 
@@ -1168,7 +1202,7 @@ Following the spacing rules produces consistent code that is easy to read.
         name: "nginx"
         state: "present"
       when:
-        - ansible_os_family == 'RedHat'
+        - (ansible_facts['os_family'] | ansible.builtin.lower) == 'redhat'
 
 
     - name: "Create some EC2 Instances"
@@ -1179,7 +1213,7 @@ Following the spacing rules produces consistent code that is easy to read.
         instance_tags:
           name: "{{ item }}"
       when:
-        - ansible_os_family == 'RedHat'
+        - (ansible_facts['os_family'] | ansible.builtin.lower) == 'redhat'
       ignore_errors: true
       loop: "{{ instance_names }}"
       register: __ec2_output
@@ -1199,7 +1233,7 @@ Following the spacing rules produces consistent code that is easy to read.
       foo.module:
         device: "{{ device_name }}"
       when:
-        - ansible_os_family == 'RedHat'
+        - (ansible_facts['os_family'] | ansible.builtin.lower) == 'redhat'
       changed_when: false
       failed_when: false
 ```
