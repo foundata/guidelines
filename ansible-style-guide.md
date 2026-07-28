@@ -1688,13 +1688,15 @@ printf 'Changes applied\n'
 **You SHOULD:**
 
 * Use descriptive enough `name` values to tell what a task does instead of comments whenever possible.
+* Keep comments concise: explain only non-obvious intent, constraints, or workarounds; do not narrate or repeat what the task, module arguments, or surrounding code already show. When both a problem and its workaround require explanation, use at most one short paragraph for each.
 * Keep multi-line comments below 80 characters per line (excluding indentation).
 
 
 **Reasoning:**
 
-* Good, descriptive `name` values also produce valuable output for the user, as comments are not displayed."
+* Good, descriptive `name` values also produce valuable output for the user, as comments are not displayed.
 * Variables documented in the `/defaults` or `/vars` directories do not require explanation within the playbooks themselves.
+* Concise comments preserve context that the code cannot express. Narrating visible behavior adds noise and is more likely to become outdated when the implementation changes.
 
 
 
