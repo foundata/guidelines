@@ -898,7 +898,7 @@ trivy sbom \
   'example-linux-amd64.spdx.json'
 ```
 
-Use exactly one scanner stack as the authoritative release gate. [Syft](https://github.com/anchore/syft) and [Grype](https://github.com/anchore/grype) MAY replace Trivy for SBOM generation and vulnerability matching when a project documents a concrete benefit, such as materially better SBOM coverage for its language ecosystem. They provide neither the required secret scanning nor the required configuration scanning, so such a project must still cover those scan types — in practice by keeping Trivy anyway, which is why the default is Trivy alone. Do not run two scanners as parallel release gates: their databases and matching differ by design, so a dual gate produces conflicting findings and duplicated exception handling rather than additional safety. A non-gating second-opinion scan MAY be used for audits.
+Use exactly one scanner stack as the authoritative release gate. [Syft](https://github.com/anchore/syft) and [Grype](https://github.com/anchore/grype) MAY replace Trivy for SBOM generation and vulnerability matching when a project documents a concrete benefit, such as materially better SBOM coverage for its language ecosystem. They provide neither the required secret scanning nor the required configuration scanning, so such a project must still cover those scan types, in practice by keeping Trivy anyway, which is why the default is Trivy alone. Do not run two scanners as parallel release gates: their databases and matching differ by design, so a dual gate produces conflicting findings and duplicated exception handling rather than additional safety. A non-gating second-opinion scan MAY be used for audits.
 
 
 ### SBOMs<a id="sboms"></a>
@@ -1064,7 +1064,7 @@ hadolint Containerfile
 ```
 
 ```yaml
-# .hadolint.yaml – keep close to defaults; document every deviation.
+# .hadolint.yaml: keep close to defaults; document every deviation.
 ignored:
   # Exact distribution package versions are intentionally not pinned; see
   # "RUN instructions and package installation" in the foundata build guide.
