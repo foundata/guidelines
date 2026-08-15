@@ -340,6 +340,24 @@ A digest pin transfers change control from the registry owner to the repository,
 - Set a repository-specific update schedule that is shorter than the vulnerability remediation deadline.
 
 
+Renovate is the standard update tool, and it is itself a supply-chain input: it proposes changes to the digests every other control trusts.
+
+
+**You MUST:**
+
+- Run Renovate self-hosted from a version- or digest-pinned image or package. Do not grant a hosted update service write access to foundata repositories.
+- Give the update job credentials that can open pull requests but cannot merge them or push to protected branches.
+
+
+**You SHOULD:**
+
+- Maintain one organization-level Renovate preset that repositories extend, so schedule, grouping and digest policy are decided once instead of per repository.
+- Use Renovate custom managers to update digest pins embedded outside Containerfiles, such as pinned tool digests in scripts and deployment files.
+
+
+Renovate's AGPL-3.0-only license applies to the tool itself, not to the repositories or images it updates. Operating an unmodified or internally modified instance creates no distribution obligations.
+
+
 
 ## Build context<a id="build-context"></a>
 
