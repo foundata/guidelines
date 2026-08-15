@@ -1134,17 +1134,17 @@ The example is a structural reference, not a universal base-image choice. Projec
 
 **Base images.** A single mandated distribution would trade compatibility, lifecycle fit and diagnostic knowledge for superficial consistency. Image size is an incomplete security metric: attack surface depends on reachable behavior, configuration and privileges, and saved megabytes do not help a team that cannot patch or debug the base during an incident. musl is a real compatibility surface for glibc-targeted software.
 
-**Digest pinning and updates.** The tag documents intent; the digest selects the bytes. A pin transfers change control to the repository and creates an update obligation, because a forgotten digest is a frozen vulnerability set. Pinning alone is not reproducibility. Renovate proposes the digests every other control trusts, so it runs self-hosted and pinned, able to propose but not merge; its AGPL-3.0-only license covers the tool, not the repositories or images it updates.
+**Digest pinning and updates.** The tag documents intent; the digest selects the bytes. A pin transfers change control to the repository and creates an update obligation, because a forgotten digest is a frozen vulnerability set. Pinning alone does not make a build reproducible. Renovate proposes the digests every other control trusts, so it runs self-hosted and pinned, able to propose but not merge; its AGPL-3.0-only license covers the tool, not the repositories or images it updates.
 
 **Build context.** The context is builder input and may be transferred, cached or inspected even when never copied into the image, so it is bounded with an allowlist.
 
-**Packages and caches.** Exact package pins block security updates and become uninstallable after repository rotation; the base digest plus the SBOM records what was installed. Caches are speed, not input identity.
+**Packages and caches.** Exact package pins block security updates and become uninstallable after repository rotation; the base digest plus the SBOM records what was installed. A cache improves build speed but is not part of the build's input identity.
 
-**File ownership.** Mode `0555` is not immutability when the executing user owns the file: an owner can re-permission and rewrite it. Root ownership blocks that, and a read-only root filesystem is an independent second control.
+**File ownership.** Mode `0555` alone does not make a file immutable when the executing user owns it: an owner can re-permission and rewrite it. Root ownership blocks that, and a read-only root filesystem is an independent second control.
 
 **Build arguments and environment.** `ARG` and `ENV` values surface in image configuration, logs, cache metadata and provenance, so they are public unless the documented secret channel is used end to end.
 
-**Users and resource limits.** A container user is a process identity, not a boundary, but it shrinks compromise impact. Limits need measurement because applications derive internal sizing from them; an inherited `nofile` limit in the millions has produced a connection table hundreds of megabytes large at idle.
+**Users and resource limits.** A container user is a process identity rather than a complete security boundary, but it still shrinks the impact of a compromise. Limits need measurement because applications derive internal sizing from them; an inherited `nofile` limit in the millions has produced a connection table hundreds of megabytes large at idle.
 
 **Entrypoint.** The shell form inserts a shell that changes argument handling and can block signal delivery. Supervisors are limited to documented product contracts because each extra process obscures the signal path and exit status that deployment tooling depends on.
 
@@ -1156,9 +1156,9 @@ The example is a structural reference, not a universal base-image choice. Projec
 
 **Exact-digest releases.** Every security statement binds to a digest. A scan of a local tag or a signature over a moving tag can describe different bytes than consumers pull, so the workflow pushes a candidate, verifies the registry-reported digest and promotes by retagging; a rebuild would reopen the gap the gates closed.
 
-**One scanner stack.** Scanner databases and matching differ by design, so parallel gates yield conflicting findings and duplicated exceptions instead of safety; second opinions stay non-gating. Trivy is the default because it also covers the required secret and configuration scanning. Registry-side scanning is defense in depth, not the gate, and an empty result does not prove security. Trivy's public database has rate-limited busy CI runners: cache it, set `--db-repository` or self-host a mirror, and scan the retained SBOM to keep scheduled rescans cheap.
+**One scanner stack.** Scanner databases and matching differ by design, so parallel gates yield conflicting findings and duplicated exceptions instead of safety; second opinions stay non-gating. Trivy is the default because it also covers the required secret and configuration scanning. Registry-side scanning is useful defense in depth but does not replace the release gate, and an empty scan result does not prove an image is secure. Trivy's public database has rate-limited busy CI runners: cache it, set `--db-repository` or self-host a mirror, and scan the retained SBOM to keep scheduled rescans cheap.
 
-**Provenance and signing.** Correct SLSA field names are not trusted provenance; trust comes from a generator running in the release environment under an attested workload identity. Keyless signing removes long-lived key custody, and verification must constrain issuer and identity because "signed by somebody" is not a trust statement.
+**Provenance and signing.** Correct SLSA field names are not trusted provenance; trust comes from a generator running in the release environment under an attested workload identity. Keyless signing removes long-lived key custody, and verification must constrain the issuer and identity because a signature alone proves only that someone signed.
 
 **Formatting and test harness.** No Containerfile formatter has ecosystem authority and Hadolint does not format, so layout is enforced by lint rules and review. Testinfra reuses the pytest stack of the [Python style guide](./python-style-guide.md); Goss suits teams preferring one Go binary with YAML assertions.
 
