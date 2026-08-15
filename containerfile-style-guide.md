@@ -2,7 +2,7 @@
 
 This document defines how foundata builds and publishes Linux [OCI container images](https://github.com/opencontainers/image-spec) from Containerfiles. It is intended for application developers, infrastructure engineers and reviewers who already understand containers and need a consistent, supportable and verifiable build process.
 
-The resulting image is the release artifact. This guide therefore covers the Containerfile, its build context, registry references, supported platforms, runtime contract, software bill of materials (SBOM), vulnerability scan, provenance, signature and release verification.
+The resulting image is the release artifact. This guide therefore covers the Containerfile, its build context, registry references, supported platforms, runtime contract, software bill of materials (SBOM), vulnerability scan, provenance, signature and release verification. The [Reasoning](#reasoning) section records why the contested rules are the way they are.
 
 The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119) and [RFC 8174](https://datatracker.ietf.org/doc/html/rfc8174).
 
@@ -37,6 +37,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
   - [Signing and verification](#signing-and-verification)
 - [Linting, testing and release workflow](#linting-testing-and-release-workflow)
 - [Reference Containerfile](#reference-containerfile)
+- [Reasoning](#reasoning)
 - [Author information](#author-information)
 
 
@@ -44,9 +45,6 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 ## Goals and scope<a id="goals-and-scope"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
-
-Container images combine application code, runtime dependencies and metadata into a distributable artifact. A useful image policy must address both how that artifact is assembled and how a consumer establishes what it contains, where it came from and whether it satisfies release policy.
-
 
 **This guide aims to produce images that are:**
 
@@ -117,9 +115,6 @@ This guide covers Linux application and service images built from Containerfiles
 - Claim Docker compatibility unless a project separately builds and tests the image with explicitly supported Docker versions.
 
 
-Docker is a legacy compatibility consideration only. It may happen to accept a conforming Containerfile, but that incidental behavior is neither a release requirement nor a compatibility promise. The conventional `Dockerfile` filename may be retained in an inherited repository when renaming it would cause disproportionate disruption, but new foundata projects use `Containerfile`.
-
-
 The recommended supporting tools are:
 
 | Concern | Tool | Role | License |
@@ -136,16 +131,10 @@ The recommended supporting tools are:
 | Pull-time trust | [`containers-policy.json`](https://github.com/containers/image/blob/main/docs/containers-policy.json.5.md) | Signature policy enforcement for containers/image consumers | Apache-2.0 |
 
 
-All named tool implementations are open source; SLSA is a public specification rather than a tool. A hosted service built from open-source software, including Quay.io or Sigstore's public-good infrastructure, is still an external service with its own availability, privacy and usage terms. Pinning and distributing a tool may also create license obligations even though its license does not normally apply to the image the tool produces.
-
-
 
 ## When to create a container image<a id="when-to-create-a-container-image"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
-
-A container image is appropriate when it provides a useful deployment boundary and the application can operate under container runtime constraints. It should not be introduced solely to wrap a single portable file if consumers do not use a container runtime.
-
 
 **You SHOULD create an image when:**
 
@@ -185,14 +174,18 @@ A container image is appropriate when it provides a useful deployment boundary a
 - Follow the [shell scripting style guide](./shell-scripting-style-guide.md) for non-trivial shell code executed during a build or used as an entrypoint.
 
 
+**You MAY:**
+
+- Retain the conventional `Dockerfile` filename in an inherited repository when renaming it would cause disproportionate disruption.
+- Use a dedicated filename such as `Containerfile.integration` for a genuinely different build purpose.
+
+
 **You MUST NOT:**
 
 - Add a `# syntax=...` directive that requires Docker BuildKit.
 - Generate a Containerfile dynamically when ordinary build arguments or separate explicit Containerfiles express the variants clearly.
 - Hide release behavior in undocumented wrapper scripts.
-
-
-Use a dedicated filename such as `Containerfile.integration` for a genuinely different build purpose. Do not create suffix variants for differences that belong in runtime configuration.
+- Create Containerfile suffix variants for differences that belong in runtime configuration.
 
 
 
@@ -228,8 +221,7 @@ The currently approved registry for publishing public foundata images is `quay.i
 - Publish credentials, private source references or internal hostnames in public labels or attestations.
 
 
-When an upstream image is mirrored, the mirroring process MUST record the upstream repository and digest, preserve multi-platform index membership where required, scan the mirrored content, apply foundata trust policy, and refresh it through reviewable automation. A convenient third-party mirror or an image with a similar name is not evidence that it is equivalent to the authoritative artifact.
-
+When an upstream image is mirrored, the mirroring process MUST record the upstream repository and digest, preserve multi-platform index membership where required, scan the mirrored content, apply foundata trust policy, and refresh it through reviewable automation.
 
 Tags communicate a release channel or human-readable version; digests identify content. Publish an immutable version tag such as `:1.8.2` when the project has versions. Moving convenience tags such as `:1`, `:stable` or `:latest` MAY exist, but deployment and verification policy MUST resolve them to and operate on a digest.
 
@@ -242,7 +234,7 @@ Tags communicate a release channel or human-readable version; digests identify c
 
 ### Choosing a base image<a id="choosing-a-base-image"></a>
 
-foundata does not mandate one base distribution for every application. A global mandate would trade away compatibility, lifecycle and operational knowledge for superficial consistency. The correct base depends on the application contract and the team that must patch and diagnose it.
+foundata does not mandate one base distribution for every application.
 
 
 **You MUST evaluate:**
@@ -273,13 +265,9 @@ foundata does not mandate one base distribution for every application. A global 
 - Use an unsupported distribution release merely to avoid an upgrade.
 
 
-Image size affects transfer and storage cost, but it is an incomplete security metric. Attack surface depends on reachable behavior, installed functionality, configuration and privileges. Supportability also matters during an incident. Optimize by removing unnecessary functionality and layers after establishing a compatible, maintained base, not by selecting the smallest compressed artifact by fashion.
-
-
 ### Pinning image references<a id="pinning-image-references"></a>
 
 All external image inputs to a release build MUST be pinned by digest. This includes production and build stages: a compromised or unexpectedly changed builder can alter the final artifact even when the final base is pinned.
-
 
 Use a readable tag together with the digest of the image index:
 
@@ -287,9 +275,7 @@ Use a readable tag together with the digest of the image index:
 FROM quay.io/fedora/fedora-minimal:<version>@sha256:<image-index-digest> AS runtime
 ```
 
-The tag documents the intended release line. The digest, not the tag, selects the bytes. For a multi-platform image, pin the image-index digest rather than an architecture-specific child manifest so the builder can select the correct child for `linux/amd64` or `linux/arm64`.
-
-The `tag@digest` form is for readable image references in Containerfile instructions and is supported by Buildah. Some containers/image command-line transports accept only `repository@digest`, without the tag, when operating on an immutable reference. Use that digest-only form in Skopeo, Podman and release commands where required; retaining the tag in the Containerfile still makes automated updates and review clearer.
+The tag documents the intended release line; the digest, not the tag, selects the bytes. For a multi-platform image, pin the image-index digest rather than an architecture-specific child manifest so the builder can select the correct child per platform. Some containers/image command-line transports accept only `repository@digest` without the tag; use that form in Skopeo, Podman and release commands where required.
 
 
 **You MUST pin:**
@@ -301,7 +287,6 @@ The `tag@digest` form is for readable image references in Containerfile instruct
 
 
 The literal `scratch` base and a stage name declared earlier in the same Containerfile are not external references and do not have a registry digest.
-
 
 Resolve the current index digest with Skopeo and review the result before changing the Containerfile:
 
@@ -322,15 +307,14 @@ printf '%s@%s\n' "${image}" "${digest}"
 
 ### Updating pinned references<a id="updating-pinned-references"></a>
 
-A digest pin transfers change control from the registry owner to the repository, so it also creates an obligation to update. A forgotten digest is a frozen vulnerability set, not a security control.
-
-
 **You MUST:**
 
 - Use reviewable automation to propose base-image digest updates.
 - Rebuild, test, scan and sign after an image input changes.
 - Review an unexpected digest change under an unchanged immutable-version tag as a supply-chain event.
 - Keep supported release branches receiving relevant base-image and toolchain updates.
+- Run Renovate self-hosted from a version- or digest-pinned image or package. Do not grant a hosted update service write access to foundata repositories.
+- Give the update job credentials that can open pull requests but cannot merge them or push to protected branches.
 
 
 **You SHOULD:**
@@ -338,33 +322,14 @@ A digest pin transfers change control from the registry owner to the repository,
 - Configure Renovate's Containerfile manager and `docker:pinDigests` behavior for image references.
 - Group routine digest refreshes where this does not obscure a high-risk or breaking update.
 - Set a repository-specific update schedule that is shorter than the vulnerability remediation deadline.
-
-
-Renovate is the standard update tool, and it is itself a supply-chain input: it proposes changes to the digests every other control trusts.
-
-
-**You MUST:**
-
-- Run Renovate self-hosted from a version- or digest-pinned image or package. Do not grant a hosted update service write access to foundata repositories.
-- Give the update job credentials that can open pull requests but cannot merge them or push to protected branches.
-
-
-**You SHOULD:**
-
 - Maintain one organization-level Renovate preset that repositories extend, so schedule, grouping and digest policy are decided once instead of per repository.
 - Use Renovate custom managers to update digest pins embedded outside Containerfiles, such as pinned tool digests in scripts and deployment files.
-
-
-Renovate's AGPL-3.0-only license applies to the tool itself, not to the repositories or images it updates. Operating an unmodified or internally modified instance creates no distribution obligations.
 
 
 
 ## Build context<a id="build-context"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
-
-The build context is input to the builder and may be transferred, cached or inspected even when a file is never copied into the final image. It must therefore be deliberately bounded.
-
 
 **You MUST:**
 
@@ -382,20 +347,6 @@ The build context is input to the builder and may be transferred, cached or insp
 - Inspect the effective context when adding a broad `COPY . ...` instruction.
 
 
-Example:
-
-```gitignore
-**
-!build/
-!build/example
-!LICENSE
-!Containerfile
-```
-
-
-The `.containerignore` syntax and precedence are defined by the [containers/common manual](https://github.com/containers/common/blob/main/docs/containerignore.5.md). Use `.containerignore`, not `.dockerignore`, for new projects.
-
-
 **You MUST NOT:**
 
 - Rely on `.gitignore` to define the build context.
@@ -403,13 +354,13 @@ The `.containerignore` syntax and precedence are defined by the [containers/comm
 - Use the filesystem root or a developer's home directory as the build context.
 
 
+The `.containerignore` syntax and precedence are defined by the [containers/common manual](https://github.com/containers/common/blob/main/docs/containerignore.5.md). Use `.containerignore`, not `.dockerignore`, for new projects. See the [Reference Containerfile](#reference-containerfile) for a minimal allowlist example.
+
+
 
 ## Stages and dependencies<a id="stages-and-dependencies"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
-
-Multi-stage builds separate compilation, testing and packaging dependencies from the runtime filesystem. They are useful when each stage has one clear responsibility and the final stage copies only the required outputs.
-
 
 **You MUST:**
 
@@ -428,23 +379,23 @@ Multi-stage builds separate compilation, testing and packaging dependencies from
 - Keep build dependency declarations close to the application dependency manifests they consume.
 
 
+**You MAY:**
+
+- Use build mounts for transient caches and secrets when supported by the documented Buildah version.
+
+
 **You MUST NOT:**
 
 - Copy an entire build stage filesystem into the runtime stage.
 - Fetch an executable through `curl | sh`, an unauthenticated URL or a mutable latest-release URL.
 - Assume that deleting a secret or large file in a later instruction removes it from an earlier layer.
-
-
-Use build mounts for transient caches and secrets when supported by the documented Buildah version. A cache mount improves speed but is not an input identity and MUST NOT be required for correctness.
+- Require a cache mount for correctness; a cache improves speed but is not an input identity.
 
 
 
 ## RUN instructions and package installation<a id="run-instructions-and-package-installation"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
-
-`RUN` instructions execute at build time and create filesystem layers. Their commands must be reviewable, non-interactive and fail reliably.
-
 
 **You MUST:**
 
@@ -465,6 +416,21 @@ Use build mounts for transient caches and secrets when supported by the document
 - Move non-trivial shell logic to a checked and linted script.
 
 
+**You MAY:**
+
+- Add an exact package version constraint when compatibility requires it; document how the version remains available and receives security maintenance.
+
+
+**You MUST NOT:**
+
+- Use `curl ... | sh` or an equivalent network-to-interpreter pipeline.
+- Disable TLS certificate validation or package signature verification.
+- Run a full distribution upgrade as a substitute for updating the pinned base image.
+- Keep package indexes, compiler caches or downloaded archives in the final filesystem without a runtime need.
+- Put a long application installer into a quoted `RUN` string when it can be a tested source file.
+- Require exact distribution package versions by default.
+
+
 Example pattern for a POSIX shell stage:
 
 ```dockerfile
@@ -478,23 +444,10 @@ RUN set -eu; \
 The command names are intentionally generic; use the exact supported commands of the chosen distribution. Do not paste package-manager flags from another distribution or release.
 
 
-**You MUST NOT:**
-
-- Use `curl ... | sh` or an equivalent network-to-interpreter pipeline.
-- Disable TLS certificate validation or package signature verification.
-- Run a full distribution upgrade as a substitute for updating the pinned base image.
-- Keep package indexes, compiler caches or downloaded archives in the final filesystem without a runtime need.
-- Put a long application installer into a quoted `RUN` string when it can be a tested source file.
-
-
-Do not require exact distribution package versions by default. Exact version constraints can prevent security updates and are often unavailable after repository rotation. Pin the base image, record the result in the SBOM and rebuild through controlled automation. Add an exact package constraint only when compatibility requires it and document how the version remains available and receives security maintenance.
-
-
 
 ## Files, ownership and permissions<a id="files-ownership-and-permissions"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
-
 
 **You MUST:**
 
@@ -530,8 +483,6 @@ Example:
 COPY --from=build --chown=0:0 --chmod=0555 /workspace/bin/example /usr/local/bin/example
 ```
 
-Mode `0555` alone is not an immutability control when the executing user owns the file: its owner can change the mode and then rewrite it on a writable root filesystem. Root ownership prevents that permission change by the runtime identity, while a read-only root filesystem provides an independent runtime control.
-
 
 
 ## Build arguments, configuration and secrets<a id="build-arguments-configuration-and-secrets"></a>
@@ -548,6 +499,14 @@ Build arguments select non-secret build behavior. Environment variables define i
 - Use `ENV` only for values that are appropriate defaults in every container created from the image.
 - Supply build secrets with Buildah's secret mechanism and consume them through `RUN --mount=type=secret`.
 - Supply runtime secrets at runtime through the deployment platform.
+
+
+**You MUST NOT:**
+
+- Pass passwords, tokens, private keys or signing material through `ARG`, `ENV`, labels, command-line literals or ordinary `COPY`.
+- Bake environment-specific service addresses, credentials or deployment configuration into a reusable release image.
+- Assume that an unset build argument reliably fails without explicit validation.
+- Log secret values or commands that expand them.
 
 
 Example:
@@ -567,24 +526,10 @@ buildah build \
 ```
 
 
-**You MUST NOT:**
-
-- Pass passwords, tokens, private keys or signing material through `ARG`, `ENV`, labels, command-line literals or ordinary `COPY`.
-- Bake environment-specific service addresses, credentials or deployment configuration into a reusable release image.
-- Assume that an unset build argument reliably fails without explicit validation.
-- Log secret values or commands that expand them.
-
-
-Build arguments and environment variables can appear in image configuration, build logs, cache metadata or provenance. Treat them as public unless the tool's documented secret channel is used end to end.
-
-
 
 ## Users and runtime filesystem<a id="users-and-runtime-filesystem"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
-
-A container user is a process identity, not a complete security boundary. It still materially reduces the impact of an application compromise and makes overly broad filesystem assumptions visible.
-
 
 **You MUST:**
 
@@ -605,7 +550,15 @@ A container user is a process identity, not a complete security boundary. It sti
 - Listen on an unprivileged port greater than or equal to 1024.
 
 
-Example hardening smoke test:
+**You MUST NOT:**
+
+- Install or use `sudo` in the final image.
+- Run as root merely to bind a low port, write application files or avoid setting ownership during the build.
+- Declare a broad writable directory when one narrow cache or temporary path is sufficient.
+- Assume a named user resolves in a `scratch` image without supplying the required user database files.
+
+
+Example hardening smoke test with illustrative resource values:
 
 ```sh
 podman run --rm \
@@ -620,24 +573,11 @@ podman run --rm \
   quay.io/foundata/example@sha256:<platform-manifest-digest>
 ```
 
-The resource values in this example are illustrative, not universal defaults. Some applications derive internal allocation sizes from resource limits; an excessive `nofile` limit, for example, can cause unexpectedly high memory use. Record the chosen values in deployment configuration and test both ordinary load and behavior at each limit.
-
-
-**You MUST NOT:**
-
-- Install or use `sudo` in the final image.
-- Run as root merely to bind a low port, write application files or avoid setting ownership during the build.
-- Declare a broad writable directory when one narrow cache or temporary path is sufficient.
-- Assume a named user resolves in a `scratch` image without supplying the required user database files.
-
 
 
 ## Entrypoint, command and signal handling<a id="entrypoint-command-and-signal-handling"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
-
-The image entrypoint defines the process contract used by every runtime. It must preserve arguments, receive signals and report the application's exit status.
-
 
 **You MUST:**
 
@@ -665,13 +605,11 @@ CMD ["serve"]
 ```
 
 
-**Bad example:**
+**Bad example (shell form):**
 
 ```dockerfile
 ENTRYPOINT /usr/local/bin/example serve
 ```
-
-The shell form inserts a shell between the runtime and application, changes argument handling and can prevent signals from reaching the intended process.
 
 
 
@@ -700,6 +638,14 @@ Use the standard [`org.opencontainers.image.*` annotations](https://github.com/o
 - `org.opencontainers.image.created` as an RFC 3339 timestamp when the build system supplies a controlled value.
 
 
+**You MUST NOT:**
+
+- Put credentials, internal infrastructure names or personal data in labels.
+- Claim a source revision, version or creation time that the release pipeline did not verify.
+- Use a changing build timestamp when a reproducible build is required; derive it from controlled source metadata instead.
+- Invent project-specific labels when a standard OCI annotation has the required meaning.
+
+
 Pass revision, version and creation time from trusted release automation:
 
 ```dockerfile
@@ -713,19 +659,10 @@ LABEL org.opencontainers.image.created="${IMAGE_CREATED}" \
 ```
 
 
-**You MUST NOT:**
-
-- Put credentials, internal infrastructure names or personal data in labels.
-- Claim a source revision, version or creation time that the release pipeline did not verify.
-- Use a changing build timestamp when a reproducible build is required; derive it from controlled source metadata instead.
-- Invent project-specific labels when a standard OCI annotation has the required meaning.
-
-
 
 ## Ports, volumes and health checks<a id="ports-volumes-and-health-checks"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
-
 
 **You SHOULD:**
 
@@ -747,7 +684,7 @@ LABEL org.opencontainers.image.created="${IMAGE_CREATED}" \
 - Add or rely on a Containerfile `HEALTHCHECK` instruction in an OCI-format image.
 
 
-The OCI Image Specification has no health-check field. Buildah therefore ignores `HEALTHCHECK` when producing the required OCI image format; depending on its version, it may also emit a warning. The instruction is retained only in Docker-format images built with `--format docker`, which requires a documented exception to this guide's OCI-format requirement. For Podman deployments, define the health check through Quadlet, a systemd unit or the equivalent deployment interface.
+The OCI Image Specification has no health-check field, so Buildah drops `HEALTHCHECK` from OCI-format output. Define the health check through Quadlet, a systemd unit or the equivalent deployment interface. Retaining the instruction in a Docker-format image requires a documented exception to this guide's OCI-format requirement.
 
 
 
@@ -774,6 +711,13 @@ Every public release MUST include a `linux/amd64` image. Public releases SHOULD 
 - Test the index through Podman's normal platform selection after publication.
 
 
+**You MUST NOT:**
+
+- Label an `amd64` filesystem as `arm64` or otherwise override platform metadata to conceal a cross-build failure.
+- Download an architecture-specific artifact based only on the build host's `uname -m`.
+- Publish an index entry that has not passed the platform's required tests.
+
+
 Example Buildah workflow:
 
 ```sh
@@ -793,22 +737,13 @@ buildah manifest push --all \
   'docker://quay.io/foundata/example:<version>'
 ```
 
-When a `RUN` instruction executes target-architecture code on a non-native worker, Buildah requires appropriate emulation. Cross-compilation without emulation is preferable when the language toolchain supports it, but the release still requires a runtime smoke test on the target architecture.
-
-
-**You MUST NOT:**
-
-- Label an `amd64` filesystem as `arm64` or otherwise override platform metadata to conceal a cross-build failure.
-- Download an architecture-specific artifact based only on the build host's `uname -m`.
-- Publish an index entry that has not passed the platform's required tests.
-
 
 
 ## Rebuildability and reproducibility<a id="rebuildability-and-reproducibility"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-Digest-pinned images provide immutable image inputs but do not make the complete build reproducible. Package repositories, language dependencies, downloaded files, generated timestamps, archive ordering, compiler behavior and the builder version can all change output.
+Rebuildability is mandatory: the project can create a working replacement from documented inputs. Bit-for-bit reproducibility is strongly desirable, but must be measured and claimed precisely rather than assumed.
 
 
 **You MUST:**
@@ -837,20 +772,17 @@ Digest-pinned images provide immutable image inputs but do not make the complete
 - Weaken update policy solely to preserve an old digest; a secure rebuild may intentionally produce new content.
 
 
-Rebuildability is mandatory: the project can create a working replacement from documented inputs. Bit-for-bit reproducibility is strongly desirable, but must be measured and claimed precisely rather than assumed.
-
-
 
 ## Security, SBOMs, provenance and signing<a id="security-sboms-provenance-and-signing"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-The release pipeline MUST evaluate and identify the exact digest it publishes. A scan result for a local tag, an SBOM for the source directory or a signature over a moving tag does not establish the state of the released image.
+The release pipeline MUST evaluate, scan, attest and sign the exact digests it publishes. A scan result for a local tag, an SBOM for the source directory or a signature over a moving tag does not establish the state of the released image. The subsections below all follow from this rule.
 
 
 ### Vulnerability and configuration scanning<a id="vulnerability-and-configuration-scanning"></a>
 
-Trivy is the standard scanner. The release pipeline MUST scan the final image pulled by digest from Quay after publication or from an equivalently immutable pre-publication registry location. This verifies the deliverable rather than an assumed local intermediate.
+Trivy is the standard scanner. The release pipeline MUST scan the final image pulled by digest from Quay after publication or from an equivalently immutable pre-publication registry location.
 
 
 **You MUST:**
@@ -861,17 +793,18 @@ Trivy is the standard scanner. The release pipeline MUST scan the final image pu
 - Fail a release for a fixable `HIGH` or `CRITICAL` vulnerability unless an approved exception exists.
 - Store the scanner version, vulnerability database version or timestamp, image digest and result with the release evidence.
 - Rescan supported release digests on a schedule because vulnerability knowledge changes without image content changing.
+- Use exactly one scanner stack as the authoritative release gate.
 
 
-Example release gate:
+**You MAY:**
 
-```sh
-trivy image \
-  --exit-code 1 \
-  --ignore-unfixed \
-  --severity HIGH,CRITICAL \
-  'quay.io/foundata/example@sha256:<platform-manifest-digest>'
-```
+- Replace Trivy with [Syft](https://github.com/anchore/syft) and [Grype](https://github.com/anchore/grype) for SBOM generation and vulnerability matching when a project documents a concrete benefit; the required secret and configuration scanning must then still be covered, in practice by keeping Trivy anyway.
+- Run a non-gating second-opinion scan for audits.
+
+
+**You MUST NOT:**
+
+- Run two scanners as parallel release gates.
 
 
 **A vulnerability exception MUST include:**
@@ -884,9 +817,15 @@ trivy image \
 - An expiry date and review trigger.
 
 
-Quay's registry scanning can provide useful continuous visibility, but it is defense in depth and does not replace the reproducible CI release gate. Scanner findings are inputs to risk decisions; neither package count nor an empty result proves that an image is secure.
+Example release gate:
 
-Trivy runs as a single local binary and requires no server infrastructure; its client/server mode is optional. It does download its vulnerability database from a public registry on first use, and busy shared CI runners have hit rate limits there. Cache the database between runs and configure an alternative database repository (`--db-repository`) or a self-hosted mirror when that occurs.
+```sh
+trivy image \
+  --exit-code 1 \
+  --ignore-unfixed \
+  --severity HIGH,CRITICAL \
+  'quay.io/foundata/example@sha256:<platform-manifest-digest>'
+```
 
 Trivy can also scan a retained SBOM directly, which keeps the required scheduled rescans cheap because the released image does not have to be pulled again:
 
@@ -898,13 +837,10 @@ trivy sbom \
   'example-linux-amd64.spdx.json'
 ```
 
-Use exactly one scanner stack as the authoritative release gate. [Syft](https://github.com/anchore/syft) and [Grype](https://github.com/anchore/grype) MAY replace Trivy for SBOM generation and vulnerability matching when a project documents a concrete benefit, such as materially better SBOM coverage for its language ecosystem. They provide neither the required secret scanning nor the required configuration scanning, so such a project must still cover those scan types, in practice by keeping Trivy anyway, which is why the default is Trivy alone. Do not run two scanners as parallel release gates: their databases and matching differ by design, so a dual gate produces conflicting findings and duplicated exception handling rather than additional safety. A non-gating second-opinion scan MAY be used for audits.
-
 
 ### SBOMs<a id="sboms"></a>
 
 Each platform-specific release manifest MUST have an SBOM in SPDX 2.3 JSON format. Generate it from the final image so it describes the filesystem and packages consumers receive.
-
 
 ```sh
 trivy image \
@@ -930,12 +866,9 @@ trivy image \
 - Compare SBOM coverage with application dependency lock files.
 
 
-Buildah can invoke Trivy or Syft through its SBOM presets, which can be useful during development. The normative release SBOM remains the scan of the final digest because it describes the artifact actually published.
-
-
 ### Provenance<a id="provenance"></a>
 
-Release provenance MUST use an in-toto Statement with a SLSA Provenance v1 predicate. It must be generated by the trusted release environment from observed build data, not assembled from values supplied unchecked by the caller.
+Release provenance MUST use an in-toto Statement with a SLSA Provenance v1 predicate. It must be generated by the trusted release environment from observed build data, not assembled from values supplied unchecked by the caller. A project MUST document its provenance generator integration and trust root.
 
 
 **The provenance MUST identify:**
@@ -957,38 +890,11 @@ Release provenance MUST use an in-toto Statement with a SLSA Provenance v1 predi
 - Describe the actual build; do not claim a SLSA build level unless every requirement of that level is implemented and audited.
 
 
-The exact provenance generator depends on the continuous-integration platform and its workload identity. A project MUST document that integration and its trust root. Serializing JSON with the correct field names is not equivalent to trusted provenance.
-
-
 ### Signing and verification<a id="signing-and-verification"></a>
 
 Cosign is the standard signing and attestation client. The preferred identity model is keyless signing with the release job's short-lived OIDC workload identity and Sigstore transparency-log integration. Where a suitable workload identity is unavailable, use a KMS- or HSM-protected key with documented rotation and recovery; do not store a long-lived private key in the repository or an ordinary CI variable.
 
-
 Sign immutable digests after all image content has been uploaded to its registry location. The upload makes the subject digest available to Cosign; it does not promote the candidate to a release. Registry and deployment policy MUST continue to reject the candidate until its signatures and required attestations have been verified.
-
-```sh
-cosign sign --yes \
-  'quay.io/foundata/example@sha256:<image-index-digest>'
-```
-
-Attach an SBOM attestation to its platform digest:
-
-```sh
-cosign attest --yes \
-  --type spdxjson \
-  --predicate example-linux-amd64.spdx.json \
-  'quay.io/foundata/example@sha256:<platform-manifest-digest>'
-```
-
-Attach trusted provenance using the predicate produced by the CI provenance generator:
-
-```sh
-cosign attest --yes \
-  --type slsaprovenance1 \
-  --predicate provenance.json \
-  'quay.io/foundata/example@sha256:<image-index-digest>'
-```
 
 
 **You MUST:**
@@ -1009,7 +915,24 @@ cosign attest --yes \
 - Use the same long-lived signing key across unrelated trust domains.
 
 
-Cosign verification requires identity constraints, for example:
+Signing and attestation:
+
+```sh
+cosign sign --yes \
+  'quay.io/foundata/example@sha256:<image-index-digest>'
+
+cosign attest --yes \
+  --type spdxjson \
+  --predicate example-linux-amd64.spdx.json \
+  'quay.io/foundata/example@sha256:<platform-manifest-digest>'
+
+cosign attest --yes \
+  --type slsaprovenance1 \
+  --predicate provenance.json \
+  'quay.io/foundata/example@sha256:<image-index-digest>'
+```
+
+Verification requires identity constraints:
 
 ```sh
 cosign verify \
@@ -1040,8 +963,6 @@ The release repository MUST contain the expected issuer and identity policy, not
 
 Every image repository MUST automate linting, clean builds, runtime tests and release-security controls. A locally successful build is not release evidence.
 
-There is no Containerfile formatter worth adopting as a standard. Unlike `gofmt` for Go or Ruff for Python, no formatter has meaningful ecosystem traction or authority over Containerfile style, and Hadolint lints but does not format. The formatting rules in [Files and layout](#files-and-layout) are therefore enforced by Hadolint where a corresponding rule exists and by review otherwise; do not add a niche formatting tool to the pipeline for this.
-
 
 **You MUST:**
 
@@ -1057,7 +978,21 @@ There is no Containerfile formatter worth adopting as a standard. Unlike `gofmt`
 - Release only from a protected, reviewed source revision through trusted CI.
 
 
-Hadolint is the de-facto standard Containerfile linter and also runs ShellCheck against `RUN` shell code. Run it with a pinned version and keep policy-level rule decisions in a committed configuration file rather than in flags:
+**You SHOULD:**
+
+- Write smoke and structure tests with a dedicated harness instead of accumulating unstructured shell. [Testinfra](https://testinfra.readthedocs.io/) is the default recommendation; [Goss](https://github.com/goss-org/goss) is a suitable alternative when a single Go binary with YAML assertions is preferred over a Python toolchain.
+- Test a clean no-cache build periodically in addition to ordinary cached builds.
+- Enforce a maximum image-size or layer regression threshold derived from the application, not a universal byte limit.
+- Test the published digest after pulling it from Quay.
+- Run scheduled rebuilds even when application source has not changed so base and package security updates are consumed.
+
+
+**You MUST NOT:**
+
+- Add a Containerfile formatting tool to the pipeline.
+
+
+Run Hadolint with a pinned version and keep policy-level rule decisions in a committed configuration file rather than in flags. Use an inline suppression only for a narrow, single-instruction exception, and expect occasional false positives on Buildah-supported syntax that Docker popularized later:
 
 ```sh
 hadolint Containerfile
@@ -1071,24 +1006,10 @@ ignored:
   - DL3041
 ```
 
-Use an inline suppression only for a narrow, single-instruction exception:
-
 ```dockerfile
 # hadolint ignore=DL3003
 RUN cd /workspace/example && ./generate.sh
 ```
-
-Expect occasional false positives on Buildah-supported syntax that Docker popularized later; suppress them narrowly with a comment instead of disabling whole rule groups.
-
-
-**You SHOULD:**
-
-- Write smoke and structure tests with a dedicated harness instead of accumulating unstructured shell. [Testinfra](https://testinfra.readthedocs.io/) is the default recommendation: it is a pytest plugin with a Podman connection backend, so image tests reuse the test framework, fixtures and skills of the [Python style guide](./python-style-guide.md). [Goss](https://github.com/goss-org/goss) is a suitable alternative when a single Go binary with YAML assertions is preferred over a Python toolchain.
-- Test a clean no-cache build periodically in addition to ordinary cached builds.
-- Enforce a maximum image-size or layer regression threshold derived from the application, not a universal byte limit.
-- Test the published digest after pulling it from Quay.
-- Run scheduled rebuilds even when application source has not changed so base and package security updates are consumed.
-
 
 Example Testinfra smoke test:
 
@@ -1200,6 +1121,46 @@ The corresponding minimal `.containerignore` for an externally built artifact is
 ```
 
 The example is a structural reference, not a universal base-image choice. Project documentation must state how `build/example` is produced, tested and associated with the source revision recorded in the labels and provenance.
+
+
+
+## Reasoning<a id="reasoning"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+**Toolchain and Docker.** The Buildah, Podman and Skopeo toolchain is rootless, daemonless and open source. Docker's acceptance of a conforming Containerfile is incidental, so it is neither tested nor promised. Hosted services built from open-source software, including Quay.io and Sigstore's public infrastructure, remain external services with their own terms, and distributing pinned tools can create license obligations even when a tool's license does not cover the images it produces.
+
+**Registries.** Publishing is centralized on Quay so retention and tag mutation stay controlled operations. Consumption prefers the authoritative upstream registry because a similarly named repackaging elsewhere is not evidence of equivalence. Mirrors are reserved for concrete availability or policy needs; an unmaintained mirror becomes a stale, unscanned trust anchor.
+
+**Base images.** A single mandated distribution would trade compatibility, lifecycle fit and diagnostic knowledge for superficial consistency. Image size is an incomplete security metric: attack surface depends on reachable behavior, configuration and privileges, and saved megabytes do not help a team that cannot patch or debug the base during an incident. musl is a real compatibility surface for glibc-targeted software.
+
+**Digest pinning and updates.** The tag documents intent; the digest selects the bytes. A pin transfers change control to the repository and creates an update obligation, because a forgotten digest is a frozen vulnerability set. Pinning alone is not reproducibility. Renovate proposes the digests every other control trusts, so it runs self-hosted and pinned, able to propose but not merge; its AGPL-3.0-only license covers the tool, not the repositories or images it updates.
+
+**Build context.** The context is builder input and may be transferred, cached or inspected even when never copied into the image, so it is bounded with an allowlist.
+
+**Packages and caches.** Exact package pins block security updates and become uninstallable after repository rotation; the base digest plus the SBOM records what was installed. Caches are speed, not input identity.
+
+**File ownership.** Mode `0555` is not immutability when the executing user owns the file: an owner can re-permission and rewrite it. Root ownership blocks that, and a read-only root filesystem is an independent second control.
+
+**Build arguments and environment.** `ARG` and `ENV` values surface in image configuration, logs, cache metadata and provenance, so they are public unless the documented secret channel is used end to end.
+
+**Users and resource limits.** A container user is a process identity, not a boundary, but it shrinks compromise impact. Limits need measurement because applications derive internal sizing from them; an inherited `nofile` limit in the millions has produced a connection table hundreds of megabytes large at idle.
+
+**Entrypoint.** The shell form inserts a shell that changes argument handling and can block signal delivery. Supervisors are limited to documented product contracts because each extra process obscures the signal path and exit status that deployment tooling depends on.
+
+**Health checks.** The OCI image format has no health-check field, and health policy is an environment decision, so the deployment layer owns it.
+
+**Multi-platform.** Emulated builds can hide target-architecture defects; cross-compiling is fine for the build but never replaces an on-target runtime test.
+
+**Reproducibility.** Rebuildability is what an incident requires: a working replacement from documented inputs. Bit-for-bit equivalence is desirable evidence but must be measured, not assumed.
+
+**Exact-digest releases.** Every security statement binds to a digest. A scan of a local tag or a signature over a moving tag can describe different bytes than consumers pull, so the workflow pushes a candidate, verifies the registry-reported digest and promotes by retagging; a rebuild would reopen the gap the gates closed.
+
+**One scanner stack.** Scanner databases and matching differ by design, so parallel gates yield conflicting findings and duplicated exceptions instead of safety; second opinions stay non-gating. Trivy is the default because it also covers the required secret and configuration scanning. Registry-side scanning is defense in depth, not the gate, and an empty result does not prove security. Trivy's public database has rate-limited busy CI runners: cache it, set `--db-repository` or self-host a mirror, and scan the retained SBOM to keep scheduled rescans cheap.
+
+**Provenance and signing.** Correct SLSA field names are not trusted provenance; trust comes from a generator running in the release environment under an attested workload identity. Keyless signing removes long-lived key custody, and verification must constrain issuer and identity because "signed by somebody" is not a trust statement.
+
+**Formatting and test harness.** No Containerfile formatter has ecosystem authority and Hadolint does not format, so layout is enforced by lint rules and review. Testinfra reuses the pytest stack of the [Python style guide](./python-style-guide.md); Goss suits teams preferring one Go binary with YAML assertions.
 
 
 
