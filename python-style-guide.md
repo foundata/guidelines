@@ -154,7 +154,7 @@ Update the matrix as new stable Python versions are adopted. Do not add a versio
 
 **You MUST:**
 
-- Use a single [`pyproject.toml`](https://packaging.python.org/en/latest/guides/writing-pyproject-toml/) as the central project, build and tool configuration file.
+- Keep one [`pyproject.toml`](https://packaging.python.org/en/latest/guides/writing-pyproject-toml/) at the repository root as the authority for repository-wide tool configuration and development dependency groups. Except for the uv workspace layout described below, it is also the repository's sole project and build file. Workspace member files MAY contain member-specific project metadata, runtime dependencies, scripts, build-system declarations, and build or source settings. They MUST NOT duplicate root linting, formatting, type-checking, testing, or development dependency configuration.
 - Declare runtime dependencies in `[project.dependencies]` and development-only dependencies in `[dependency-groups]` or the package manager's equivalent.
 - Declare `[build-system]` for every project distributed as a Python package.
 - Keep import package names valid Python identifiers. Use `snake_case` if a distribution name contains dashes.
@@ -208,11 +208,39 @@ Update the matrix as new stable Python versions are adopted. Do not add a versio
 - Tests MAY be colocated with application packages when this follows an established framework convention or keeps tests with their owning component. For example, Django applications may use an app-local `tests.py`, `test*.py` modules, or `tests/` package.
 
 
+**For uv workspaces:**
+
+A repository MAY contain more than one distributable package only when all of the following conditions hold:
+
+- The packages are components of one product, with one changelog, one canonical documentation set and one release lifecycle. Unrelated or independently versioned projects belong in separate repositories.
+- The split provides a real installation boundary for users. For example, a server may need a dependency-free engine while a desktop installation adds a frontend package.
+- All members release with the same version number, tag and release entry. A release may leave a member without code changes.
+- Dependencies between members encode the documented compatibility contract, and automated tests cover that contract.
+- The repository has one lock file. The virtual root owns workspace membership, development dependency groups and repository-wide tool configuration.
+- The release process builds, installs and smoke-tests every member. It verifies distribution metadata, runtime versions and dependency invariants, then publishes those exact artifacts without rebuilding or modifying them.
+- Generated artifact inputs, such as package-index READMEs, are produced deterministically before the artifacts are validated.
+
+Use this layout:
+
+```text
+product/
+├── pyproject.toml
+├── packages/
+│   ├── example/
+│   │   ├── pyproject.toml
+│   │   └── src/example/
+│   └── example-gui/
+│       ├── pyproject.toml
+│       └── src/example_gui/
+└── tests/
+```
+
+
 **Reasoning:**
 
 - The `src` layout prevents tests from accidentally importing source files from the repository instead of the installed package.
 - Test location is a distribution concern: shipped library packages should not carry their test suite by accident, but an application that is deployed as a whole gains nothing from forcing tests out of the framework's own layout. Django, for example, generates app-local tests and its test runner discovers them there.
-- `pyproject.toml` belongs at the repository root. We do not use monorepos, so a single distribution root per repository is always correct and there is no need to nest the package in a subdirectory. Nesting only adds friction (a `README` symlink to satisfy the build root, an extra `cd` for every command, and packaging edge cases) without a compensating benefit.
+- `pyproject.toml` belongs at the repository root. Unrelated or independently versioned projects use separate repositories. A repository containing one distribution therefore keeps that distribution at the root; nesting it adds README indirection, extra directory changes and packaging edge cases without a compensating benefit. The only permitted multi-distribution layout is the single-product uv workspace described above, whose root file remains the authority for shared configuration.
 - Non-package content may live at the repository root beside `pyproject.toml`. With `uv_build` the source distribution stays clean automatically as it packages only the module plus project metadata (unlike some backends like `setuptools_scm` which include every version-controlled file). Top-level files such as `README`, `assets/` and documentation do not enter the sdist with `uv_build` (verify once with `tar tf dist/*.tar.gz`).
 - Central configuration reduces duplicated or contradictory settings.
 - `uv` is the project manager and build frontend, while `uv_build` is the build backend. `uv_build` is appropriate for pure-Python packages; projects with native extensions, custom build steps or unsupported layouts need another suitable backend.
