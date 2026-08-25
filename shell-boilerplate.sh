@@ -5,9 +5,9 @@
 # SPDX-FileCopyrightText: 2026, foundata GmbH (https://foundata.com)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# --- BOILERPLATE START v1.1.1 ---
+# --- BOILERPLATE START v1.1.2 ---
 # Consistent environment for predictable tool and shell behavior
-export PATH="${PATH:-'/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin'}"
+export PATH="${PATH:-/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin}"
 if command -v locale >/dev/null 2>&1; then
   for locale_candidate in 'C.UTF-8' 'C.utf8' 'en_US.UTF-8' 'UTF-8' 'C'; do
     if LC_ALL="${locale_candidate}" locale charmap >/dev/null 2>&1; then

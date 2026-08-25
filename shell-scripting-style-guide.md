@@ -1179,7 +1179,7 @@ get_config_dir() {
   Do so until your script explicitly has to follow a system's localization.
 - Set a [`PATH`](https://en.wikipedia.org/wiki/PATH_(variable)) fallback:
   ```sh
-  export PATH="${PATH:-'/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin'}"
+  export PATH="${PATH:-/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin}"
   ```
 - Test scripts with `dash` during development (it is stricter about POSIX compliance).
 - Avoid / disable the `pipefail` option and do not base script logic on it:
