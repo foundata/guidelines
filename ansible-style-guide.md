@@ -19,6 +19,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 * [Conditionals](#conditionals)
   * [Formatting](#conditionals-formatting)
 * [Loops](#loops)
+  * [Loop variables in role task files](#role-loop-variables)
 * [Tasks and play declaration](#tasks-plays)
   * [Handlers](#handlers)
   * [Roles](#roles)
@@ -308,7 +309,7 @@ Following the spacing rules produces consistent code that is easy to read.
 * Quote references to the local Ansible environment, such as the names of variables being assigned values.
 
 
-**Good Examples:**
+**Good examples:**
 
 ```yaml
 - name: "Connect to host, verify a usable python"
@@ -482,7 +483,7 @@ Following the spacing rules produces consistent code that is easy to read.
 * Names of plugins, roles, and most parts of Ansible must follow Python namespace rules, which disallow certain characters, such as hyphens  (`-`) or dots (`.`). See [StackOverflow](https://stackoverflow.com/a/37831973), [Galaxy Issue 775](https://github.com/ansible/galaxy/issues/775), and a [comment from Issue 779](https://github.com/ansible/galaxy/issues/779#issuecomment-401632750) for more information:
   > For that to work, namespaces need to be Python compatible, which means they can’t contain ‘-’.
 * Refer to the [Ansible Galaxy documentation on role names](https://galaxy.ansible.com/docs/contributing/creating_role.html#role-names) for additional guidance.
-* Role variables, registered variables, and custom facts are not truly local—they persist globally and can pollute the namespace. Prefixing them with the role name reduces conflicts, while two underscores indicate they are internal. This applies to variables set by set_fact and register, as they remain after the role completes. The two underscores for internal variables is [a community convention](https://redhat-cop.github.io/automation-good-practices/#_naming_parameters).
+* Role variables, registered variables, and custom facts are not truly local. They persist globally and can pollute the namespace. Prefixing them with the role name reduces conflicts, while two underscores indicate they are internal. This applies to variables set by `set_fact` and `register`, as they remain after the role completes. The two underscores for internal variables are [a community convention](https://redhat-cop.github.io/automation-good-practices/#_naming_parameters).
 
 
 
@@ -677,8 +678,8 @@ Following the spacing rules produces consistent code that is easy to read.
 **Reasoning:**
 
 * Bracket notation makes it easier to distinguish between keys and attributes or methods of Python dictionaries. It also usually results in better editor highlighting.
-* Bracket notation allows for seamless use of variables as keys.
-* Dot notation can lead to issues because keys may collide with attributes or methods of Python dictionaries (e.g., `count`, `copy`, `title`, and others). Consistency is crucial, so it's better to stick with bracket notation rather than switching between the two options within a playbook.
+* Bracket notation supports variables as keys.
+* Dot notation can fail when keys collide with attributes or methods of Python dictionaries, such as `count`, `copy`, or `title`. Use bracket notation consistently within a playbook.
 
 
 
@@ -1091,7 +1092,56 @@ Following the spacing rules produces consistent code that is easy to read.
 **Reasoning:**
 
 * [Ansible documentation: Comparing loops](https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_loops.html#comparing-loops)
-* The Ansible team has not deprecated `with_<lookup>` in general (even though there [was](https://github.com/ansible/ansible/issues/51153#issuecomment-456219258) [discussion](https://github.com/ansible/ansible-lint/issues/2204#issue-1266269947)), the syntax remains valid.
+* The Ansible team has not deprecated `with_<lookup>` in general. The syntax remains valid despite
+  [earlier](https://github.com/ansible/ansible/issues/51153#issuecomment-456219258)
+  [discussions](https://github.com/ansible/ansible-lint/issues/2204#issue-1266269947).
+
+
+
+### Loop variables in role task files<a id="role-loop-variables"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+**You MUST:**
+
+* Set `loop_control.loop_var` explicitly for every `loop` or `with_*` in a role's task files.
+* Use a private name built from the role's public variable prefix and the loop's purpose:
+  `__<public-variable-prefix><purpose>_item`. The public variable prefix includes its trailing underscore.
+  For example, use `__role_collection_package_item` for a package loop in a role whose public variables start with `role_collection_`. A generic dispatch loop in `tasks/main.yml` can use `__role_collection_loop_item`.
+* Use different purpose names for nested loops, including loops in task files called by a looping `include_tasks` task.
+
+
+**Good examples:**
+
+```yaml
+# collection/roles/example/tasks/packages.yml
+- name: "Install packages"
+  ansible.builtin.package:
+    name: "{{ __role_collection_package_item }}"
+    state: "present"
+  loop: "{{ role_collection_packages }}"
+  loop_control:
+    loop_var: "__role_collection_package_item"
+```
+
+
+**Bad examples:**
+
+```yaml
+# collection/roles/example/tasks/packages.yml
+- name: "Install packages"
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: "present"
+  loop: "{{ role_collection_packages }}"
+```
+
+
+**Reasoning:**
+
+* Consumers can run `include_role` in a loop and pass role parameters templated from that loop's `item`. Ansible evaluates these parameters when the role accesses them. A role task that also loops over `item` replaces the consumer's value while the parameter is evaluated.
+* This collision can silently produce an empty or incorrect value when the parameter uses `default(...)`. The role may then change or remove the wrong data. An explicit, namespaced loop variable prevents the role from rebinding `item`.
+* Purpose-specific names also prevent collisions between [nested loops](https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_loops.html#nested-loops).
 
 
 
@@ -1437,10 +1487,10 @@ argument_specs:
 
 **Reasoning:**
 
-* The `argument_specs.yml` file provides a standardized way to document role parameters, including types, defaults, and descriptions.
-* It enables automatic documentation generation using tools like [DocSmith for Ansible](https://github.com/foundata/ansible-docsmith).
+* The `argument_specs.yml` file documents role parameters, including types, defaults, and descriptions.
+* Tools such as [DocSmith for Ansible](https://github.com/foundata/ansible-docsmith) can generate documentation from it.
 * Ansible uses this specification to validate role arguments at runtime, catching configuration errors early.
-* It serves as authoritative, machine-readable documentation that stays in sync with the actual role implementation.
+* It is the machine-readable source for role parameter documentation and stays with the role implementation.
 
 
 
@@ -1694,7 +1744,7 @@ printf 'Changes applied\n'
 
 **Reasoning:**
 
-* Good, descriptive `name` values also produce valuable output for the user, as comments are not displayed.
+* Descriptive `name` values appear in Ansible's output; comments do not.
 * Variables documented in the `/defaults` or `/vars` directories do not require explanation within the playbooks themselves.
 * Concise comments preserve context that the code cannot express. Narrating visible behavior adds noise and is more likely to become outdated when the implementation changes.
 
