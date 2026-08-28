@@ -192,7 +192,7 @@ ensure() {
 
 # Convenience wrappers (see the used functions for documentation)
 require_cmd() { check_cmd -r "$@"; }
-# --- BOILERPLATE END v1.1.1 ---
+# --- BOILERPLATE END v1.1.2 ---
 
 ###### FIXME Optional but often useful boilerplate follows.
 
