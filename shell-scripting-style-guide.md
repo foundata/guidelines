@@ -1057,6 +1057,8 @@ sort temp.txt > output.txt || exit 1
     shopt -s inherit_errexit  # Preserve set -e in command substitutions (Bash 4.4+)
     ```
     Note: `pipefail` and `inherit_errexit` are Bash-specific and not POSIX-compliant.
+
+    **Exception:** Use `set -e` for simple, linear scripts where any failed command should stop the script, such as release checks with many build, lint, and packaging steps. This is cleaner than adding `|| exit 1` everywhere. Pair it with the four Bash options above and add a comment explaining why it is used. Avoid `set -e` in scripts with branches, important pipeline statuses, or command substitutions used in logic.
 - `set -a` exports all subsequently defined variables to the environment, which can pollute child processes and cause unexpected behavior.
 
 
