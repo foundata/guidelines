@@ -24,6 +24,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 - [Portability](#portability)
   - [Hints](#hints)
 - [`shell-boilerplate.sh`](#shell-boilerplate)
+  - [Updating the boilerplate](#shell-boilerplate-update)
 - [`shell-snippets.sh`](#shell-snippets)
 - [Author information](#author-information)
 
@@ -1239,8 +1240,9 @@ for cmd in 'curl' 'jq' 'openssl'; do
   fi
 done
 
-# Check using our boilerplate (FIXME see ...)
-## FIXME
+# Check using check_cmd()/require_cmd() from shell-boilerplate.sh
+require_cmd 'curl' 'jq' 'openssl' # exits with an error message if any is missing
+check_cmd 'jq' && printf '%s\n' 'jq is available' # returns 1 instead of exiting
 ```
 
 
@@ -1274,7 +1276,7 @@ Common POSIX utilities that can be relied upon (see [Open Group Base Specificati
 
 The [`shell-boilerplate.sh`](./shell-boilerplate.sh) file provides a starting point for new scripts. It includes environment setup, utility functions, and a structured `main()` pattern that follows this style guide.
 
-The code between the `--- BOILERPLATE START|END v<version> ---` markers is designed as a minimal inline library to be used across all our scripts. It provides:
+The code between the `--- BOILERPLATE START|END v<version> ---` markers is a menu, not a mandate: copy in only the parts a script needs. It provides:
 
 - Consistent environment setup (`PATH` fallback, locale probe with `LC_ALL` fallback, `set -u`, `pipefail` disabled).
 - ANSI formatting codes respecting [`NO_COLOR`](https://no-color.org/).
@@ -1282,9 +1284,71 @@ The code between the `--- BOILERPLATE START|END v<version> ---` markers is desig
 - `check_cmd()` and `require_cmd()` for checking command availability.
 - `ensure()` for running commands that must not fail.
 
-Keep the version markers intact. They enable programmatic updates of the boilerplate section across multiple scripts.
+Take the full block for complex, long-running scripts of the size and shape of [`pve_backup_usb.sh`](https://github.com/foundata/proxmox-pve-backup-usb/blob/main/pve_backup_usb.sh): many functions, cleanup on exit, several command checks, where consistent logging and error handling pay off. Small scripts can take just the environment setup and skip the rest.
+
+Keep the version markers only on a script that carries the block in full; they exist so it can be updated programmatically later (see [Updating the boilerplate](#shell-boilerplate-update)). A partial copy should be pasted plainly, without markers.
 
 See [`shell-boilerplate.sh`](./shell-boilerplate.sh).
+
+
+### Updating the boilerplate<a id="shell-boilerplate-update"></a>
+
+Scripts that carry the full, marker-delimited block can pull the latest version straight from GitHub with the standalone snippet below. It replaces only the content between the markers and leaves the rest of the target script untouched:
+
+```sh
+#!/usr/bin/env sh
+#
+# Update the inline boilerplate block in a script from the canonical
+# shell-boilerplate.sh. Only replaces the content between the
+# "--- BOILERPLATE START|END v<version> ---" markers.
+#
+# Usage: update-boilerplate.sh <script>
+
+set -u
+
+target="${1:?Usage: update-boilerplate.sh <script>}"
+url='https://raw.githubusercontent.com/foundata/guidelines/master/shell-boilerplate.sh'
+
+if [ ! -f "${target}" ]; then
+  printf '%s: not a file: %s\n' "$(basename "${0}")" "${target}" >&2
+  exit 1
+fi
+
+new="$(mktemp)" && tmp="$(mktemp)" || exit 1
+trap 'rm -f "${new}" "${tmp}"' EXIT INT TERM
+
+if ! curl --fail --silent --show-error --location --output "${new}" "${url}"; then
+  printf '%s: download failed: %s\n' "$(basename "${0}")" "${url}" >&2
+  exit 1
+fi
+
+exec_bit=0
+[ -x "${target}" ] && exec_bit=1
+
+awk '
+  NR == FNR {
+    if ($0 ~ /^# --- BOILERPLATE START v/) { inblock = 1 }
+    if (inblock) { block = block $0 "\n" }
+    if ($0 ~ /^# --- BOILERPLATE END v/) { inblock = 0 }
+    next
+  }
+  /^# --- BOILERPLATE START v/ { printf "%s", block; skip = 1 }
+  /^# --- BOILERPLATE END v/ { skip = 0; next }
+  !skip { print }
+' "${new}" "${target}" > "${tmp}"
+
+cp "${target}" "${target}.bak"
+mv "${tmp}" "${target}"
+[ "${exec_bit}" = 1 ] && chmod +x "${target}"
+
+printf '%s: updated %s (backup: %s.bak)\n' "$(basename "${0}")" "${target}" "${target}"
+```
+
+Review the diff before committing: the markers only bound the replacement, they do not guarantee the new version is a drop-in fit (e.g. if custom code was pasted between them). Keep the update as its own commit, scoped to just the boilerplate change, e.g.:
+
+```
+<component>: update shell boilerplate to v<version>
+```
 
 
 
