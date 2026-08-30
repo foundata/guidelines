@@ -115,7 +115,7 @@ The links define each step's requirements.
 
 1. Run source, dependency-lock, [Containerfile](#linting-and-testing), [context](#build-context) and repository checks.
 2. Validate declared container-image dependency and [base-image pins](#pinning-image-references).
-3. Build, import, re-verify and [test](#linting-and-testing) `linux/amd64` natively or with the documented [emulation fallback](#multi-platform-images), then apply the required platform floor.
+3. First build, import, re-verify and [test](#linting-and-testing) `linux/amd64` natively or with the documented [emulation fallback](#multi-platform-images); every release requires this platform.
 4. Repeat the build, import, re-verification and test sequence on every other required platform worker.
 5. Generate each platform [SBOM](#sboms), run the local [release scan gate](#vulnerability-and-configuration-scanning), and emit a platform qualification binding the layout, SBOM, scan results and verdict by digest.
 6. When transport is needed, [verify the recorded digests](#multi-platform-images) of layouts, evidence and qualifications before assembly. Assemble an OCI image index for a multi-platform release.
@@ -415,7 +415,7 @@ printf '%s@%s\n' "${image}" "${digest}"
 
 **You MUST:**
 
-- Use reviewable automation to propose base-image digest updates; self-hosted Renovate is the sole proposal and write path for tag or digest updates, and ContainerWright 1.0 only checks declared pins.
+- Use reviewable automation to propose base-image digest updates; self-hosted Renovate is the sole proposal and write path for tag or digest updates, and ContainerWright checks declared pins but does not edit them.
 - Rebuild, test, scan and sign after an image input changes.
 - Review an unexpected digest change under an unchanged immutable-version tag as a supply-chain event.
 - Keep supported release branches receiving relevant base-image and toolchain updates.
@@ -846,6 +846,8 @@ Example Buildah workflow:
 
 ```sh
 manifest='localhost/example-release'
+layout='./build/example-release.oci'
+candidate='<version>-candidate.<run-id>.g<source-revision-short>'
 
 buildah manifest create "${manifest}"
 buildah build \
@@ -858,7 +860,12 @@ buildah build \
   .
 buildah manifest push --all \
   "${manifest}" \
-  'docker://quay.io/foundata/example:<version>'
+  "oci:${layout}:candidate"
+
+# After per-platform tests, SBOMs, scans and qualification:
+skopeo copy --all --preserve-digests \
+  "oci:${layout}:candidate" \
+  "docker://quay.io/foundata/example:${candidate}"
 ```
 
 In a distributed release, each platform worker exports an OCI layout. The authorized release environment verifies the layouts and assembles the accepted manifests into an index. A local single-platform release uses the same qualification and assembly steps without transport.
@@ -922,7 +929,7 @@ Trivy is the standard scanner.
 - Fail a release for a fixable `HIGH` or `CRITICAL` vulnerability unless an approved, unexpired exception exists in repository configuration; this guide owns the authoritative severity threshold.
 - Store the scanner version, vulnerability database version or timestamp, image digest and result with the release evidence.
 - Record the local manifest digest before scanning and verify the same digest after upload.
-- The organization MUST schedule rescans from a digest-bound inventory of supported releases because vulnerability data changes without image changes. Mutable tags MUST NOT define this inventory. Scheduling and remediation ownership are external; [Rescans and remediation](#rescans-and-remediation) defines the procedure.
+- Arrange scheduled organization rescans from a digest-bound inventory of supported releases because vulnerability data changes without image changes. Mutable tags MUST NOT define this inventory. Scheduling and remediation ownership are external; [Rescans and remediation](#rescans-and-remediation) defines the procedure.
 - Use exactly one scanner stack as the authoritative release gate.
 - Cache the vulnerability database between runs, record the database version or timestamp with each scan result, and refresh a stale or corrupted cache instead of trusting it.
 
@@ -1095,6 +1102,10 @@ Cosign writes the encrypted private key to `cosign.key` and public key to `cosig
 
 Sign immutable digests after uploading all image content. Upload makes the subject digest available to Cosign but does not promote the candidate. Registry and deployment policy reject it until signatures and required attestations pass verification.
 
+Release signatures and signed attestations MUST use Cosign's supported default public [Sigstore transparency service](https://docs.sigstore.dev/logging/overview/) (Rekor). Signing MUST fail if log inclusion cannot be obtained, and release verification MUST verify that inclusion. Release commands MUST NOT disable transparency-log upload, use a no-log signing configuration or ignore transparency-log verification. Candidate signatures are the release signatures because promotion assigns tags to the same verified digest; the candidate and its evidence are already public by construction.
+
+ContainerWright MUST NOT sign during checks, builds, tests, evidence generation or qualification. A workflow that does not publish a candidate therefore creates no transparency-log entry.
+
 
 **You MUST:**
 
@@ -1102,7 +1113,7 @@ Sign immutable digests after uploading all image content. Upload makes the subje
 - Sign attestations and associate them with the exact subject digest.
 - Encrypt the private key at rest, restrict access to the authorized release process and maintain a tested backup, rotation and revocation procedure.
 - Verify signatures and attestations against the exact approved public key or managed-key identity.
-- Verify the signature, SBOM attestation and provenance attestation before promotion or deployment.
+- Verify the signature, SBOM attestation, provenance attestation and their transparency-log inclusion before promotion or deployment.
 - Configure `containers-policy.json` or an equivalent admission policy to reject unsigned or untrusted production images; deployment environment owners enforce it.
 - Test trust-policy changes with both a trusted image and an intentionally untrusted image.
 
@@ -1157,6 +1168,24 @@ cosign verify-attestation \
   'quay.io/foundata/example@sha256:<image-index-digest>'
 ```
 
+Manual signing experiments are outside ContainerWright and SHOULD use a disposable test key, never the release key. Keep them out of the public log. With Cosign 2.x, a local blob experiment uses `--tlog-upload=false` when signing and `--insecure-ignore-tlog=true` when verifying:
+
+```sh
+cosign sign-blob \
+  --key './cosign-test.key' \
+  --tlog-upload=false \
+  --output-signature './test-artifact.sig' \
+  './test-artifact'
+
+cosign verify-blob \
+  --key './cosign-test.pub' \
+  --signature './test-artifact.sig' \
+  --insecure-ignore-tlog=true \
+  './test-artifact'
+```
+
+Cosign versions that replace the upload flag with [signing configuration](https://docs.sigstore.dev/cosign/system_config/custom_components/) SHOULD use a test-only configuration without a transparency-log service for the same experiment. These opt-outs are test-only and MUST NOT be used for a release.
+
 - The approved public key or KMS/HSM identity MUST come from maintainer-controlled release configuration for release verification and protected deployment configuration for admission. It MUST NOT come from the signature or repository under review.
 - The private key or KMS/HSM signing permission MUST be available only to the authorized release process through a protected secret facility. Signing credentials MUST NOT be stored in repository files or ordinary environment configuration.
 - Registry and deployment policy MUST reject a candidate until its signatures and required attestations have been verified; deployment environment owners enforce admission.
@@ -1180,6 +1209,8 @@ After final verification, ContainerWright MUST generate the intermediate predica
 - Digests of verified evidence.
 
 Identities MUST come from embedded ContainerWright data and observations by the authorized release environment, not caller-supplied values.
+
+Release-environment mode MUST be `local` or `ci`. `local` identifies a release run on a maintainer-controlled workstation.
 
 An illustrative predicate has this shape:
 
@@ -1229,7 +1260,7 @@ Cosign wraps the predicate in an in-toto Statement and attaches it to the releas
 
 **Scheduled rescans.**
 
-- A scheduled rescan MUST resolve the subject by digest, enumerate every platform in an index, retrieve each SBOM attestation from the registry and verify its subject and signer against the trust root before scanning.
+- A scheduled rescan MUST resolve the subject by digest, enumerate every platform in an index, retrieve each SBOM attestation from the registry and verify its subject, signer and transparency-log inclusion against the trust root before scanning.
 - An authoritative rescan result MUST record the scanner version; vulnerability database version or timestamp; guide revision; ContainerWright version and source revision; repository-configuration digest; rescan-job identity; subject digest; per-platform findings; triage state; and verdict.
 - An informal local rescan is a useful diagnostic but is not release evidence and does not start or satisfy remediation duties.
 
@@ -1420,7 +1451,7 @@ The example is a structural reference, not a universal base-image choice.
 - **One scanner stack.** Scanner databases and matching differ, so parallel gates create conflicting findings and duplicate exceptions. Second opinions remain non-gating. Trivy also supplies the required secret and configuration scans. Registry scanning adds defense but cannot replace the release gate, and an empty result does not prove security. Busy CI runners can hit Trivy's public database rate limits. Cache it, configure `--db-repository` or host a mirror. Rescan retained SBOMs to reduce cost.
 - **Rescan scope.** An SBOM rescan matches known vulnerabilities against retained inventory. It cannot scan secrets or configuration without the filesystem. Evidence therefore states the scope; configurations requiring those scans must fetch the immutable image.
 - **Remediation clocks.** Starting at an informal scan allows resets; starting at publication penalizes later discoveries. The authoritative rescan result provides a fixed start. Record later triage and exceptions as new results. Never repoint a version tag, which would change content already verified by consumers.
-- **Provenance and signing.** Correct SLSA fields alone do not establish trust. The generator must run in the authorized release environment, and verification must use the approved signing key. A managed key pair is self-contained; KMS or HSM protection can later reduce exposure of exportable keys. Keep builder, signer and source identities separate so one compromise cannot impersonate all three.
+- **Provenance and signing.** Correct SLSA fields alone do not establish trust. The generator must run in the authorized release environment, and verification must use the approved signing key. The managed key pair keeps key custody under foundata's control; the public transparency log makes release signing auditable. Manual experiments use disposable keys without log upload to avoid permanent test entries and release-key associations. KMS or HSM protection can later reduce exposure of exportable keys. Keep builder, signer and source identities separate so one compromise cannot impersonate all three.
 - **Evidence retention.** Registry attestations are authoritative only while they remain fetchable and verifiable. A registry migration can orphan them, so exports or backups should match the release support lifetime.
 - **Formatting and test harness.** No Containerfile formatter has ecosystem authority, and Hadolint does not format. Lint rules and review enforce layout. Testinfra reuses the [Python style guide's](./python-style-guide.md) pytest stack; Goss offers one Go binary with YAML assertions.
 
