@@ -14,6 +14,7 @@
   * [Creative Commons Attribution 4.0 International (`CC-BY-4.0`)](#cc-by-40)
 * [Reasoning](#reasoning)
 * [Disclaimer](#disclaimer)
+* [Author information](#author-information)
 
 
 
@@ -232,5 +233,12 @@ Further reading:
 
 1. **This is not legal advice.** If in doubt: Ask persons in charge and/or a lawyer as some additional rules might apply (like the [Arbeitnehmererfindungsgesetz (ArbnErfG)](https://www.gesetze-im-internet.de/arbnerfg/) mentioned in your employment contract).
 2. After choosing and/or applying a license or in any case of uncertainty, **communicate with persons in charge for a last check before releasing a new project or repository** to the public.
+
+
+## Author information<a id="author-information"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+This guide was written by [foundata](https://foundata.com/) to help projects select an appropriate open-source or free-content license based on intended use and ecosystem requirements. It summarizes guidance from the [FSF license list](https://www.gnu.org/licenses/license-list.en.html), [OSI](https://opensource.org/licenses/) and [SPDX](https://spdx.org/licenses/). It is informational and not legal advice.
 
 <!--REUSE-IgnoreEnd-->

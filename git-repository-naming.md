@@ -18,6 +18,7 @@ MUST, SHOULD and other key words are used as defined in [RFC 2119](https://datat
 - [AI-related repositories](#ai-repositories)
   - [AI categories](#ai-categories)
     - [AI harness-locked variants](#ai-harness-variants)
+- [Author information](#author-information)
 
 
 ## General rules<a id="general-rules"></a>
@@ -176,3 +177,10 @@ ai-command-deploy-codex          # Codex build
 ai-hook-format-claudecode        # Claude Code build
 ai-hook-format-cursor            # Cursor build
 ```
+
+
+## Author information<a id="author-information"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+This guide was written by [foundata](https://foundata.com/) to define predictable repository names for ecosystem-specific artifacts, stand-alone projects and AI-related repositories. It records foundata's naming conventions and terminology.

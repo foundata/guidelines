@@ -21,6 +21,7 @@ MUST, SHOULD and other key words are used as defined in [RFC 2119](https://datat
 - [Complete examples](#complete-examples)
 - [Reasoning](#reasoning)
 - [References](#references)
+- [Author information](#author-information)
 
 
 ## Goals<a id="goals"></a>
@@ -475,3 +476,10 @@ Commit logs are developer-facing history, while changelogs are user-facing relea
 - [Scoped Commits](https://scopedcommits.com/)
 - [Stop Using Conventional Commits](https://sumnerevans.com/posts/software-engineering/stop-using-conventional-commits/)
 - [`git interpret-trailers` documentation](https://git-scm.com/docs/git-interpret-trailers)
+
+
+## Author information<a id="author-information"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+This guide was written by [foundata](https://foundata.com/) to make Git history concise, scoped and useful to maintainers. It is informed by [Scoped Commits](https://scopedcommits.com/), [Stop Using Conventional Commits](https://sumnerevans.com/posts/software-engineering/stop-using-conventional-commits/) and Git's [`git interpret-trailers`](https://git-scm.com/docs/git-interpret-trailers) documentation.

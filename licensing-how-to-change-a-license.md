@@ -9,6 +9,7 @@ To re-license a project (i.e., place it under a different or additional license)
   * [Further reading, examples](#internal-contributors-further-reading)
 * [External contributors (outside the organization)](#external-contributors)
   * [Further reading, examples](#external-contributors-further-reading)
+- [Author information](#author-information)
 
 
 ## Internal contributors only (within the organization)<a id="internal-contributors"></a>
@@ -50,3 +51,10 @@ When dealing with external contributors, the process can be more complex due to 
 ### Further reading, examples<a id="external-contributors-further-reading"></a>
 
 * [DokuWiki content relicensing](https://www.dokuwiki.org/devel:ideas:relicensing) and [Licensing Change page](https://www.dokuwiki.org/licensing_change)
+
+
+## Author information<a id="author-information"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+This guide was written by [foundata](https://foundata.com/) to document a practical, consent-based process for changing project licenses. It is informed by [Contributor License Agreements](https://en.wikipedia.org/wiki/Contributor_License_Agreement) and documented relicensing examples from [DokuWiki](https://www.dokuwiki.org/devel:ideas:relicensing).

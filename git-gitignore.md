@@ -15,6 +15,7 @@ The `gitignore` config is used to specify intentionally untracked files. There a
   - [Go](#type-go)
   - [Hugo](#type-hugo)
   - [Python](#type-python)
+- [Author information](#author-information)
 
 
 
@@ -134,3 +135,10 @@ For Python-based projects, it is recommended to extend [our default `.gitignore`
 URL: <https://www.toptal.com/developers/gitignore/api/git,vim,linux,macos,windows,jetbrains+all,visualstudiocode,python>
 
 See also: [Django](#type-django)
+
+
+## Author information<a id="author-information"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+This guide was written by [foundata](https://foundata.com/) to establish a predictable baseline for repository-specific `.gitignore` files. It follows Git's [`gitignore` documentation](https://git-scm.com/docs/gitignore) and uses the [Toptal gitignore generator](https://www.toptal.com/developers/gitignore) as its default source.
