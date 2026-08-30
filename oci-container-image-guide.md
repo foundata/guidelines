@@ -1091,7 +1091,7 @@ test "${local_digest}" = "${remote_digest}"
 
 ### Signing and verification<a id="signing-and-verification"></a>
 
-Cosign is the standard signing and attestation client. The baseline signing model is a foundata-managed key pair. Generate the initial key material in a controlled environment:
+Cosign is the standard signing and attestation client. Command examples in this section use Cosign 3.x syntax; ContainerWright's supported-version matrix defines the exact accepted versions. The baseline signing model is a foundata-managed key pair. Generate the initial key material in a controlled environment:
 
 ```sh
 umask 077
@@ -1168,23 +1168,30 @@ cosign verify-attestation \
   'quay.io/foundata/example@sha256:<image-index-digest>'
 ```
 
-Manual signing experiments are outside ContainerWright and SHOULD use a disposable test key, never the release key. Keep them out of the public log. With Cosign 2.x, a local blob experiment uses `--tlog-upload=false` when signing and `--insecure-ignore-tlog=true` when verifying:
+Manual signing experiments are outside ContainerWright and SHOULD use a disposable test key, never the release key. Keep them out of the public log. With Cosign 3.x, create a test-only [signing configuration](https://docs.sigstore.dev/cosign/system_config/custom_components/) without Fulcio, an OpenID Connect provider, Rekor or a timestamp authority. Store the signature in a Sigstore bundle and explicitly allow verification without transparency-log evidence:
 
 ```sh
-cosign sign-blob \
+cosign signing-config create \
+  --no-default-fulcio \
+  --no-default-oidc \
+  --no-default-rekor \
+  --no-default-tsa \
+  --out './cosign-test-no-log.json'
+
+cosign sign-blob --yes \
   --key './cosign-test.key' \
-  --tlog-upload=false \
-  --output-signature './test-artifact.sig' \
+  --signing-config './cosign-test-no-log.json' \
+  --bundle './test-artifact.sigstore.json' \
   './test-artifact'
 
 cosign verify-blob \
   --key './cosign-test.pub' \
-  --signature './test-artifact.sig' \
+  --bundle './test-artifact.sigstore.json' \
   --insecure-ignore-tlog=true \
   './test-artifact'
 ```
 
-Cosign versions that replace the upload flag with [signing configuration](https://docs.sigstore.dev/cosign/system_config/custom_components/) SHOULD use a test-only configuration without a transparency-log service for the same experiment. These opt-outs are test-only and MUST NOT be used for a release.
+These opt-outs are test-only and MUST NOT be used for a release.
 
 - The approved public key or KMS/HSM identity MUST come from maintainer-controlled release configuration for release verification and protected deployment configuration for admission. It MUST NOT come from the signature or repository under review.
 - The private key or KMS/HSM signing permission MUST be available only to the authorized release process through a protected secret facility. Signing credentials MUST NOT be stored in repository files or ordinary environment configuration.
