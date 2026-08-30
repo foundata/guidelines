@@ -7,6 +7,7 @@ This repository collects recommendations and rules [foundata](https://foundata.c
 
 Topics (in alphabetical order):
 * [Ansible](#ansible)
+* [Container images](#container-images)
 * [Git](#git)
 * [Go](#go)
 * [PowerShell scripting](#powershell-scripting)
@@ -24,6 +25,13 @@ Misc:
 [Ansible](https://www.ansible.com/) is a simple, agentless IT automation tool.
 
 * [Ansible style guide (playbooks) (`ansible-style-guide.md`)](./ansible-style-guide.md)
+
+
+## Container images<a id="container-images"></a>
+
+Resources on how to build and publish OCI container images from Containerfiles:
+
+* [OCI container image build and release guide (`oci-container-image-guide.md`)](./oci-container-image-guide.md)
 
 
 ## Licensing<a id="licensing"></a>
@@ -79,6 +87,8 @@ Our **guides are updated continuously**, meaning:
 * **Changes are immediately put "live" by publishing them after a review**.
 * There is no special versioning, neither for the documents themselves nor for the repository.
 * As Git and a repository hosting are used, permanent links to specific "versions" are still easy and possible if needed.
+
+The [OCI container image build and release guide](./oci-container-image-guide.md) is an exception to this continuous-release model. It is a versioned ruleset implemented by [ContainerWright](https://foundata.com/en/projects/containerwright), so a revised guide becomes effective only when its coordinated, compatible ContainerWright release is available. ContainerWright embeds the exact guide commit it implements and owns stable identifiers for its automated checks. Its conformance documentation maps each check to the guide's stable section anchor; the guide itself does not maintain a parallel rule-number registry.
 
 We believe that guides are work in progress and will probably never be finished as our understanding of each topic evolves. This fits our overall agile approach.
 
