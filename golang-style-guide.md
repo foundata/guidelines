@@ -40,7 +40,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-Go is a statically typed, compiled general-purpose language with first-class concurrency, a comprehensive standard library and a toolchain that produces self-contained binaries. Its main operational advantage for us is distribution: a Go program can usually be shipped as one static executable with no runtime or dependency installation on the target host.
+Go is a statically typed, compiled general-purpose language defined by the [Go language specification](https://go.dev/ref/spec), with first-class concurrency, a comprehensive standard library and a toolchain that produces self-contained binaries. Its main operational advantage for us is distribution: a Go program can usually be shipped as one static executable with no runtime or dependency installation on the target host.
 
 
 **Go is RECOMMENDED for:**
@@ -1417,7 +1417,7 @@ The baseline is standard tooling: `gofmt`/`goimports` (see [Formatting and impor
 **You MUST:**
 
 - Run `go vet ./...` and fix every diagnostic. Vet reports likely-wrong code (unreachable code, misused `Printf` verbs, copied locks, malformed struct tags); its findings are close to always real bugs. (`go test` runs a subset of vet checks automatically, which is not a substitute for the full run.)
-- Scan for known vulnerabilities with `go tool govulncheck ./...` before every release (track [`govulncheck`](https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck) with the `tool` directive like the other developer tools), and fix findings by updating the affected dependency (or the Go toolchain — the standard library is scanned too). `govulncheck` performs reachability analysis and reports only vulnerabilities in code paths your project actually calls, so findings are actionable, not noise ([Go vulnerability management](https://go.dev/doc/security/vuln/)).
+- Scan for known vulnerabilities with `go tool govulncheck ./...` before every release (track [`govulncheck`](https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck) with the `tool` directive like the other developer tools), and fix findings by updating the affected dependency (or the Go toolchain — the standard library is scanned too). `govulncheck` performs reachability analysis and reports only vulnerabilities in code paths your project actually calls, so findings are actionable, not noise (see [Go's security documentation](https://go.dev/security/), especially its [vulnerability management guidance](https://go.dev/doc/security/vuln/)).
 - Fix every diagnostic of the configured analyzers. A suppression MUST be as narrow as possible and carry a short justification when the reason is not obvious:
   ```go
   //lint:ignore SA1019 vendor API v2 requires the deprecated client until 2026-10, see #123
@@ -1646,15 +1646,4 @@ Our usual Linux targets are **Debian 13, CentOS Stream 10 and Fedora 44**. Progr
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-This guide was written by [foundata](https://foundata.com/) to produce robust, readable and consistent Go applications, commands and libraries. It draws on the following primary standards and documentation:
-
-- [The Go Programming Language Specification](https://go.dev/ref/spec)
-- [Go Modules Reference](https://go.dev/ref/mod)
-- [Go Toolchains](https://go.dev/doc/toolchain) and [Go Release Policy](https://go.dev/doc/devel/release#policy)
-- [Effective Go](https://go.dev/doc/effective_go) (foundational, though it predates modules and generics and is not a complete guide to modern Go)
-- [Go Code Review Comments](https://go.dev/wiki/CodeReviewComments) and [Go Test Comments](https://go.dev/wiki/TestComments)
-- [Google Go Style Guide](https://google.github.io/styleguide/go/) with its [Decisions](https://google.github.io/styleguide/go/decisions) and [Best practices](https://google.github.io/styleguide/go/best-practices) documents
-- [Go Doc Comments](https://go.dev/doc/comment) and [Organizing a Go module](https://go.dev/doc/modules/layout)
-- [Go Security](https://go.dev/security/) including [Vulnerability Management](https://go.dev/doc/security/vuln/) and [Go Fuzzing](https://go.dev/doc/security/fuzz/)
-- [Staticcheck documentation](https://staticcheck.dev/docs/)
-- [golangci-lint documentation](https://golangci-lint.run/)
+This guide was written by [foundata](https://foundata.com/) to produce robust, readable and consistent Go applications, commands and libraries.

@@ -1379,9 +1379,8 @@ See [`shell-snippets.sh`](./shell-snippets.sh).
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-This guide was written by [foundata](https://foundata.com/) to produce robust, readable, and portable shell scripts. It incorporates lessons learned from real-world cross-platform shell scripting, as well as insights drawn from several authoritative resources that served as references and sources of inspiration:
+This guide was written by [foundata](https://foundata.com/) to produce robust, readable, and portable shell scripts. It incorporates lessons learned from real-world cross-platform shell scripting.
 
-- [Google: Shell Style Guide](https://google.github.io/styleguide/shellguide.html)
-- [The Open Group (POSIX): Shell & Utilities — Detailed Table of Contents](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/contents.html)
-- [Greg's Wiki: Bash Frequently Asked Questions](https://mywiki.wooledge.org/BashFAQ)
+For general background, see:
+
 - [Greg's Wiki: Bash Pitfalls](https://mywiki.wooledge.org/BashPitfalls)

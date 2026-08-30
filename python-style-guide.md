@@ -633,7 +633,7 @@ def checkPDF(filePath):
 **You SHOULD:**
 
 - Let the type checker infer obvious local variable types.
-- Prefer standard annotations that remain meaningful across type checkers. Use checker-specific directives, helper types or source-level workarounds only when standard annotations cannot express the required behavior.
+- Prefer standard annotations that remain meaningful across type checkers. The [Python typing documentation](https://typing.python.org/) defines the typing specifications that these annotations target. Use checker-specific directives, helper types or source-level workarounds only when standard annotations cannot express the required behavior.
 - When the project targets a Python version older than a typing feature it needs (for example `@typing.override`, which is standard library only on 3.12+), import that feature from [`typing_extensions`](https://pypi.org/project/typing-extensions/) and declare `typing-extensions` as a direct runtime dependency. Do not guard these imports on `sys.version_info`.
 - Express behavior with protocols or abstract interfaces when callers need a capability rather than a concrete implementation.
 - Use `Any` only at genuinely dynamic boundaries and narrow it to a concrete type as soon as possible.
@@ -1298,12 +1298,4 @@ assert document is not None
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-This guide was written by [foundata](https://foundata.com/) to produce robust, readable and consistent Python applications, libraries and scripts. It draws on the following primary standards and documentation:
-
-- [Python Enhancement Proposal 8: Style Guide for Python Code](https://peps.python.org/pep-0008/)
-- [Python Enhancement Proposal 257: Docstring Conventions](https://peps.python.org/pep-0257/)
-- [Python typing documentation](https://typing.python.org/)
-- [Python Packaging User Guide](https://packaging.python.org/)
-- [Ruff documentation](https://docs.astral.sh/ruff/)
-- [mypy documentation](https://mypy.readthedocs.io/en/stable/)
-- [pytest documentation](https://docs.pytest.org/en/stable/)
+This guide was written by [foundata](https://foundata.com/) to produce robust, readable and consistent Python applications, libraries and scripts.
