@@ -276,7 +276,7 @@ ConClear MUST NOT claim to implement rules that require human review. Its confor
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-The approved registry for publishing public foundata images is currently [Quay.io](https://docs.projectquay.io/quay_io.html) (`quay.io`). This rule chooses where foundata publishes images; it does not prohibit consuming upstream images from their authoritative registries.
+The approved registry for publishing public foundata images is currently [Quay.io](https://docs.projectquay.io/quay_io.html) (`quay.io`). This rule chooses where foundata publishes images; it does not prohibit consuming upstream images from their authoritative registries. ConClear separates standard OCI image transport from provider-specific registry controls and uses one explicitly configured backend from its compiled support matrix. Quay.io is currently the only implemented release-registry backend.
 
 
 **You MUST:**
@@ -287,6 +287,7 @@ The approved registry for publishing public foundata images is currently [Quay.i
 - Use lowercase repository names consisting of stable product or component names.
 - Treat repository deletion, renaming and tag mutation as controlled operations because consumers may depend on them.
 - Configure automated registry retention so it does not delete release digests, signatures, SBOMs or attestations that remain supported; the organization owns registry retention configuration.
+- Use a release-registry backend supported by the selected ConClear release for `publish` through `promote`. ConClear MUST reject an unsupported destination before remote mutation. Checks, builds, tests, qualification, evidence generation, assembly and provenance generation remain available for other fully qualified repositories.
 
 
 **You SHOULD:**
@@ -307,6 +308,21 @@ The approved registry for publishing public foundata images is currently [Quay.i
 - A mirror owner MUST record the upstream repository and digest, preserve required index membership, scan the content, apply foundata trust policy and automate reviewed refreshes.
 
 
+**Supported release-registry contract.** A backend supported for complete ConClear releases MUST:
+
+- Preserve the complete OCI manifest, index, configuration and blob graph without digest transformation.
+- Resolve exact tags and digests without treating ambiguous remote state as absence.
+- Store and retrieve Cosign signatures and attestations for image indexes and platform manifests in the released subject's repository.
+- Enforce and verify a bounded candidate lifetime independently of the ConClear process that published it.
+- Prevent immutable release tags from being repointed while permitting declared moving tags.
+- Assign release tags only to the verified digest and permit an exact post-write observation.
+- Delete an owned candidate reference and permit conclusive verification of its removal.
+- Expose enough remote state for ConClear to recover safely from interrupted or ambiguous writes.
+- Use externally supplied, narrowly scoped credentials without placing secret values in repository configuration or release evidence.
+
+The candidate lifetime MAY be enforced by a native per-tag expiration, a verified retention rule restricted to ConClear candidate names or another provider control that remains effective if the releasing process never resumes. A local timestamp or best-effort cleanup attempt is not sufficient.
+
+
 **Release-tag model.** Tags communicate a release channel or human-readable version; digests identify content.
 
 - Publish an immutable version tag such as `:1.8.2` when the project has versions.
@@ -318,13 +334,13 @@ The approved registry for publishing public foundata images is currently [Quay.i
 
 - By default, a publication attempt MUST use a version-first candidate tag in the final repository. A versioned release uses `<version>-candidate.<run-id>.g<source-revision-short>`, for example `1.8.2-candidate.01k3z8h6v4n7c2m9p5q1r0s8tx.g7ac94d12`. An unversioned project uses `g<source-revision-short>-candidate.<run-id>`. ConClear generates and validates the tag.
 - A candidate reference MUST NOT be intentionally reused for a different publication attempt; every attempt, including a rebuild of the same source revision, uses a new reference.
-- Candidate content and evidence MUST be safe to disclose publicly. Deleting or expiring a Quay tag may leave unreferenced manifests and blobs until garbage collection.
+- Candidate content and evidence MUST be safe to disclose publicly. Deleting or expiring a tag may leave unreferenced manifests and blobs until registry garbage collection.
 - Where the registry supports tag immutability, the release workflow SHOULD enable it for candidate and release tags.
-- ConClear MUST set a [bounded default candidate lifetime](https://docs.redhat.com/en/documentation/red_hat_quay/3.15/html/use_red_hat_quay/image-tags-overview) and refuse promotion after expiry. Repository configuration MAY shorten but MUST NOT extend or disable it. Immediately after publication, ConClear MUST set the expiration through the [Quay tag API](https://docs.redhat.com/en/documentation/red_hat_quay/3/html/red_hat_quay_api_reference/tag).
-- A workflow MUST NOT use a separate candidate repository unless it copies or recreates every signature and attestation in the final repository, then verifies the subjects and identities before promotion. [OCI referrers](https://docs.redhat.com/en/documentation/red_hat_quay/3.15/html/red_hat_quay_api_reference/referrers), Cosign signatures and attestations are repository-scoped; `skopeo copy --all` does not move them.
+- ConClear MUST set a bounded default candidate lifetime through the selected registry-control backend and refuse promotion after expiry. Repository configuration MAY shorten but MUST NOT extend or disable it. The backend MUST verify that the provider retained or otherwise enforces the requested deadline.
+- A workflow MUST NOT use a separate candidate repository unless it copies or recreates every signature and attestation in the final repository, then verifies the subjects and identities before promotion. [OCI referrers](https://github.com/opencontainers/distribution-spec/blob/main/spec.md#listing-referrers), Cosign signatures and attestations are repository-scoped; `skopeo copy --all` does not move them.
 - The run identifier MUST be a lowercase [ULID](https://github.com/ulid/spec) generated by ConClear as its release-run identity. It sorts by time and prevents reference collisions. Each rebuild gets a new identifier, locally or in CI.
 - After writing a release or convenience tag, promotion MUST compare it with the verified digest and record the result. A missing or different tag is an operational failure.
-- After successful promotion, ConClear MUST delete the temporary candidate tag. A rejected or abandoned candidate MUST be deleted explicitly or left to its configured expiration. Delayed removal of unreferenced manifests and blobs by [Quay garbage collection](https://docs.redhat.com/en/documentation/red_hat_quay/3.15/html/manage_red_hat_quay/garbage-collection) is not a release failure.
+- After successful promotion, ConClear MUST delete the temporary candidate tag. A rejected or abandoned candidate MUST be deleted explicitly or left to its configured expiration. Delayed removal of unreferenced manifests and blobs by registry garbage collection is not a release failure.
 
 
 
@@ -1450,7 +1466,7 @@ The example is a structural reference, not a universal base-image choice.
 - **Versioned ruleset.** Embedding the guide revision identifies ConClear's implemented rules without a separate policy artifact. Recording both revisions distinguishes guide changes from implementation changes.
 - **Candidate references.** One source revision can rebuild to different digests, so the revision alone cannot identify an attempt. A version or revision prefix groups related tags; the sortable, collision-resistant run identifier distinguishes attempts. Candidates stay in the final repository because OCI referrers, Cosign signatures and attestations are repository-scoped and `skopeo copy --all` does not move them. A separate repository requires explicit recreation and verification of that evidence at the final location.
 - **Platform transport.** Records claim but do not prove their origin. Digest verification before assembly keeps qualification meaningful without separate transport authentication.
-- **Registries.** Quay centralizes publishing, retention and tag mutation. Consume from the authoritative upstream registry because a similarly named repackaging is not equivalent. Use mirrors only for specific availability or policy needs; an unmaintained mirror becomes stale and unscanned.
+- **Registries.** OCI image transport is portable, but candidate expiry, selective tag protection and conclusive mutation recovery depend on provider controls. The explicit backend matrix prevents a nominally compatible registry from weakening release behavior. Quay.io currently satisfies the complete contract and remains foundata's approved destination. Consume from the authoritative upstream registry because a similarly named repackaging is not equivalent. Use mirrors only for specific availability or policy needs; an unmaintained mirror becomes stale and unscanned.
 - **Base images.** One mandatory distribution would sacrifice compatibility, lifecycle fit and diagnostic knowledge for superficial consistency. Image size is an incomplete measure of attack surface, which depends on reachable behavior, configuration and privileges. A smaller base also does not help a team that cannot patch or debug it. musl remains a compatibility boundary for glibc-targeted software.
 - **Digest pinning and updates.** Tags document intent; digests select bytes. Pinning transfers change control to the repository and creates an update duty. A forgotten digest freezes its vulnerabilities, and pinning alone does not ensure reproducibility. Renovate therefore proposes, but cannot merge, trusted digest changes. It runs self-hosted and pinned; its AGPL-3.0-only license covers the tool, not updated repositories or images.
 - **Pin intent and freshness.** Divergence under an immutable-version tag may be a supply-chain event; under a moving release line it is routine. Declared intent tells the pin gate which applies. The gate only reports, while Renovate remains the sole writer.
@@ -1464,7 +1480,7 @@ The example is a structural reference, not a universal base-image choice.
 - **Multi-platform.** Emulated builds can hide target-architecture defects; cross-compiling is fine for the build but never replaces an on-target runtime test.
 - **Execution modes.** A single `uname` value cannot distinguish native, emulated and cross-built execution. Recording target, host, execution architecture and mechanism for build and test gives ConClear the evidence needed to apply its rules.
 - **Reproducibility.** Rebuildability is what an incident requires: a working replacement from documented inputs. Bit-for-bit equivalence is desirable evidence but must be measured, not assumed.
-- **Exact-digest releases.** Security statements bind to digests. Local OCI layouts allow content gates before publication; Skopeo's digest-preserving copy and recursive comparison prove that Quay received the accepted manifest and blobs. Rebuilding or transforming the upload breaks that link. Registries lack portable compare-and-swap and multi-tag transactions, so pre-write checks, post-write comparisons and failure records provide detection and fail-closed continuation, not atomicity.
+- **Exact-digest releases.** Security statements bind to digests. Local OCI layouts allow content gates before publication; Skopeo's digest-preserving copy and recursive comparison prove that the registry received the accepted manifest and blobs. Rebuilding or transforming the upload breaks that link. Registries lack portable compare-and-swap and multi-tag transactions, so pre-write checks, post-write comparisons and failure records provide detection and fail-closed continuation, not atomicity.
 - **One scanner stack.** Scanner databases and matching differ, so parallel gates create conflicting findings and duplicate exceptions. Second opinions remain non-gating. Trivy also supplies the required secret and configuration scans. Registry scanning adds defense but cannot replace the release gate, and an empty result does not prove security. Busy CI runners can hit Trivy's public database rate limits. Cache it, configure `--db-repository` or host a mirror. Rescan retained SBOMs to reduce cost.
 - **Rescan scope.** An SBOM rescan matches known vulnerabilities against retained inventory. It cannot scan secrets or configuration without the filesystem. Evidence therefore states the scope; configurations requiring those scans must fetch the immutable image.
 - **Remediation clocks.** Starting at an informal scan allows resets; starting at publication penalizes later discoveries. The authoritative rescan result provides a fixed start. Record later triage and exceptions as new results. Never repoint a version tag, which would change content already verified by consumers.
