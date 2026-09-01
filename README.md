@@ -1,104 +1,123 @@
 # foundata: guidelines, conventions, standards and related documents
 
-This repository collects recommendations and rules [foundata](https://foundata.com/) is using to create creative work (which includes source code) or doing operations. What makes sense to share in public will find its place in this repository.
+This repository collects recommendations and rules
+[foundata](https://foundata.com/) is using to create creative work (which
+includes source code) or doing operations. What makes sense to share in public
+will find its place in this repository.
 
 
 ## Table of contents
 
 Topics (in alphabetical order):
-* [Ansible](#ansible)
-* [Container images](#container-images)
-* [Git](#git)
-* [Go](#go)
-* [Markdown](#markdown)
-* [PowerShell scripting](#powershell-scripting)
-* [Python](#python)
-* [Shell scripting](#shell-scripting)
-* [Licensing](#licensing)
+
+- [Ansible](#ansible)
+- [Container images](#container-images)
+- [Git](#git)
+- [Go](#go)
+- [Markdown](#markdown)
+- [PowerShell scripting](#powershell-scripting)
+- [Python](#python)
+- [Shell scripting](#shell-scripting)
+- [Licensing](#licensing)
 
 Misc:
-* [Continuous release of guidelines and related documents](#continuous-release)
-* [Licensing, copyright](#licensing-copyright)
+
+- [Continuous release of guidelines and related documents](#continuous-release)
+- [Licensing, copyright](#licensing-copyright)
 
 
 ## Ansible<a id="ansible"></a>
 
 [Ansible](https://www.ansible.com/) is a simple, agentless IT automation tool.
 
-* [Ansible style guide (playbooks) (`ansible-style-guide.md`)](./ansible-style-guide.md)
+- [Ansible style guide (playbooks) (`ansible-style-guide.md`)](./ansible-style-guide.md)
 
 
 ## Container images<a id="container-images"></a>
 
 Resources on how to build and publish OCI container images from Containerfiles:
 
-* [OCI container image build and release guide (`oci-container-image-guide.md`)](./oci-container-image-guide.md)
+- [OCI container image build and release guide (`oci-container-image-guide.md`)](./oci-container-image-guide.md)
 
 
 ## Licensing<a id="licensing"></a>
 
 Resources on how to choose, apply or change a license.
 
-* [How to choose a license (`licensing-how-to-choose-a-license.md`)](./licensing-how-to-choose-a-license.md)
-* [How to apply licenses (`licensing-how-to-apply.md`)](./licensing-how-to-apply.md)
-* [How to change a license, re-licensing projects (`licensing-how-to-change-a-license.md`)](./licensing-how-to-change-a-license.md)
+- [How to choose a license (`licensing-how-to-choose-a-license.md`)](./licensing-how-to-choose-a-license.md)
+- [How to apply licenses (`licensing-how-to-apply.md`)](./licensing-how-to-apply.md)
+- [How to change a license, re-licensing projects (`licensing-how-to-change-a-license.md`)](./licensing-how-to-change-a-license.md)
 
 
 ## Git<a id="git"></a>
 
 Resources on how to work with, maintain and host Git repositories.
 
-* [Git commit message guide (`git-commits.md`)](./git-commits.md)
-* [How to name Git repositories (`git-repository-naming.md`)](./git-repository-naming.md)
-* [`gitignore` configuration (`git-gitignore.md`)](./git-gitignore.md)
+- [Git commit message guide (`git-commits.md`)](./git-commits.md)
+- [How to name Git repositories (`git-repository-naming.md`)](./git-repository-naming.md)
+- [`gitignore` configuration (`git-gitignore.md`)](./git-gitignore.md)
 
 
 ## Go<a id="go"></a>
 
-Resources on how to develop and maintain Go applications, commands and libraries:
+Resources on how to develop and maintain Go applications, commands and
+libraries:
 
-* [Go style guide (`golang-style-guide.md`)](./golang-style-guide.md)
+- [Go style guide (`golang-style-guide.md`)](./golang-style-guide.md)
 
 
 ## Markdown<a id="markdown"></a>
 
 Resources on how to write and maintain technical Markdown documents:
 
-* [Markdown style guide (`markdown-style-guide.md`)](./markdown-style-guide.md)
+- [Markdown style guide (`markdown-style-guide.md`)](./markdown-style-guide.md)
 
 
 ## PowerShell Scripting<a id="powershell-scripting"></a>
 
 Resources on how to develop and maintain PowerShell scripts:
 
-* [PowerShell style guide (`powershell-style-guide.md`)](./powershell-style-guide.md)
+- [PowerShell style guide (`powershell-style-guide.md`)](./powershell-style-guide.md)
 
 
 ## Python<a id="python"></a>
 
-Resources on how to develop and maintain Python applications, libraries and scripts:
+Resources on how to develop and maintain Python applications, libraries and
+scripts:
 
-* [Python style guide (`python-style-guide.md`)](./python-style-guide.md)
+- [Python style guide (`python-style-guide.md`)](./python-style-guide.md)
 
 
 ## Shell Scripting<a id="shell-scripting"></a>
 
 Resources on how to develop and maintain shell scripts:
 
-* [Shell scripting style guide (`shell-scripting-style-guide.md`)](./shell-scripting-style-guide.md)
+- [Shell scripting style guide (`shell-scripting-style-guide.md`)](./shell-scripting-style-guide.md)
 
 
 ## Continuous release of guidelines and related documents<a id="continuous-release"></a>
 
 Our **guides are updated continuously**, meaning:
 
-* **Changes are immediately put "live" by publishing them after a review**.
-* There is no special versioning, neither for the documents themselves nor for the repository.
-* As Git and a repository hosting are used, permanent links to specific "versions" are still easy and possible if needed.
+- **Changes are immediately put "live" by publishing them after a review**.
+- There is no special versioning, neither for the documents themselves nor for
+  the repository.
+- As Git and a repository hosting are used, permanent links to specific
+  "versions" are still easy and possible if needed.
 
-The [OCI container image build and release guide](./oci-container-image-guide.md) is an exception to this continuous-release model. It is a versioned ruleset implemented by [ConClear](https://foundata.com/en/projects/conclear), so a revised guide becomes effective only when its coordinated, compatible ConClear release is available. ConClear embeds the exact guide commit it implements and owns stable identifiers for its automated checks. Its conformance documentation maps each check to the guide's stable section anchor; the guide itself does not maintain a parallel rule-number registry.
+The
+[OCI container image build and release guide](./oci-container-image-guide.md) is
+an exception to this continuous-release model. It is a versioned ruleset
+implemented by [ConClear](https://foundata.com/en/projects/conclear), so a
+revised guide becomes effective only when its coordinated, compatible ConClear
+release is available. ConClear embeds the exact guide commit it implements and
+owns stable identifiers for its automated checks. Its conformance documentation
+maps each check to the guide's stable section anchor; the guide itself does not
+maintain a parallel rule-number registry.
 
-We believe that guides are work in progress and will probably never be finished as our understanding of each topic evolves. This fits our overall agile approach.
+We believe that guides are work in progress and will probably never be finished
+as our understanding of each topic evolves. This fits our overall agile
+approach.
 
 
 ## Licensing, copyright<a id="licensing-copyright"></a>
@@ -106,9 +125,19 @@ We believe that guides are work in progress and will probably never be finished 
 <!--REUSE-IgnoreStart-->
 Copyright (c) 2020, 2024 [foundata GmbH](https://foundata.com/)
 
-This project is licensed under the [Creative Commons Attribution Share Alike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/deed) license, see [`LICENSES/CC-BY-SA-4.0.txt`](./LICENSES/CC-BY-SA-4.0.txt) for the full text.
+This project is licensed under the
+[Creative Commons Attribution Share Alike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/deed)
+license, see [`LICENSES/CC-BY-SA-4.0.txt`](./LICENSES/CC-BY-SA-4.0.txt) for the
+full text.
 
-The [`REUSE.toml`](REUSE.toml) file provides detailed licensing and copyright information in a human- and machine-readable format. This includes parts that may be subject to different licensing or usage terms, such as third-party components. The repository conforms to the [REUSE specification](https://reuse.software/spec/). You can use [`reuse spdx`](https://reuse.readthedocs.io/en/latest/readme.html#cli) to create a [SPDX software bill of materials (SBOM)](https://en.wikipedia.org/wiki/Software_Package_Data_Exchange).
+The [`REUSE.toml`](REUSE.toml) file provides detailed licensing and copyright
+information in a human- and machine-readable format. This includes parts that
+may be subject to different licensing or usage terms, such as third-party
+components. The repository conforms to the
+[REUSE specification](https://reuse.software/spec/). You can use
+[`reuse spdx`](https://reuse.readthedocs.io/en/latest/readme.html#cli) to create
+a
+[SPDX software bill of materials (SBOM)](https://en.wikipedia.org/wiki/Software_Package_Data_Exchange).
 <!--REUSE-IgnoreEnd-->
 
 [![REUSE status](https://api.reuse.software/badge/github.com/foundata/guidelines)](https://api.reuse.software/info/github.com/foundata/guidelines)

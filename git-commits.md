@@ -1,6 +1,8 @@
 # Git: commit messages
 
-MUST, SHOULD and other key words are used as defined in [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119) and [RFC 8174](https://datatracker.ietf.org/doc/html/rfc8174).
+MUST, SHOULD and other key words are used as defined in
+[RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119) and
+[RFC 8174](https://datatracker.ietf.org/doc/html/rfc8174).
 
 
 ## Table of contents
@@ -28,7 +30,10 @@ MUST, SHOULD and other key words are used as defined in [RFC 2119](https://datat
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-A commit message is part of the project's technical history. It should help a contributor scanning the log, reviewing a change, investigating a regression or using `git blame` understand the change without first reconstructing its purpose from the diff.
+A commit message is part of the project's technical history. It should help a
+contributor scanning the log, reviewing a change, investigating a regression or
+using `git blame` understand the change without first reconstructing its purpose
+from the diff.
 
 A good commit message answers:
 
@@ -36,40 +41,51 @@ A good commit message answers:
 - What behavior, capability or constraint changed?
 - Why was the change needed, when that is not obvious?
 
-The diff records how the change was implemented. The commit message records what changed and why.
-
+The diff records how the change was implemented. The commit message records what
+changed and why.
 
 
 ## Applicability and precedence<a id="applicability-and-precedence"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-This guide defines the baseline for foundata repositories. Rules from a specific project, upstream community or contribution ecosystem MAY extend this guide or override it where they conflict. The narrowest applicable rule takes precedence.
+This guide defines the baseline for foundata repositories. Rules from a specific
+project, upstream community or contribution ecosystem MAY extend this guide or
+override it where they conflict. The narrowest applicable rule takes precedence.
 
 **You MUST:**
 
-- Follow a repository's contribution rules when they differ from this guide, including when contributing to a repository outside foundata.
-
+- Follow a repository's contribution rules when they differ from this guide,
+  including when contributing to a repository outside foundata.
 
 **You SHOULD:**
 
-- Identify adopted or externally imposed rules in the repository's `CONTRIBUTING.md`, `DEVELOPMENT.md` or equivalent contributor documentation.
+- Identify adopted or externally imposed rules in the repository's
+  `CONTRIBUTING.md`, `DEVELOPMENT.md` or equivalent contributor documentation.
 
-A policy does not automatically apply merely because a project uses the technology associated with it.
-
+A policy does not automatically apply merely because a project uses the
+technology associated with it.
 
 
 ### Known additional rules<a id="known-additional-rules"></a>
 
-- **Ansible Community projects and resources:** The [Ansible Community Policy for AI-Assisted Contributions](https://docs.ansible.com/projects/ansible/latest/community/ai_policy.html) applies to the public projects and communication channels listed by that policy. Among other requirements, it recommends disclosing contributions that substantially retain AI-generated output and permits an `Assisted-by` commit trailer. Individual Ansible projects MAY impose additional or stricter policies. A foundata project that uses Ansible but is outside the policy's stated scope is not covered automatically and MUST document the policy if it adopts it.
-
+- **Ansible Community projects and resources:** The
+  [Ansible Community Policy for AI-Assisted Contributions](https://docs.ansible.com/projects/ansible/latest/community/ai_policy.html)
+  applies to the public projects and communication channels listed by that
+  policy. Among other requirements, it recommends disclosing contributions that
+  substantially retain AI-generated output and permits an `Assisted-by` commit
+  trailer. Individual Ansible projects MAY impose additional or stricter
+  policies. A foundata project that uses Ansible but is outside the policy's
+  stated scope is not covered automatically and MUST document the policy if it
+  adopts it.
 
 
 ## Commit structure<a id="commit-structure"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-Normal commits use the **[Scoped Commits](https://scopedcommits.com/)** structure:
+Normal commits use the **[Scoped Commits](https://scopedcommits.com/)**
+structure:
 
 ```text
 <scope>: <description>
@@ -83,23 +99,24 @@ Normal commits use the **[Scoped Commits](https://scopedcommits.com/)** structur
 
 - Write a subject using the `<scope>: <description>` format.
 
-
 **You SHOULD:**
 
-- Add a body when the motivation, prior behavior, constraints or consequences are not clear from the subject.
+- Add a body when the motivation, prior behavior, constraints or consequences
+  are not clear from the subject.
 - Put ticket references and trailers at the end.
-
 
 **You MAY:**
 
-- Omit the body and trailers when the subject contains all necessary information.
-- Use the format generated by Git or the repository hosting software for merges, reverts and other special commits.
-
+- Omit the body and trailers when the subject contains all necessary
+  information.
+- Use the format generated by Git or the repository hosting software for merges,
+  reverts and other special commits.
 
 
 ### Subject<a id="subject"></a>
 
-The subject appears without the body in places such as `git log --oneline`, release comparisons and repository hosting interfaces.
+The subject appears without the body in places such as `git log --oneline`,
+release comparisons and repository hosting interfaces.
 
 **You MUST:**
 
@@ -107,55 +124,65 @@ The subject appears without the body in places such as `git log --oneline`, rele
 - Make the subject understandable without the body.
 - Use the format `<scope>: <description>` for normal commits.
 
-
 **You SHOULD:**
 
-- Keep the subject at 72 characters or fewer. A longer subject is acceptable when shortening it would remove essential meaning or make an identifier ambiguous.
-
+- Keep the subject at 72 characters or fewer. A longer subject is acceptable
+  when shortening it would remove essential meaning or make an identifier
+  ambiguous.
 
 **You MUST NOT:**
 
 - End the subject with a period.
-- Use a Conventional Commits type such as `feat`, `fix`, `refactor`, `chore` or `docs` in place of the scope.
+- Use a Conventional Commits type such as `feat`, `fix`, `refactor`, `chore` or
+  `docs` in place of the scope.
 - Use a ticket number as the scope.
-
 
 
 ### Scope<a id="scope"></a>
 
-The scope identifies the subsystem, component, package, service, command, documentation set or other stable area affected by the commit. It puts the information most useful when scanning history first.
+The scope identifies the subsystem, component, package, service, command,
+documentation set or other stable area affected by the commit. It puts the
+information most useful when scanning history first.
 
 **You MUST:**
 
-- Choose a scope specific enough to distinguish the affected area from unrelated parts of the project.
-
+- Choose a scope specific enough to distinguish the affected area from unrelated
+  parts of the project.
 
 **You SHOULD:**
 
 - Use terminology contributors already use for the project.
-- Write the scope in lowercase unless it contains an identifier whose spelling is case-sensitive.
-- Choose a scope that remains stable when files are renamed or implementation details change.
-- Choose the narrowest scope that remains useful to somebody reading the history.
-- Use a cross-cutting scope such as `build`, `dependencies`, `release` or `repository` when that is the actual subject of the change.
-- Use the shared subsystem or the component whose behavior is primarily changed when one logical change necessarily touches several components.
-- Document recurring or potentially ambiguous scopes, for example in `DEVELOPMENT.md`.
-
+- Write the scope in lowercase unless it contains an identifier whose spelling
+  is case-sensitive.
+- Choose a scope that remains stable when files are renamed or implementation
+  details change.
+- Choose the narrowest scope that remains useful to somebody reading the
+  history.
+- Use a cross-cutting scope such as `build`, `dependencies`, `release` or
+  `repository` when that is the actual subject of the change.
+- Use the shared subsystem or the component whose behavior is primarily changed
+  when one logical change necessarily touches several components.
+- Document recurring or potentially ambiguous scopes, for example in
+  `DEVELOPMENT.md`.
 
 **You MAY:**
 
 - Use `/` for a meaningful hierarchy, such as `api/auth` or `docs/python`.
-- Use a name commonly treated as a Conventional Commits type when it identifies a real project area. For example, `docs/python` identifies a documentation set.
-
+- Use a name commonly treated as a Conventional Commits type when it identifies
+  a real project area. For example, `docs/python` identifies a documentation
+  set.
 
 **You MUST NOT:**
 
-- Use a generic change type such as `feature`, `bugfix`, `cleanup`, `refactor`, `chore` or `misc` as the scope.
-- Use a type-like scope merely to classify the change. For example, a *bare* `docs` prefix is not a scope when it says only that documentation changed.
-
+- Use a generic change type such as `feature`, `bugfix`, `cleanup`, `refactor`,
+  `chore` or `misc` as the scope.
+- Use a type-like scope merely to classify the change. For example, a *bare*
+  `docs` prefix is not a scope when it says only that documentation changed.
 
 **You SHOULD NOT:**
 
-- Require an exhaustive scope registry when ordinary project terminology is sufficient.
+- Require an exhaustive scope registry when ordinary project terminology is
+  sufficient.
 
 **Good examples:**
 
@@ -188,23 +215,27 @@ PROJ-123    # A ticket number is not a scope; put it in a trailer instead
 
 ### Description<a id="description"></a>
 
-The description states the behavioral or operational result of the commit. Prefer what the affected code can now do, what it prevents or what it guarantees over the edits used to produce that result.
+The description states the behavioral or operational result of the commit.
+Prefer what the affected code can now do, what it prevents or what it guarantees
+over the edits used to produce that result.
 
 **You MUST:**
 
-- Make the description concrete enough to distinguish the change from other work in the same scope.
-
+- Make the description concrete enough to distinguish the change from other work
+  in the same scope.
 
 **You SHOULD:**
 
 - Use the imperative mood, as in `reject`, `support`, `preserve` or `remove`.
-- Begin with a lowercase letter unless the description starts with a proper name or case-sensitive identifier.
-- Include the reason when it is both short and essential to understanding the result.
-
+- Begin with a lowercase letter unless the description starts with a proper name
+  or case-sensitive identifier.
+- Include the reason when it is both short and essential to understanding the
+  result.
 
 **You MUST NOT:**
 
-- Merely say `update`, `improve`, `change`, `cleanup`, `various fixes` or a similarly vague phrase without saying what changed.
+- Merely say `update`, `improve`, `change`, `cleanup`, `various fixes` or a
+  similarly vague phrase without saying what changed.
 - Narrate implementation steps that are already apparent from the diff.
 
 **Good examples:**
@@ -234,13 +265,17 @@ misc: various changes
 
 - Separate the body from the subject with one blank line.
 
-
 **You SHOULD:**
 
-- Explain information that future contributors cannot reliably recover from the final diff.
-- Write the body as prose or a short list when a list communicates distinct consequences more clearly.
-- Mention implementation details only when they explain a design decision, compatibility constraint, surprising behavior or important tradeoff.
-- Describe validation only when it provides useful information beyond the normal project checks, such as a manual hardware test or a reproduced production failure.
+- Explain information that future contributors cannot reliably recover from the
+  final diff.
+- Write the body as prose or a short list when a list communicates distinct
+  consequences more clearly.
+- Mention implementation details only when they explain a design decision,
+  compatibility constraint, surprising behavior or important tradeoff.
+- Describe validation only when it provides useful information beyond the normal
+  project checks, such as a manual hardware test or a reproduced production
+  failure.
 
 **Useful context includes:**
 
@@ -252,28 +287,32 @@ misc: various changes
 
 **You MAY:**
 
-- Omit the body when the subject is complete or when there is no motivation or non-obvious decision to record. Empty ceremony is less useful than no body.
-
+- Omit the body when the subject is complete or when there is no motivation or
+  non-obvious decision to record. Empty ceremony is less useful than no body.
 
 **You MUST NOT:**
 
 - Repeat the subject in more words.
-- List every changed file, function, conditional or test merely to prove that work was performed.
-- Use the body as a table of contents for the diff. For documentation and configuration changes, do not enumerate the rules, sections or settings added.
-- Claim motivation, test results or issue relationships that you have not verified.
-
+- List every changed file, function, conditional or test merely to prove that
+  work was performed.
+- Use the body as a table of contents for the diff. For documentation and
+  configuration changes, do not enumerate the rules, sections or settings added.
+- Claim motivation, test results or issue relationships that you have not
+  verified.
 
 
 ### References and trailers<a id="references-and-trailers"></a>
 
 **You MUST:**
 
-- Use the `Token: value` form documented by [`git interpret-trailers`](https://git-scm.com/docs/git-interpret-trailers) for trailers intended for Git's trailer tooling.
-
+- Use the `Token: value` form documented by
+  [`git interpret-trailers`](https://git-scm.com/docs/git-interpret-trailers)
+  for trailers intended for Git's trailer tooling.
 
 **You SHOULD:**
 
-- Put issue, ticket and review references at the end of the body rather than replacing the scope or description.
+- Put issue, ticket and review references at the end of the body rather than
+  replacing the scope or description.
 - Separate references and trailers from the preceding body with one blank line.
 - Use the project-defined trailer name for external systems.
 
@@ -284,8 +323,10 @@ GitHub-Issue: #123
 
 **You MAY:**
 
-- Use an issue-closing directive as the final reference line when the hosting service supports it.
-- Use standard trailers such as `Signed-off-by`, `Co-authored-by` and `Reviewed-by` when required by the project's contribution or review process.
+- Use an issue-closing directive as the final reference line when the hosting
+  service supports it.
+- Use standard trailers such as `Signed-off-by`, `Co-authored-by` and
+  `Reviewed-by` when required by the project's contribution or review process.
 
 For example:
 
@@ -293,42 +334,58 @@ For example:
 Closes #123
 ```
 
-`Closes #123` is hosting-service syntax rather than a Git trailer because it has no colon.
-
+`Closes #123` is hosting-service syntax rather than a Git trailer because it has
+no colon.
 
 **You MUST NOT:**
 
-- Use an issue-closing directive unless closing the issue is intended. Use a neutral issue trailer when the commit merely relates to the issue.
+- Use an issue-closing directive unless closing the issue is intended. Use a
+  neutral issue trailer when the commit merely relates to the issue.
 - Invent a person, review or sign-off.
 
 
 #### Sign-offs and DCO<a id="sign-offs-and-dco"></a>
 
-A sign-off is a `Signed-off-by: Name <email>` trailer, not a cryptographic signature. Its exact meaning is defined by the project; it often records that the contributor created the work or has the right to submit it under the applicable license and agrees to a [Developer Certificate of Origin](https://developercertificate.org/). The [Linux kernel contribution process](https://docs.kernel.org/process/submitting-patches.html#sign-your-work-the-developer-s-certificate-of-origin) is a prominent example.
+A sign-off is a `Signed-off-by: Name <email>` trailer, not a cryptographic
+signature. Its exact meaning is defined by the project; it often records that
+the contributor created the work or has the right to submit it under the
+applicable license and agrees to a
+[Developer Certificate of Origin](https://developercertificate.org/). The
+[Linux kernel contribution process](https://docs.kernel.org/process/submitting-patches.html#sign-your-work-the-developer-s-certificate-of-origin)
+is a prominent example.
 
 **Projects MAY:**
 
 - Require contributors to sign off commits or patches.
 - Separately require cryptographic commit signatures.
 
-
 **You MUST:**
 
-- Follow the project's sign-off policy and understand the certification made by its `Signed-off-by` trailer before adding one.
-
+- Follow the project's sign-off policy and understand the certification made by
+  its `Signed-off-by` trailer before adding one.
 
 **You SHOULD:**
 
-- Use [`git commit --signoff`](https://github.com/git/git/blob/b2c150d3aa82f6583b9aadfecc5f8fa1c74aca09/Documentation/git-commit.txt#L154-L161), or its short form `git commit -s`, when a sign-off is required.
-
+- Use
+  [`git commit --signoff`](https://github.com/git/git/blob/b2c150d3aa82f6583b9aadfecc5f8fa1c74aca09/Documentation/git-commit.txt#L154-L161),
+  or its short form `git commit -s`, when a sign-off is required.
 
 **You MUST NOT:**
 
-- Add a sign-off for another person or add one when you cannot make the project's required certification.
-- Treat a `Signed-off-by` trailer as proof that Git cryptographically verified the commit or the contributor's identity.
+- Add a sign-off for another person or add one when you cannot make the
+  project's required certification.
+- Treat a `Signed-off-by` trailer as proof that Git cryptographically verified
+  the commit or the contributor's identity.
 
-Git intentionally provides no `commit.signoff` configuration setting because a sign-off should remain a conscious act. The `format.signOff` setting affects `git format-patch` only and is not a default for `git commit`. The `commit.gpgSign = true` setting can cryptographically sign every commit, but it does not add a DCO sign-off. See the [`git commit` documentation](https://git-scm.com/docs/git-commit#Documentation/git-commit.txt---signoff) and [Git FAQ](https://git-scm.com/docs/gitfaq#Documentation/gitfaq.txt-Whynothavecodesignoffcodeandotherconfigurationvariables) for the distinction.
-
+Git intentionally provides no `commit.signoff` configuration setting because a
+sign-off should remain a conscious act. The `format.signOff` setting affects
+`git format-patch` only and is not a default for `git commit`. The
+`commit.gpgSign = true` setting can cryptographically sign every commit, but it
+does not add a DCO sign-off. See the
+[`git commit` documentation](https://git-scm.com/docs/git-commit#Documentation/git-commit.txt---signoff)
+and
+[Git FAQ](https://git-scm.com/docs/gitfaq#Documentation/gitfaq.txt-Whynothavecodesignoffcodeandotherconfigurationvariables)
+for the distinction.
 
 
 ## Commit contents<a id="commit-contents"></a>
@@ -337,24 +394,31 @@ Git intentionally provides no `commit.signoff` configuration setting because a s
 
 **You SHOULD:**
 
-- Make each commit atomic: represent one coherent change that can be reviewed, reverted and understood independently.
-- Include directly required tests, documentation and changelog entries in the same commit as the behavior they describe unless the project deliberately uses a separate review workflow for them.
+- Make each commit atomic: represent one coherent change that can be reviewed,
+  reverted and understood independently.
+- Include directly required tests, documentation and changelog entries in the
+  same commit as the behavior they describe unless the project deliberately uses
+  a separate review workflow for them.
 - Include generated output with the source change that produces it.
-- Separate broad mechanical formatting or generated-file churn from a behavioral change when doing so makes both commits easier to review.
-- Keep a refactoring with the behavior change when separating them would create artificial or broken intermediate states; split it when it is independently meaningful and makes the behavioral change clearer.
-- Make each commit pass the checks relevant to its contents unless the repository explicitly preserves a series whose intermediate commits are not expected to stand alone.
-- Fold local `fixup!` and `squash!` commits into the intended commit before merging unless the project deliberately preserves the review history.
-
+- Separate broad mechanical formatting or generated-file churn from a behavioral
+  change when doing so makes both commits easier to review.
+- Keep a refactoring with the behavior change when separating them would create
+  artificial or broken intermediate states; split it when it is independently
+  meaningful and makes the behavioral change clearer.
+- Make each commit pass the checks relevant to its contents unless the
+  repository explicitly preserves a series whose intermediate commits are not
+  expected to stand alone.
+- Fold local `fixup!` and `squash!` commits into the intended commit before
+  merging unless the project deliberately preserves the review history.
 
 **You MAY:**
 
 - Use local `fixup!` and `squash!` commits while developing.
 
-
 **You MUST NOT:**
 
-- Combine unrelated behavior changes merely because they were developed at the same time.
-
+- Combine unrelated behavior changes merely because they were developed at the
+  same time.
 
 
 ## Special commits<a id="special-commits"></a>
@@ -363,16 +427,20 @@ Git intentionally provides no `commit.signoff` configuration setting because a s
 
 **You SHOULD:**
 
-- Retain Git's `Revert "..."` subject for revert commits and identify the reverted commit. Add the reason for the revert when it is not obvious.
-- Use a scope such as `release` for release preparation commits, for example `release: prepare 2.4.0`.
-- Use the affected dependency or `dependencies` as the scope for dependency-only commits, for example `dependencies: update pypdf to 6.0`.
-- Describe what an initial commit establishes, for example `project: establish the ScanMole application`, rather than merely saying `Initial commit`.
-
+- Retain Git's `Revert "..."` subject for revert commits and identify the
+  reverted commit. Add the reason for the revert when it is not obvious.
+- Use a scope such as `release` for release preparation commits, for example
+  `release: prepare 2.4.0`.
+- Use the affected dependency or `dependencies` as the scope for dependency-only
+  commits, for example `dependencies: update pypdf to 6.0`.
+- Describe what an initial commit establishes, for example
+  `project: establish the ScanMole application`, rather than merely saying
+  `Initial commit`.
 
 **You MAY:**
 
-- Retain the subject generated by Git or the repository hosting software for merge commits.
-
+- Retain the subject generated by Git or the repository hosting software for
+  merge commits.
 
 
 ## AI-assisted commit messages<a id="ai-assisted-commit-messages"></a>
@@ -381,26 +449,39 @@ Git intentionally provides no `commit.signoff` configuration setting because a s
 
 **You MUST:**
 
-- Take responsibility for the accuracy, relevance and wording of an AI-assisted commit message.
-- Review generated text against both the diff and the reason the change was requested.
-- Apply the same rules to AI-assisted messages as to manually written messages. State these expectations explicitly in repository-level agent instructions such as `AGENTS.md`, or include them in the prompt. Suitable wording includes:
-  - Describe the behavioral or operational result and, when useful, why it was needed.
-  - BE CONCISE. Omit the body when the subject is sufficient. Otherwise, use at most one tight paragraph for context and one for the resolution. Do not narrate or repeat the diff. For code comments, document only non-obvious intent or constraints. Treat user rewrites as templates for similar future messages and comments.
-
+- Take responsibility for the accuracy, relevance and wording of an AI-assisted
+  commit message.
+- Review generated text against both the diff and the reason the change was
+  requested.
+- Apply the same rules to AI-assisted messages as to manually written messages.
+  State these expectations explicitly in repository-level agent instructions
+  such as `AGENTS.md`, or include them in the prompt. Suitable wording includes:
+  - Describe the behavioral or operational result and, when useful, why it was
+    needed.
+  - BE CONCISE. Omit the body when the subject is sufficient. Otherwise, use at
+    most one tight paragraph for context and one for the resolution. Do not
+    narrate or repeat the diff. For code comments, document only non-obvious
+    intent or constraints. Treat user rewrites as templates for similar future
+    messages and comments.
 
 **You MAY:**
 
 - Use AI to assist with drafting a commit message.
 
-
 **You MUST NOT:**
 
-- Narrate the diff. The diff shows how the change was implemented; the commit message should preserve what changed and why.
-- Include inventories of files, functions, sections, rules, settings, branches, conditions, imports or helper calls.
-- State that tests or documentation were added when that is routine and not the purpose of the commit.
-- Make generic claims such as "improves maintainability", "enhances robustness" or "provides a seamless experience" without a concrete, verified meaning.
-- Restate the same change in the subject, an introductory sentence and a bullet list.
-- Infer motivation, ticket relationships, compatibility claims or test results without evidence.
+- Narrate the diff. The diff shows how the change was implemented; the commit
+  message should preserve what changed and why.
+- Include inventories of files, functions, sections, rules, settings, branches,
+  conditions, imports or helper calls.
+- State that tests or documentation were added when that is routine and not the
+  purpose of the commit.
+- Make generic claims such as "improves maintainability", "enhances robustness"
+  or "provides a seamless experience" without a concrete, verified meaning.
+- Restate the same change in the subject, an introductory sentence and a bullet
+  list.
+- Infer motivation, ticket relationships, compatibility claims or test results
+  without evidence.
 
 **Good example:**
 
@@ -418,7 +499,10 @@ foo: enhance Bar handling
 Extended foo() by adding three new switch branches, calling the Bar helper inline and updating the related imports. Added comprehensive tests for the new functionality.
 ```
 
-An implementation detail belongs in the message when it is itself significant. For example, naming a database migration strategy, wire-format change or compatibility workaround can be essential because it explains constraints that the diff alone does not preserve.
+An implementation detail belongs in the message when it is itself significant.
+For example, naming a database migration strategy, wire-format change or
+compatibility workaround can be essential because it explains constraints that
+the diff alone does not preserve.
 
 
 ## Complete examples<a id="complete-examples"></a>
@@ -465,13 +549,33 @@ Jira-Ticket: SEC-418
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-Scope comes before description because contributors, reviewers and incident responders usually scan history for changes to a particular subsystem. Whether a commit was labeled a feature, fix or refactor is less useful and is normally already apparent from a concrete description.
+Scope comes before description because contributors, reviewers and incident
+responders usually scan history for changes to a particular subsystem. Whether a
+commit was labeled a feature, fix or refactor is less useful and is normally
+already apparent from a concrete description.
 
-Conventional Commits prioritize a change-type classification that is frequently ambiguous and redundant. A single coherent change can simultaneously add a capability, fix behavior and refactor its implementation. Requiring one type loses information while moving the stable subject of the change out of the most prominent position.
+Conventional Commits prioritize a change-type classification that is frequently
+ambiguous and redundant. A single coherent change can simultaneously add a
+capability, fix behavior and refactor its implementation. Requiring one type
+loses information while moving the stable subject of the change out of the most
+prominent position.
 
-Commit messages should not duplicate diffs. File names and control flow can be inspected directly and change as commits are rebased; motivation, rejected alternatives and intended behavior often cannot be recovered later. Recording what and why makes the history useful without filling it with mechanical narration.
+Commit messages should not duplicate diffs. File names and control flow can be
+inspected directly and change as commits are rebased; motivation, rejected
+alternatives and intended behavior often cannot be recovered later. Recording
+what and why makes the history useful without filling it with mechanical
+narration.
 
-Commit logs are developer-facing history, while changelogs are user-facing release documentation, so they remain separate: several commits may form one release note, internal or reverted commits may need none, and a commit category cannot determine compatibility or semantic versioning. Most foundata projects use [Keep a Changelog](https://keepachangelog.com/en/), while Ansible projects use [antsibull-changelog](https://docs.ansible.com/projects/antsibull-changelog/) where appropriate; user-visible changes update the selected workflow with text written for users. Build, test and release automation uses changed files and explicit release configuration instead of commit-message labels.
+Commit logs are developer-facing history, while changelogs are user-facing
+release documentation, so they remain separate: several commits may form one
+release note, internal or reverted commits may need none, and a commit category
+cannot determine compatibility or semantic versioning. Most foundata projects
+use [Keep a Changelog](https://keepachangelog.com/en/), while Ansible projects
+use
+[antsibull-changelog](https://docs.ansible.com/projects/antsibull-changelog/)
+where appropriate; user-visible changes update the selected workflow with text
+written for users. Build, test and release automation uses changed files and
+explicit release configuration instead of commit-message labels.
 
 
 ## References<a id="references"></a>
@@ -487,4 +591,10 @@ Commit logs are developer-facing history, while changelogs are user-facing relea
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-This guide was written by [foundata](https://foundata.com/) to make Git history concise, scoped and useful to maintainers. It is informed by [Scoped Commits](https://scopedcommits.com/), [Stop Using Conventional Commits](https://sumnerevans.com/posts/software-engineering/stop-using-conventional-commits/) and Git's [`git interpret-trailers`](https://git-scm.com/docs/git-interpret-trailers) documentation.
+This guide was written by [foundata](https://foundata.com/) to make Git history
+concise, scoped and useful to maintainers. It is informed by
+[Scoped Commits](https://scopedcommits.com/),
+[Stop Using Conventional Commits](https://sumnerevans.com/posts/software-engineering/stop-using-conventional-commits/)
+and Git's
+[`git interpret-trailers`](https://git-scm.com/docs/git-interpret-trailers)
+documentation.

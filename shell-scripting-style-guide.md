@@ -1,8 +1,16 @@
 # Shell scripting style guide
 
-This document defines the style for writing portable [POSIX](https://pubs.opengroup.org/onlinepubs/9799919799/) shell scripts. It aims to produce scripts that work across different shells ([`bash`](https://en.wikipedia.org/wiki/Bash_(Unix_shell)), [`dash`](https://en.wikipedia.org/wiki/Almquist_shell#Dash), [`ash`](https://en.wikipedia.org/wiki/Almquist_shell)) and operating systems while being readable and maintainable.
+This document defines the style for writing portable
+[POSIX](https://pubs.opengroup.org/onlinepubs/9799919799/) shell scripts. It
+aims to produce scripts that work across different shells
+([`bash`](https://en.wikipedia.org/wiki/Bash_(Unix_shell)),
+[`dash`](https://en.wikipedia.org/wiki/Almquist_shell#Dash),
+[`ash`](https://en.wikipedia.org/wiki/Almquist_shell)) and operating systems
+while being readable and maintainable.
 
-The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119) and [RFC 8174](https://datatracker.ietf.org/doc/html/rfc8174).
+The terms MUST, SHOULD, and other key words are used as defined in
+[RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119) and
+[RFC 8174](https://datatracker.ietf.org/doc/html/rfc8174).
 
 
 ## Table of contents
@@ -29,24 +37,24 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 - [Author information](#author-information)
 
 
-
 ## When to use shell<a id="when-to-use-shell"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-Shell scripting is a *portable* tool when following some rules, but it is not suitable for every task and there are many pitfalls. Use shell scripts where they make sense and delegate to other languages where they struggle.
-
+Shell scripting is a *portable* tool when following some rules, but it is not
+suitable for every task and there are many pitfalls. Use shell scripts where
+they make sense and delegate to other languages where they struggle.
 
 **Shell is RECOMMENDED for:**
 
 - Short, simple scripts with straightforward logic:
-  - System administration tasks like log rotation, backups, and service management.
+  - System administration tasks like log rotation, backups, and service
+    management.
   - Build scripts, CI/CD pipelines, and deployment automation.
   - Containerfiles
 - Task that primarily involves invoking other command-line tools:
   - Top-level wrappers that set up the environment
   - Glue scripts that coordinate the execution of multiple tools.
-
 
 **Shell is NOT RECOMMENDED for:**
 
@@ -54,23 +62,30 @@ Shell scripting is a *portable* tool when following some rules, but it is not su
 - Complex logic with many conditionals and nested structures.
 - Tasks requiring robust error handling and recovery.
 - Generating or parsing structured data formats (JSON, XML, YAML).
-- Cross-platform applications where Python or similar languages would be more portable.
-
+- Cross-platform applications where Python or similar languages would be more
+  portable.
 
 **You SHOULD:**
 
-- Keep shell scripts under 1000 lines including comments. If a script grows larger, consider refactoring or using a different language.
-- Prefer calling well-tested command-line tools over reimplementing their functionality in shell.
-- Use a layered architecture: shell for the outer wrapper, Python (or another language) for complex logic.
-
+- Keep shell scripts under 1000 lines including comments. If a script grows
+  larger, consider refactoring or using a different language.
+- Prefer calling well-tested command-line tools over reimplementing their
+  functionality in shell.
+- Use a layered architecture: shell for the outer wrapper, Python (or another
+  language) for complex logic.
 
 **Reasoning:**
 
-- Shell is good at orchestrating other programs but lacks features for complex programming (proper data structures, exception handling, testing frameworks).
-- Shell's quoting rules, word splitting, and glob expansion create numerous pitfalls that grow with script complexity.
-- Debugging and testing shell scripts is significantly harder than in languages with proper tooling.
-- The same task that takes 20 lines of shell might take 10 lines of Python with better error handling and readability. But Python surely is not as portable because of package dependencies etc., especially if it comes to OCI containers.
-
+- Shell is good at orchestrating other programs but lacks features for complex
+  programming (proper data structures, exception handling, testing frameworks).
+- Shell's quoting rules, word splitting, and glob expansion create numerous
+  pitfalls that grow with script complexity.
+- Debugging and testing shell scripts is significantly harder than in languages
+  with proper tooling.
+- The same task that takes 20 lines of shell might take 10 lines of Python with
+  better error handling and readability. But Python surely is not as portable
+  because of package dependencies etc., especially if it comes to OCI
+  containers.
 
 
 ## Linting and automatic formatting<a id="linting-formatting"></a>
@@ -81,42 +96,57 @@ Shell scripting is a *portable* tool when following some rules, but it is not su
 
 - On **POSIX** scripts (shebang `#!/usr/bin/env sh`):
   - Run [`shfmt`](https://github.com/mvdan/sh):
+
     ```sh
     shfmt --language-dialect posix --indent 2 --case-indent --binary-next-line --simplify --diff script.sh
     shfmt --language-dialect posix --indent 2 --case-indent --binary-next-line --simplify --write script.sh
     ```
+
   - Run [`shellcheck`](https://www.shellcheck.net/):
+
     ```sh
     shellcheck --shell=sh --severity=style --exclude=SC2292 --exclude=SC3040 --exclude=SC3043 --enable=all script.sh
     ```
+
   - Run [`checkbashisms`](https://tracker.debian.org/pkg/devscripts):
+
     ```sh
     checkbashisms script.sh
     ```
+
 - On **Bash** scripts (shebang `#!/usr/bin/env bash`):
   - Run [`shfmt`](https://github.com/mvdan/sh):
+
     ```sh
     shfmt --language-dialect bash --indent 2 --case-indent --binary-next-line --simplify --diff script.sh
     shfmt --language-dialect bash --indent 2 --case-indent --binary-next-line --simplify --write script.sh
     ```
+
   - Run [`shellcheck`](https://www.shellcheck.net/):
+
     ```sh
     shellcheck --shell=bash --severity=style --exclude=SC2292 --exclude=SC3040 --exclude=SC3043 --enable=all script.sh
     ```
-- Fix all errors and warnings. If a warning must be silenced, add a comment explaining why:
+
+- Fix all errors and warnings. If a warning must be silenced, add a comment
+  explaining why:
+
   ```sh
   # shellcheck disable=SC2034  # Variable is exported for use by sourcing script
   unused_but_exported_var='value'
   ```
 
-
 **Reasoning:**
 
 - `shfmt` eliminates style debates by providing a single, deterministic format.
-- Automated tools catch errors that humans miss and enforce consistency without manual effort:
-  - `shellcheck` identifies bugs, security issues, and portability problems. See the [ShellCheck Wiki](https://www.shellcheck.net/wiki/) for a complete list of checks.
-  - `checkbashisms` catches many (not all) bash-specific constructs that break POSIX compatibility (note: it has some false positives and does not catch all issues).
-
+- Automated tools catch errors that humans miss and enforce consistency without
+  manual effort:
+  - `shellcheck` identifies bugs, security issues, and portability problems. See
+    the [ShellCheck Wiki](https://www.shellcheck.net/wiki/) for a complete list
+    of checks.
+  - `checkbashisms` catches many (not all) bash-specific constructs that break
+    POSIX compatibility (note: it has some false positives and does not catch
+    all issues).
 
 
 ## File format and permission<a id="file-format"></a>
@@ -125,31 +155,40 @@ Shell scripting is a *portable* tool when following some rules, but it is not su
 
 **You MUST:**
 
-- Use [UTF-8 encoding](https://en.wikipedia.org/wiki/UTF-8). Do not use a [Byte Order Mark (BOM)](https://en.wikipedia.org/wiki/Byte_order_mark).
-- Use Unix line endings (LF, `\n`). Do not use Windows (CRLF) or old Mac (CR) line endings.
+- Use [UTF-8 encoding](https://en.wikipedia.org/wiki/UTF-8). Do not use a
+  [Byte Order Mark (BOM)](https://en.wikipedia.org/wiki/Byte_order_mark).
+- Use Unix line endings (LF, `\n`). Do not use Windows (CRLF) or old Mac (CR)
+  line endings.
 - End files with a single trailing newline.
 - Trim trailing whitespace from lines.
-- Never use [SUID or SGID permissions](https://en.wikipedia.org/wiki/Setuid) on shell scripts. Use `sudo` to provide elevated access if needed.
-
+- Never use [SUID or SGID permissions](https://en.wikipedia.org/wiki/Setuid) on
+  shell scripts. Use `sudo` to provide elevated access if needed.
 
 **Reasoning:**
 
-- Unix shells expect LF line endings. [CRLF can cause subtle bugs or syntax errors](https://www.shellcheck.net/wiki/SC1017#rationale).
-- BOMs interfere with the [shebang (`#!`)](#shebang) mechanism and can cause scripts to fail silently.
-- [Trailing newlines are a POSIX requirement](https://stackoverflow.com/a/729795) and prevent issues when concatenating files or reading the last line.
-- UTF-8 is the universal standard for text encoding and is expected by modern systems.
-- SUID/SGID on shell scripts is a security vulnerability: most systems ignore these bits on scripts, and where they work, they create privilege escalation risks through environment manipulation ([`IFS`](https://en.wikipedia.org/wiki/Input_Field_Separators), `PATH`, [`LD_PRELOAD`](https://stackoverflow.com/questions/426230/what-is-the-ld-preload-trick#comment250014_426260)).
-
+- Unix shells expect LF line endings.
+  [CRLF can cause subtle bugs or syntax errors](https://www.shellcheck.net/wiki/SC1017#rationale).
+- BOMs interfere with the [shebang (`#!`)](#shebang) mechanism and can cause
+  scripts to fail silently.
+- [Trailing newlines are a POSIX requirement](https://stackoverflow.com/a/729795)
+  and prevent issues when concatenating files or reading the last line.
+- UTF-8 is the universal standard for text encoding and is expected by modern
+  systems.
+- SUID/SGID on shell scripts is a security vulnerability: most systems ignore
+  these bits on scripts, and where they work, they create privilege escalation
+  risks through environment manipulation
+  ([`IFS`](https://en.wikipedia.org/wiki/Input_Field_Separators), `PATH`,
+  [`LD_PRELOAD`](https://stackoverflow.com/questions/426230/what-is-the-ld-preload-trick#comment250014_426260)).
 
 **File extensions and permissions:**
 
-| Type | Extension | Executable | Notes |
-|------|-----------|------------|-------|
+|       Type        |   Extension   |    Executable    | Notes |
+| ----------------- | ------------- | ---------------- | ----- |
 | Executable script | `.sh` or none | Yes (`chmod +x`) | No extension if installed in `PATH` |
-| Library/sourced | `.sh` | No (`chmod -x`) | Only sourced, never executed directly |
+| Library/sourced   | `.sh`         | No (`chmod -x`)  | Only sourced, never executed directly |
 
-Library files should not have execute permission to prevent accidental direct execution and to clearly indicate their purpose.
-
+Library files should not have execute permission to prevent accidental direct
+execution and to clearly indicate their purpose.
 
 
 ## Shebang<a id="shebang"></a>
@@ -158,15 +197,14 @@ Library files should not have execute permission to prevent accidental direct ex
 
 **You MUST:**
 
-- Start every script with a [shebang](https://en.wikipedia.org/wiki/Shebang_(Unix)) on the first line.
+- Start every script with a
+  [shebang](https://en.wikipedia.org/wiki/Shebang_(Unix)) on the first line.
 - Use `#!/usr/bin/env sh` as the default shebang for POSIX-compliant scripts.
 - Use `#!/usr/bin/env bash` only when Bash-specific features are required.
-
 
 **You SHOULD:**
 
 - Document why Bash is required if using the Bash shebang.
-
 
 **Good examples:**
 
@@ -181,7 +219,6 @@ Library files should not have execute permission to prevent accidental direct ex
 # This is a very cool script
 ```
 
-
 **Bad examples:**
 
 ```sh
@@ -195,15 +232,22 @@ Library files should not have execute permission to prevent accidental direct ex
 # Space after #! can cause issues on some systems
 ```
 
-
 **Reasoning:**
 
-- Using `env` ensures the script finds the interpreter in the user's `PATH`, making it portable across systems where shell locations differ (e.g., `/bin/sh` vs `/usr/bin/sh`).
-- The `sh` interpreter provides maximum portability when writing POSIX-compliant scripts.
-- Explicitly requiring Bash should be a conscious decision, documented for future maintainers.
-- Tangential note (not a shebang issue): some environments bypass or ignore `env(1)` entirely (e.g., [Ansible's `shell` module](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/shell_module.html) with [`args: executable:`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/shell_module.html#parameter-executable)). In such cases, fall back to the most widespread direct paths: `/bin/sh`, `/bin/bash`.
-
-
+- Using `env` ensures the script finds the interpreter in the user's `PATH`,
+  making it portable across systems where shell locations differ (e.g.,
+  `/bin/sh` vs `/usr/bin/sh`).
+- The `sh` interpreter provides maximum portability when writing POSIX-compliant
+  scripts.
+- Explicitly requiring Bash should be a conscious decision, documented for
+  future maintainers.
+- Tangential note (not a shebang issue): some environments bypass or ignore
+  `env(1)` entirely (e.g.,
+  [Ansible's `shell` module](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/shell_module.html)
+  with
+  [`args: executable:`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/shell_module.html#parameter-executable)).
+  In such cases, fall back to the most widespread direct paths: `/bin/sh`,
+  `/bin/bash`.
 
 
 ## Indentation<a id="indentation"></a>
@@ -214,16 +258,16 @@ Library files should not have execute permission to prevent accidental direct ex
 
 - Use 2 (two) spaces for each indentation level. Do not use tabs.
   - Exception: using tabs is for the body of `<<-` tab-indented here-document.
-  - Exception: Be consistent and use 4 spaces if an established project of us is using it. Open an dedicated issue for reformatting if so.
+  - Exception: Be consistent and use 4 spaces if an established project of us is
+    using it. Open an dedicated issue for reformatting if so.
 - Use consistent indentation throughout the script.
 - Indent the bodies of `if`, `for`, `while`, `case`, and function blocks.
 
-
 **You SHOULD:**
 
-- Place `then`, `do` on the same line as `if`, `for`, `while` (separated by `;` or after a newline for multi-line conditions).
+- Place `then`, `do` on the same line as `if`, `for`, `while` (separated by `;`
+  or after a newline for multi-line conditions).
 - Indent `case` pattern bodies.
-
 
 **Good examples:**
 
@@ -261,7 +305,6 @@ for file in '/file1' '/foo/file2' './file-3'; do
 done
 ```
 
-
 **Bad examples:**
 
 ```sh
@@ -284,13 +327,18 @@ process_config "${config_file}"
 fi
 ```
 
-
 **Reasoning:**
 
-- Spaces ensure consistent display across all editors and terminals regardless of tab width settings.
-- Pasting functions with tabs into an interactive shell can cause all kinds of weird errors.
-- Using two spaces aligns us with the broader shell and container ecosystem (cf. [Google](https://google.github.io/styleguide/shellguide.html#s5.1-indentation), [Kubernetes](https://www.kubernetes.dev/docs/guide/coding-convention/), [Bash Hacker's Wiki](https://web.archive.org/web/20220512181003/https://wiki.bash-hackers.org/scripting/style)) and provides a good enough visual hierarchy as most shell scripts should not have deeply nesting logic.
-
+- Spaces ensure consistent display across all editors and terminals regardless
+  of tab width settings.
+- Pasting functions with tabs into an interactive shell can cause all kinds of
+  weird errors.
+- Using two spaces aligns us with the broader shell and container ecosystem (cf.
+  [Google](https://google.github.io/styleguide/shellguide.html#s5.1-indentation),
+  [Kubernetes](https://www.kubernetes.dev/docs/guide/coding-convention/),
+  [Bash Hacker's Wiki](https://web.archive.org/web/20220512181003/https://wiki.bash-hackers.org/scripting/style))
+  and provides a good enough visual hierarchy as most shell scripts should not
+  have deeply nesting logic.
 
 
 ## Line length<a id="line-length"></a>
@@ -300,15 +348,15 @@ fi
 **You MUST:**
 
 - Keep lines under 120 characters whenever technically possible.
-- Break long pipelines before the pipe character (`|`), with the continuation indented.
-- Break long logical expressions before the operator (`&&`, `||`), with the continuation indented.
-
+- Break long pipelines before the pipe character (`|`), with the continuation
+  indented.
+- Break long logical expressions before the operator (`&&`, `||`), with the
+  continuation indented.
 
 **You SHOULD:**
 
 - Keep lines under 80 characters when possible.
 - Use backslash (`\`) continuation for long commands that are not pipelines.
-
 
 **Good examples:**
 
@@ -342,7 +390,6 @@ printf '%s\n' 'This is a single parameter '\
 'because there is no space before the backslash'
 ```
 
-
 **Bad examples:**
 
 ```sh
@@ -359,12 +406,13 @@ curl --silent \·
   --location
 ```
 
-
 **Reasoning:**
 
-- Shorter lines are easier to read, especially in side-by-side diffs or on smaller screens.
-- Placing operators at the start of continuation lines improves readability by making the logical structure immediately visible when scanning the left edge of the code.
-
+- Shorter lines are easier to read, especially in side-by-side diffs or on
+  smaller screens.
+- Placing operators at the start of continuation lines improves readability by
+  making the logical structure immediately visible when scanning the left edge
+  of the code.
 
 
 ## Quoting<a id="quoting"></a>
@@ -377,22 +425,22 @@ curl --silent \·
 - Quote all command arguments that could contain spaces or special characters.
 - Use double quotes when variable expansion is needed.
 - Use single quotes when literal strings are needed (no expansion).
-- Correctly escape identical quotes within quotes (use `'\''` and `"\""`, not `\'` or `\"`)
-
+- Correctly escape identical quotes within quotes (use `'\''` and `"\""`, not
+  `\'` or `\"`)
 
 **You SHOULD:**
 
 - Prefer single quotes for static strings to prevent accidental expansion.
 - Use double quotes for strings containing variables or command substitutions.
-- Mix quotes when it prevents [complicated escaping](https://www.grymoire.com/Unix/Quote.html#uh-8).
+- Mix quotes when it prevents
+  [complicated escaping](https://www.grymoire.com/Unix/Quote.html#uh-8).
 - Always quote variables in test expressions: `[ -n "${var}" ]`.
 - Quote all command arguments.
 
-
 **You MUST NOT:**
 
-- Use unquoted variables in command arguments (except in specific contexts like `for item in ${list}`).
-
+- Use unquoted variables in command arguments (except in specific contexts like
+  `for item in ${list}`).
 
 **Good examples:**
 
@@ -417,7 +465,6 @@ fi
 # Mixed quoting to prevent complicated escaping
 printf '%s\n' "it's working"
 ```
-
 
 **Bad examples:**
 
@@ -454,16 +501,20 @@ printf '%s\n' "The word for today is "\"Foo\"   # these are...
 printf '%s\n' "The word for today is "\""Foo"\" # ...the same
 ```
 
-
 **Reasoning:**
 
-- Quoting prevents word splitting and glob expansion, which are common sources of bugs and security vulnerabilities.
-- Braces (`${var}`) around variable names prevent ambiguity in string interpolation.
-- Single quotes are safer for static strings as they prevent any form of expansion.
-- Proper quoting is essential for handling filenames with spaces and special characters.
-- Unquoted variables in test expressions can cause syntax errors or unexpected behavior when empty.
-- [Escaping / including identical quotes within quotes in shell](https://www.grymoire.com/Unix/Quote.html#uh-8) is not working as expected for programmers used to other languages.
-
+- Quoting prevents word splitting and glob expansion, which are common sources
+  of bugs and security vulnerabilities.
+- Braces (`${var}`) around variable names prevent ambiguity in string
+  interpolation.
+- Single quotes are safer for static strings as they prevent any form of
+  expansion.
+- Proper quoting is essential for handling filenames with spaces and special
+  characters.
+- Unquoted variables in test expressions can cause syntax errors or unexpected
+  behavior when empty.
+- [Escaping / including identical quotes within quotes in shell](https://www.grymoire.com/Unix/Quote.html#uh-8)
+  is not working as expected for programmers used to other languages.
 
 
 ## Variables<a id="variables"></a>
@@ -478,7 +529,9 @@ printf '%s\n' "The word for today is "\""Foo"\" # ...the same
 - Always wrap variable names in braces: `${variable}`, not `$variable`.
 - Quote variable assignments: `foo='bar'` or `bar="${baz}"`.
 - Use `set -u` and initialize variables before use.
-- Declare and assign separately when assigning a command substitution with an independent return value to avoid masking return values:
+- Declare and assign separately when assigning a command substitution with an
+  independent return value to avoid masking return values:
+
   ```sh
   FOO="$(mycmd)"
   export FOO
@@ -490,18 +543,17 @@ printf '%s\n' "The word for today is "\""Foo"\" # ...the same
   local bar='baz'
   ```
 
-
 **You SHOULD:**
 
 - Use `readonly` for constants and configuration values.
-- Use `local` for function-local variables (note: not POSIX, but widely supported).
+- Use `local` for function-local variables (note: not POSIX, but widely
+  supported).
 - Use meaningful, descriptive variable names.
-
 
 **You MUST NOT:**
 
-- Use UPPERCASE for local script variables (avoid accidental conflicts with environment variables such as `PATH`, `HOME`, `USER`).
-
+- Use UPPERCASE for local script variables (avoid accidental conflicts with
+  environment variables such as `PATH`, `HOME`, `USER`).
 
 **Good examples:**
 
@@ -541,7 +593,6 @@ if [ -z "${CONFIG_PATH:-}" ]; then
 fi
 ```
 
-
 **Bad examples:**
 
 ```sh
@@ -564,16 +615,22 @@ export FOO="$(mycmd)"
 local bar="$(mycmd)"
 ```
 
-
 **Reasoning:**
 
-- The lowercase/UPPERCASE convention is a well-established practice that prevents accidental overwriting of important environment variables.
+- The lowercase/UPPERCASE convention is a well-established practice that
+  prevents accidental overwriting of important environment variables.
 - Braces eliminate ambiguity when concatenating variables with other text.
-- Quoting assignments is technically optional in most cases, but consistent quoting prevents edge-case bugs and improves readability.
-- Using `${var:-}` allows checking for unset variables even with `set -u` enabled.
-- Since `local` is widely supported (`bash`, `dash`, `ash`, `zsh`, FreeBSD `sh`) and `ksh` compatibility is rarely required, using `local` is acceptable for most use cases. Document the limitation if `ksh` support is needed.
-- Combining declaration and assignment (`export foo="$(cmd)"` or `local foo="$(cmd)"`) masks the command's return value because `export`/`local` always return true, breaking error handling via conditionals, `set -e`, and traps (cf. [SC2155](https://www.shellcheck.net/wiki/SC2155)).
-
+- Quoting assignments is technically optional in most cases, but consistent
+  quoting prevents edge-case bugs and improves readability.
+- Using `${var:-}` allows checking for unset variables even with `set -u`
+  enabled.
+- Since `local` is widely supported (`bash`, `dash`, `ash`, `zsh`, FreeBSD `sh`)
+  and `ksh` compatibility is rarely required, using `local` is acceptable for
+  most use cases. Document the limitation if `ksh` support is needed.
+- Combining declaration and assignment (`export foo="$(cmd)"` or
+  `local foo="$(cmd)"`) masks the command's return value because
+  `export`/`local` always return true, breaking error handling via conditionals,
+  `set -e`, and traps (cf. [SC2155](https://www.shellcheck.net/wiki/SC2155)).
 
 
 ## Functions<a id="functions"></a>
@@ -583,18 +640,20 @@ local bar="$(mycmd)"
 **You MUST:**
 
 - Use lowercase with underscores for function names: `my_function`.
-- Define functions *without* the `function` keyword (it is a non-portable Bashism).
-- Use parentheses without spaces after the function name: `my_function() { ... }`.
+- Define functions *without* the `function` keyword (it is a non-portable
+  Bashism).
+- Use parentheses without spaces after the function name:
+  `my_function() { ... }`.
 - Separate libraries with `::`: `my_library::my_function() { ... }`.
 
 **You SHOULD:**
 
 - Group `local` variable declarations at the beginning of functions.
 - Return explicit exit codes from functions.
-- For scripts with multiple functions (not required on very short scripts with simple linear flow):
+- For scripts with multiple functions (not required on very short scripts with
+  simple linear flow):
   - Use `main()` as the bottom-most function.
   - Last non-comment line should call it: `main "$@"`
-
 
 **Good examples:**
 
@@ -653,7 +712,9 @@ main() {
 main "$@"
 ```
 
-The `main` pattern keeps execution flow clear, allows functions to be defined in logical order, and enables sourcing the script without executing it (for testing or library use):
+The `main` pattern keeps execution flow clear, allows functions to be defined in
+logical order, and enables sourcing the script without executing it (for testing
+or library use):
 
 ```sh
 # Source without executing (main is not called when sourced)
@@ -662,7 +723,6 @@ if [ "${sourced}" -eq 0 ]; then
   main "$@"
 fi
 ```
-
 
 **Bad examples:**
 
@@ -686,11 +746,14 @@ printf '%s\n' 'Processing...'
 
 **Reasoning:**
 
-- The `function` keyword is a Bash extension not available in POSIX shells like dash.
+- The `function` keyword is a Bash extension not available in POSIX shells like
+  dash.
 - Explicit return codes make error handling predictable and testable.
-- The `local` keyword is not POSIX but is widely supported (bash, dash, ash, zsh). For maximum portability with ksh, group variable declarations visibly so they can be easily converted.
-- `main()` provides consistency and allows to define more variables as local (which can't be done outside of functions).
-
+- The `local` keyword is not POSIX but is widely supported (bash, dash, ash,
+  zsh). For maximum portability with ksh, group variable declarations visibly so
+  they can be easily converted.
+- `main()` provides consistency and allows to define more variables as local
+  (which can't be done outside of functions).
 
 
 ## Command substitution<a id="command-substitution"></a>
@@ -702,12 +765,10 @@ printf '%s\n' 'Processing...'
 - Use `$(command)` syntax for command substitution.
 - Never use backticks (`` `command` ``) for command substitution.
 
-
 **You SHOULD:**
 
 - Quote command substitutions when assigning to variables: `var="$(command)"`.
 - Nest command substitutions when needed (easy with `$()` syntax).
-
 
 **Good examples:**
 
@@ -726,7 +787,6 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 ```
 
-
 **Bad examples:**
 
 ```sh
@@ -738,13 +798,12 @@ file_count=`find "${dir}" -type f | wc -l`
 backup_name=`basename \`dirname "${path}"\``
 ```
 
-
 **Reasoning:**
 
 - The `$()` syntax is POSIX-compliant and supported by all modern shells.
 - The `$()` syntax is more readable and easier to nest.
-- Backticks are a legacy syntax from the Bourne shell era and require complex escaping for nesting.
-
+- Backticks are a legacy syntax from the Bourne shell era and require complex
+  escaping for nesting.
 
 
 ## Conditionals and tests<a id="conditionals"></a>
@@ -753,17 +812,16 @@ backup_name=`basename \`dirname "${path}"\``
 
 **You MUST:**
 
-- Use `[ ]` (single brackets) for test expressions, not `[[ ]]` (double brackets are a Bashism).
+- Use `[ ]` (single brackets) for test expressions, not `[[ ]]` (double brackets
+  are a Bashism).
 - Use `=` for string equality, not `==` (the latter is a Bashism in `[ ]`).
 - Quote all variables in test expressions.
-
 
 **You SHOULD:**
 
 - Use `-z` to test for empty strings and `-n` for non-empty strings.
 - Use `&&` and `||` outside the brackets for compound conditions.
 - Use `grep` for pattern matching instead of `[[ =~ ]]`.
-
 
 **Good examples:**
 
@@ -804,7 +862,6 @@ if printf '%s' "${haystack}" | grep -F -q 'needle'; then
 fi
 ```
 
-
 **Bad examples:**
 
 ```sh
@@ -834,22 +891,21 @@ if [ "${var}" = '' ]; then
 fi
 ```
 
-
 **Common test operators:**
 
-| Operator | Description |
-|----------|-------------|
-| `-z STRING` | True if string is empty (zero length) |
-| `-n STRING` | True if string is not empty (non-zero length) |
-| `STR1 = STR2` | True if strings are equal |
-| `STR1 != STR2` | True if strings are not equal |
-| `-f FILE` | True if file exists and is a regular file |
-| `-d FILE` | True if file exists and is a directory |
-| `-r FILE` | True if file exists and is readable |
-| `-w FILE` | True if file exists and is writable |
-| `-x FILE` | True if file exists and is executable |
-| `-s FILE` | True if file exists and has size > 0 |
-| `-L FILE` | True if file exists and is a symbolic link |
+|    Operator     | Description |
+| --------------- | ----------- |
+| `-z STRING`     | True if string is empty (zero length) |
+| `-n STRING`     | True if string is not empty (non-zero length) |
+| `STR1 = STR2`   | True if strings are equal |
+| `STR1 != STR2`  | True if strings are not equal |
+| `-f FILE`       | True if file exists and is a regular file |
+| `-d FILE`       | True if file exists and is a directory |
+| `-r FILE`       | True if file exists and is readable |
+| `-w FILE`       | True if file exists and is writable |
+| `-x FILE`       | True if file exists and is executable |
+| `-s FILE`       | True if file exists and has size > 0 |
+| `-L FILE`       | True if file exists and is a symbolic link |
 | `INT1 -eq INT2` | True if integers are equal |
 | `INT1 -ne INT2` | True if integers are not equal |
 | `INT1 -lt INT2` | True if INT1 < INT2 |
@@ -858,29 +914,30 @@ fi
 | `INT1 -ge INT2` | True if INT1 >= INT2 |
 
 
-**[POSIX character classes](https://pubs.opengroup.org/onlinepubs/9799919799.2024edition/basedefs/V1_chap07.html#tag_07_03_01) for `grep`, `sed`, `tr`:**
+**[POSIX character classes](https://pubs.opengroup.org/onlinepubs/9799919799.2024edition/basedefs/V1_chap07.html#tag_07_03_01)
+for `grep`, `sed`, `tr`:**
 
-| Class | Equivalent | Description |
-|-------|------------|-------------|
-| `[:alnum:]` | `[A-Za-z0-9]` | Letters and digits |
-| `[:alpha:]` | `[A-Za-z]` | Letters |
-| `[:lower:]` | `[a-z]` | Lowercase letters |
-| `[:upper:]` | `[A-Z]` | Uppercase letters |
-| `[:digit:]` | `[0-9]` | Digits |
-| `[:xdigit:]` | `[A-Fa-f0-9]` | Hexadecimal digits |
-| `[:space:]` | `[ \t\r\n\v\f]` | Whitespace characters |
-| `[:blank:]` | `[ \t]` | Space and tab only |
-| `[:cntrl:]` | `[\x00-\x1F\x7F]` | [Control characters](https://en.wikipedia.org/wiki/Control_character) |
-| `[:graph:]` | `[\x21-\x7E]` | Printable characters, not including space |
-| `[:print:]` | `[\x20-\x7E]` | Printable characters, including space |
+|    Class     |    Equivalent     | Description |
+| ------------ | ----------------- | ----------- |
+| `[:alnum:]`  | `[A-Za-z0-9]`     | Letters and digits |
+| `[:alpha:]`  | `[A-Za-z]`        | Letters     |
+| `[:lower:]`  | `[a-z]`           | Lowercase letters |
+| `[:upper:]`  | `[A-Z]`           | Uppercase letters |
+| `[:digit:]`  | `[0-9]`           | Digits      |
+| `[:xdigit:]` | `[A-Fa-f0-9]`     | Hexadecimal digits |
+| `[:space:]`  | `[ \t\r\n\v\f]`   | Whitespace characters |
+| `[:blank:]`  | `[ \t]`           | Space and tab only |
+| `[:cntrl:]`  | `[\x00-\x1F\x7F]` | [Control characters](https://en.wikipedia.org/wiki/Control_character) |
+| `[:graph:]`  | `[\x21-\x7E]`     | Printable characters, not including space |
+| `[:print:]`  | `[\x20-\x7E]`     | Printable characters, including space |
 
 **Reasoning:**
 
 - The `[[ ]]` syntax is a Bash/Zsh extension not available in POSIX shells.
 - Double equals (`==`) is not part of the POSIX test specification.
-- Using `grep` for pattern matching is portable and often clearer than regex operators.
+- Using `grep` for pattern matching is portable and often clearer than regex
+  operators.
 - Proper quoting in tests prevents word splitting and syntax errors.
-
 
 
 ## Output and printing<a id="output"></a>
@@ -890,15 +947,14 @@ fi
 **You MUST:**
 
 - Use `printf` instead of `echo` for output.
-- Never put variables directly in the format string: use `printf '%s\n' "${var}"`, not `printf "${var}"`.
+- Never put variables directly in the format string: use
+  `printf '%s\n' "${var}"`, not `printf "${var}"`.
 - Write error messages to `STDERR` using `>&2`.
-
 
 **You SHOULD:**
 
 - Include a trailing newline in output: `printf 'message %s\n' 'whatever'`.
 - Use format specifiers appropriately: `%s` for strings, `%d` for integers.
-
 
 **Good examples:**
 
@@ -920,7 +976,6 @@ printf '%s\n' 'Line 1' 'Line 2' 'Line 3'
 printf '%-20s %10d\n' 'Total files:' "${file_count}"
 ```
 
-
 **Bad examples:**
 
 ```sh
@@ -936,14 +991,17 @@ printf "${user_input}"     # DANGEROUS: user can inject format specifiers
 printf '%s\n' 'Error: something failed'  # Should go to STDERR
 ```
 
-
 **Reasoning:**
 
-- The behavior of `echo` varies significantly across implementations (handling of `-e`, `-n`, backslash escapes). POSIX does not define the behavior when the first argument starts with `-` or contains backslashes.
+- The behavior of `echo` varies significantly across implementations (handling
+  of `-e`, `-n`, backslash escapes). POSIX does not define the behavior when the
+  first argument starts with `-` or contains backslashes.
 - `printf` is consistent and well-defined across all POSIX shells.
-- Putting variables in the format string creates a format string vulnerability where special characters like `%s` or `%n` in the input could cause unexpected behavior or crashes.
-- Error messages should go to STDERR so they can be handled separately from normal output.
-
+- Putting variables in the format string creates a format string vulnerability
+  where special characters like `%s` or `%n` in the input could cause unexpected
+  behavior or crashes.
+- Error messages should go to STDERR so they can be handled separately from
+  normal output.
 
 
 ## Error handling<a id="error-handling"></a>
@@ -956,18 +1014,17 @@ printf '%s\n' 'Error: something failed'  # Should go to STDERR
 - Use exit code 2 for command-line syntax errors (following Unix convention).
 - Write error messages to `STDERR` using `>&2`.
 
-
 **You SHOULD:**
+
 - Check command exit status explicitly for important operations.
 - Provide meaningful error messages that include the script name.
 - Use `trap` for cleanup operations.
 
-
 **You SHOULD NOT:**
 
 - Use `set -e` (it has many edge cases and can cause unexpected behavior).
-- Use `set -a` (allexport) globally; if needed, use it locally and reset immediately.
-
+- Use `set -a` (allexport) globally; if needed, use it locally and reset
+  immediately.
 
 **Error logging function:**
 
@@ -988,7 +1045,6 @@ err() {
 err "Failed to connect to database"
 # Output: [2024-01-15T14:30:22+0100]: Failed to connect to database
 ```
-
 
 **Good examples:**
 
@@ -1038,18 +1094,25 @@ fi
 sort temp.txt > output.txt || exit 1
 ```
 
-
 **Reasoning:**
 
-- `set -u` catches typos in variable names and prevents silent failures from unset variables.
-- Exit code 2 is the Unix convention for syntax errors (used by shell builtins and most utilities).
+- `set -u` catches typos in variable names and prevents silent failures from
+  unset variables.
+- Exit code 2 is the Unix convention for syntax errors (used by shell builtins
+  and most utilities).
 - Trap handlers ensure cleanup happens even when the script is interrupted.
 - `set -e` has [numerous gotchas](http://mywiki.wooledge.org/BashFAQ/105):
-  - Does not trigger in command substitutions: `var=$(false); echo "still runs"`.
-  - Does not trigger in pipelines (only checks last command): `false | true` succeeds.
+  - Does not trigger in command substitutions:
+    `var=$(false); echo "still runs"`.
+  - Does not trigger in pipelines (only checks last command): `false | true`
+    succeeds.
   - Disabled in `if`, `while`, `until` conditions, and `&&`/`||` lists.
   - Behavior varies between shells and shell versions.
-  - If you still want to use `set -e`, be aware of these limitations and combine it with explicit error handling for critical operations. When Bash is required and you choose to use `set -e` (for whatever reason), these additional options help:
+  - If you still want to use `set -e`, be aware of these limitations and combine
+    it with explicit error handling for critical operations. When Bash is
+    required and you choose to use `set -e` (for whatever reason), these
+    additional options help:
+
     ```bash
     #!/usr/bin/env bash
     set -e           # Exit on error
@@ -1057,11 +1120,18 @@ sort temp.txt > output.txt || exit 1
     set -o pipefail  # Pipeline fails if any command fails (Bash-specific)
     shopt -s inherit_errexit  # Preserve set -e in command substitutions (Bash 4.4+)
     ```
-    Note: `pipefail` and `inherit_errexit` are Bash-specific and not POSIX-compliant.
 
-    **Exception:** Use `set -e` for simple, linear scripts where any failed command should stop the script, such as release checks with many build, lint, and packaging steps. This is cleaner than adding `|| exit 1` everywhere. Pair it with the four Bash options above and add a comment explaining why it is used. Avoid `set -e` in scripts with branches, important pipeline statuses, or command substitutions used in logic.
-- `set -a` exports all subsequently defined variables to the environment, which can pollute child processes and cause unexpected behavior.
+    Note: `pipefail` and `inherit_errexit` are Bash-specific and not
+    POSIX-compliant.
 
+    **Exception:** Use `set -e` for simple, linear scripts where any failed
+    command should stop the script, such as release checks with many build,
+    lint, and packaging steps. This is cleaner than adding `|| exit 1`
+    everywhere. Pair it with the four Bash options above and add a comment
+    explaining why it is used. Avoid `set -e` in scripts with branches,
+    important pipeline statuses, or command substitutions used in logic.
+- `set -a` exports all subsequently defined variables to the environment, which
+  can pollute child processes and cause unexpected behavior.
 
 
 ## Comments<a id="comments"></a>
@@ -1075,15 +1145,14 @@ sort temp.txt > output.txt || exit 1
   2. Globals: List of global variables used and/or modified.
   3. Arguments: Arguments taken (use None if no args).
   4. Outputs: Describing output to STDOUT and/or STDERR.
-  5. Returns: Returned values other than the default exit status of the last command run.
-
-
+  5. Returns: Returned values other than the default exit status of the last
+     command run.
 
 **You SHOULD:**
 
-- Use sentence case for comments (capitalize the first word only, unless proper nouns are involved).
+- Use sentence case for comments (capitalize the first word only, unless proper
+  nouns are involved).
 - Write comments that explain "why", not "what" (the code shows what).
-
 
 **Good examples:**
 
@@ -1132,23 +1201,22 @@ get_config_dir() {
 }
 ```
 
-
 **Style recommendations:**
 
-| Rule | Good Example | Bad Example |
-|------|--------------|-------------|
-| Use active voice | The script creates a backup | A backup is created by the script |
-| Use present tense | This function returns | This function will return |
-| Use American English | The color of the output | The colour of the output |
-
+|         Rule         |        Good Example         | Bad Example |
+| -------------------- | --------------------------- | ----------- |
+| Use active voice     | The script creates a backup | A backup is created by the script |
+| Use present tense    | This function returns       | This function will return |
+| Use American English | The color of the output     | The colour of the output |
 
 **Reasoning:**
 
 - English is the lingua franca of software development.
 - Consistent style makes documentation easier to read and maintain.
 - Comments explaining "why" remain valuable even when code changes.
-- Documentation blocks help maintainers understand the code without reading the implementation. The format follows [Google's Shell Style Guide](https://google.github.io/styleguide/shellguide.html).
-
+- Documentation blocks help maintainers understand the code without reading the
+  implementation. The format follows
+  [Google's Shell Style Guide](https://google.github.io/styleguide/shellguide.html).
 
 
 ## Portability<a id="portability"></a>
@@ -1159,14 +1227,16 @@ get_config_dir() {
 
 - Target POSIX-compliant shells (`sh`, `dash`, `bash`, `ash`).
 - Check for command availability before using non-standard utilities.
-- Use `./*` instead of bare `*` when passing glob results to commands that interpret leading dashes as options.
-
+- Use `./*` instead of bare `*` when passing glob results to commands that
+  interpret leading dashes as options.
 
 **You SHOULD:**
 
-- Use only POSIX-defined utilities and their POSIX-defined options when possible.
+- Use only POSIX-defined utilities and their POSIX-defined options when
+  possible.
 - Set `LC_ALL` to a locale that actually exists on the target system. Prefer a
   UTF-8 locale, but fall back to `C` if none is available:
+
   ```sh
   if command -v locale >/dev/null 2>&1; then
     for locale_candidate in 'C.UTF-8' 'C.utf8' 'en_US.UTF-8' 'UTF-8' 'C'; do
@@ -1179,27 +1249,39 @@ get_config_dir() {
     export LC_ALL='C'
   fi
   ```
+
   Do so until your script explicitly has to follow a system's localization.
 - Set a [`PATH`](https://en.wikipedia.org/wiki/PATH_(variable)) fallback:
+
   ```sh
   export PATH="${PATH:-/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin}"
   ```
-- Test scripts with `dash` during development (it is stricter about POSIX compliance).
+
+- Test scripts with `dash` during development (it is stricter about POSIX
+  compliance).
 - Avoid / disable the `pipefail` option and do not base script logic on it:
+
   ```sh
   set -o 2>/dev/null | grep -Fq pipefail && set +o pipefail # disable, non-POSIX
   ```
-- Avoid GNU-specific options (long options like `--verbose` are often not portable even if they are improving readability).
-- Document any required non-POSIX features or tools.
 
+- Avoid GNU-specific options (long options like `--verbose` are often not
+  portable even if they are improving readability).
+- Document any required non-POSIX features or tools.
 
 **Reasoning:**
 
 - `dash` is a minimal POSIX shell that catches many Bashisms during development.
-- POSIX compliance ensures scripts work across Linux distributions (`bash`, `dash`, `ash`), macOS (usually a very old Bash 3.2 or `zsh`), and BSDs (`ash`-based `sh` or `ksh`).
-- GNU long options (`--option`) are convenient but not available on BSD systems (including macOS) without GNU coreutils.
-- Using `command -v` is the POSIX-compliant way to check for command availability (preferred over `which`, `hash`, or `type`).
-- Safe glob expansion is needed as filenames can start with a hyphen (e.g., `-rf`), which commands may interpret as options. Using `./*` prevents this:
+- POSIX compliance ensures scripts work across Linux distributions (`bash`,
+  `dash`, `ash`), macOS (usually a very old Bash 3.2 or `zsh`), and BSDs
+  (`ash`-based `sh` or `ksh`).
+- GNU long options (`--option`) are convenient but not available on BSD systems
+  (including macOS) without GNU coreutils.
+- Using `command -v` is the POSIX-compliant way to check for command
+  availability (preferred over `which`, `hash`, or `type`).
+- Safe glob expansion is needed as filenames can start with a hyphen (e.g.,
+  `-rf`), which commands may interpret as options. Using `./*` prevents this:
+
   ```sh
   # Bad - fails if a file is named "-rf" or "--help"
   rm *
@@ -1214,11 +1296,24 @@ get_config_dir() {
       process_file "${file}"
   done
   ```
-- Setting `LC_ALL` ensures predictable sorting, character classification, and text processing. Without explicit [locale](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/locale.html) settings, script behavior may vary between systems. `LC_ALL` overrides all other locale variables (`LANG` and individual `LC_*` settings), so it alone is sufficient.
-- Hard-coding `en_US.UTF-8` is fragile on minimal containers and embedded systems because that locale is often not generated there. Probing for a working locale avoids noisy warnings such as `setlocale: LC_ALL: cannot change locale`.
-- `C.UTF-8` is commonly available on modern minimal systems and keeps Unicode handling predictable. Falling back to plain `C` still gives deterministic byte-oriented behavior when no UTF-8 locale exists.
-- The `pipefail` option is a Bash extension not defined by POSIX. Scripts relying on it will fail or behave unexpectedly on POSIX shells like `dash` or `ash`. For portable error handling in pipelines, check exit statuses explicitly or use temporary files.
 
+- Setting `LC_ALL` ensures predictable sorting, character classification, and
+  text processing. Without explicit
+  [locale](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/locale.html)
+  settings, script behavior may vary between systems. `LC_ALL` overrides all
+  other locale variables (`LANG` and individual `LC_*` settings), so it alone is
+  sufficient.
+- Hard-coding `en_US.UTF-8` is fragile on minimal containers and embedded
+  systems because that locale is often not generated there. Probing for a
+  working locale avoids noisy warnings such as
+  `setlocale: LC_ALL: cannot change locale`.
+- `C.UTF-8` is commonly available on modern minimal systems and keeps Unicode
+  handling predictable. Falling back to plain `C` still gives deterministic
+  byte-oriented behavior when no UTF-8 locale exists.
+- The `pipefail` option is a Bash extension not defined by POSIX. Scripts
+  relying on it will fail or behave unexpectedly on POSIX shells like `dash` or
+  `ash`. For portable error handling in pipelines, check exit statuses
+  explicitly or use temporary files.
 
 
 ### Hints
@@ -1245,7 +1340,6 @@ require_cmd 'curl' 'jq' 'openssl' # exits with an error message if any is missin
 check_cmd 'jq' && printf '%s\n' 'jq is available' # returns 1 instead of exiting
 ```
 
-
 **Basic local testing with alternate shells:**
 
 ```sh
@@ -1266,34 +1360,54 @@ done
 
 **POSIX-compliant utilities:**
 
-Common POSIX utilities that can be relied upon (see [Open Group Base Specifications, IEEE Std 1003.1-2017: Shell & Utilities](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/contents.html): [4. Utilities](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap04.html)): `awk`, `basename`, `cat`, `chmod`, `chown`, `compress`, `cp`, `cut`, `date`, `dirname`, `env`, `expr`, `find`, `grep`, `head`, `id`, `kill`, `ln`, `ls`, `mkdir`, `mkfifo`, `mv`, `od`, `paste`, `printf`, `pwd`, `read`, `rm`, `rmdir`, `sed`, `sleep`, `sort`, `tail`, `tee`, `test`, `touch`, `tr`, `true`, `false`, `umask`, `uname`, `uncompress`, `uniq`, `wc`, `xargs`, `zcat`.
-
+Common POSIX utilities that can be relied upon (see
+[Open Group Base Specifications, IEEE Std 1003.1-2017: Shell & Utilities](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/contents.html):
+[4. Utilities](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap04.html)):
+`awk`, `basename`, `cat`, `chmod`, `chown`, `compress`, `cp`, `cut`, `date`,
+`dirname`, `env`, `expr`, `find`, `grep`, `head`, `id`, `kill`, `ln`, `ls`,
+`mkdir`, `mkfifo`, `mv`, `od`, `paste`, `printf`, `pwd`, `read`, `rm`, `rmdir`,
+`sed`, `sleep`, `sort`, `tail`, `tee`, `test`, `touch`, `tr`, `true`, `false`,
+`umask`, `uname`, `uncompress`, `uniq`, `wc`, `xargs`, `zcat`.
 
 
 ## `shell-boilerplate.sh`<a id="shell-boilerplate"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-The [`shell-boilerplate.sh`](./shell-boilerplate.sh) file provides a starting point for new scripts. It includes environment setup, utility functions, and a structured `main()` pattern that follows this style guide.
+The [`shell-boilerplate.sh`](./shell-boilerplate.sh) file provides a starting
+point for new scripts. It includes environment setup, utility functions, and a
+structured `main()` pattern that follows this style guide.
 
-The code between the `--- BOILERPLATE START|END v<version> ---` markers is a menu, not a mandate: copy in only the parts a script needs. It provides:
+The code between the `--- BOILERPLATE START|END v<version> ---` markers is a
+menu, not a mandate: copy in only the parts a script needs. It provides:
 
-- Consistent environment setup (`PATH` fallback, locale probe with `LC_ALL` fallback, `set -u`, `pipefail` disabled).
+- Consistent environment setup (`PATH` fallback, locale probe with `LC_ALL`
+  fallback, `set -u`, `pipefail` disabled).
 - ANSI formatting codes respecting [`NO_COLOR`](https://no-color.org/).
-- `msg()` for formatted output (errors, warnings, success, info, debug) with optional timestamps.
+- `msg()` for formatted output (errors, warnings, success, info, debug) with
+  optional timestamps.
 - `check_cmd()` and `require_cmd()` for checking command availability.
 - `ensure()` for running commands that must not fail.
 
-Take the full block for complex, long-running scripts of the size and shape of [`pve_backup_usb.sh`](https://github.com/foundata/proxmox-pve-backup-usb/blob/main/pve_backup_usb.sh): many functions, cleanup on exit, several command checks, where consistent logging and error handling pay off. Small scripts can take just the environment setup and skip the rest.
+Take the full block for complex, long-running scripts of the size and shape of
+[`pve_backup_usb.sh`](https://github.com/foundata/proxmox-pve-backup-usb/blob/main/pve_backup_usb.sh):
+many functions, cleanup on exit, several command checks, where consistent
+logging and error handling pay off. Small scripts can take just the environment
+setup and skip the rest.
 
-Keep the version markers only on a script that carries the block in full; they exist so it can be updated programmatically later (see [Updating the boilerplate](#shell-boilerplate-update)). A partial copy should be pasted plainly, without markers.
+Keep the version markers only on a script that carries the block in full; they
+exist so it can be updated programmatically later (see
+[Updating the boilerplate](#shell-boilerplate-update)). A partial copy should be
+pasted plainly, without markers.
 
 See [`shell-boilerplate.sh`](./shell-boilerplate.sh).
 
 
 ### Updating the boilerplate<a id="shell-boilerplate-update"></a>
 
-Scripts that carry the full, marker-delimited block can pull the latest version straight from GitHub with the standalone snippet below. It replaces only the content between the markers and leaves the rest of the target script untouched:
+Scripts that carry the full, marker-delimited block can pull the latest version
+straight from GitHub with the standalone snippet below. It replaces only the
+content between the markers and leaves the rest of the target script untouched:
 
 ```sh
 #!/usr/bin/env sh
@@ -1344,42 +1458,55 @@ mv "${tmp}" "${target}"
 printf '%s: updated %s (backup: %s.bak)\n' "$(basename "${0}")" "${target}" "${target}"
 ```
 
-Review the diff before committing: the markers only bound the replacement, they do not guarantee the new version is a drop-in fit (e.g. if custom code was pasted between them). Keep the update as its own commit, scoped to just the boilerplate change, e.g.:
+Review the diff before committing: the markers only bound the replacement, they
+do not guarantee the new version is a drop-in fit (e.g. if custom code was
+pasted between them). Keep the update as its own commit, scoped to just the
+boilerplate change, e.g.:
 
-```
+```text
 <component>: update shell boilerplate to v<version>
 ```
-
 
 
 ## `shell-snippets.sh`<a id="shell-snippets"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-The [`shell-snippets.sh`](./shell-snippets.sh) file provides a collection of commonly needed shell actions ready for copy & paste. It serves as a reference and quick-start resource for recurring tasks.
+The [`shell-snippets.sh`](./shell-snippets.sh) file provides a collection of
+commonly needed shell actions ready for copy & paste. It serves as a reference
+and quick-start resource for recurring tasks.
 
 **Please note:**
 
-- All simple command snippets are POSIX compatible (except when calling external non-POSIX commands like `curl` or `wget`).
-- Functions may rely on other functions from [`shell-boilerplate.sh`](#shell-boilerplate).
+- All simple command snippets are POSIX compatible (except when calling external
+  non-POSIX commands like `curl` or `wget`).
+- Functions may rely on other functions from
+  [`shell-boilerplate.sh`](#shell-boilerplate).
 
 **Categories included:**
 
-- **Variables and string handling:** Case conversion, whitespace trimming, duplicate line removal, string length, list item counting, NUL byte stripping, user input reading, search and replace.
-- **Environment:** Retrieving user home directories reliably across different environments.
-- **Process control:** Ensuring single script instance execution, timeout handling for stale processes.
-- **User interaction:** Reading user input, prompts with defaults, yes/no confirmation dialogs, path validation.
-- **Files:** Directory copying with `rsync`, file downloads with `curl`/`wget` fallback.
+- **Variables and string handling:** Case conversion, whitespace trimming,
+  duplicate line removal, string length, list item counting, NUL byte stripping,
+  user input reading, search and replace.
+- **Environment:** Retrieving user home directories reliably across different
+  environments.
+- **Process control:** Ensuring single script instance execution, timeout
+  handling for stale processes.
+- **User interaction:** Reading user input, prompts with defaults, yes/no
+  confirmation dialogs, path validation.
+- **Files:** Directory copying with `rsync`, file downloads with `curl`/`wget`
+  fallback.
 
 See [`shell-snippets.sh`](./shell-snippets.sh).
-
 
 
 ## Author information
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-This guide was written by [foundata](https://foundata.com/) to produce robust, readable, and portable shell scripts. It incorporates lessons learned from real-world cross-platform shell scripting.
+This guide was written by [foundata](https://foundata.com/) to produce robust,
+readable, and portable shell scripts. It incorporates lessons learned from
+real-world cross-platform shell scripting.
 
 For general background, see:
 

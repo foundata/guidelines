@@ -1,37 +1,42 @@
 # Ansible style guide (playbooks)
 
-This document defines the style for writing Ansible playbooks, addressing the lack of a consistent and comprehensive code style and usage in both [Red Hat's guidelines](https://github.com/redhat-cop/automation-good-practices/blob/main/coding_style/README.adoc#ansible-guidelines) and the [Ansible documentation](https://docs.ansible.com/ansible/latest/user_guide/playbooks_best_practices.html).
+This document defines the style for writing Ansible playbooks, addressing the
+lack of a consistent and comprehensive code style and usage in both
+[Red Hat's guidelines](https://github.com/redhat-cop/automation-good-practices/blob/main/coding_style/README.adoc#ansible-guidelines)
+and the
+[Ansible documentation](https://docs.ansible.com/ansible/latest/user_guide/playbooks_best_practices.html).
 
-The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119) and [RFC 8174](https://datatracker.ietf.org/doc/html/rfc8174).
+The terms MUST, SHOULD, and other key words are used as defined in
+[RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119) and
+[RFC 8174](https://datatracker.ietf.org/doc/html/rfc8174).
 
 
 ## Table of contents
 
-* [YAML files](#yaml-files)
-* [Indentation](#indentation)
-* [Spacing](#spacing)
-* [Quoting](#quoting)
-* [Naming](#naming)
-* [Scoping (collections and roles)](#scoping)
-* [Booleans](#booleans)
-* [Maps (`key: value`)](#maps)
-  * [Value retrieval: bracket notation](#value-retrieval)
-* [Facts](#facts)
-* [Conditionals](#conditionals)
-  * [Formatting](#conditionals-formatting)
-* [Loops](#loops)
-  * [Loop variables in role task files](#role-loop-variables)
-* [Tasks and play declaration](#tasks-plays)
-  * [Handlers](#handlers)
-  * [Roles](#roles)
-* [External commands](#external-commands)
-  * [Scripts](#scripts)
-* [Comments](#comments)
-* [Linting](#linting)
-* [Miscellaneous](#misc)
-* [Linguistic guidelines](#linguistic-guidelines)
-* [Author information](#author-information)
-
+- [YAML files](#yaml-files)
+- [Indentation](#indentation)
+- [Spacing](#spacing)
+- [Quoting](#quoting)
+- [Naming](#naming)
+- [Scoping (collections and roles)](#scoping)
+- [Booleans](#booleans)
+- [Maps (`key: value`)](#maps)
+  - [Value retrieval: bracket notation](#value-retrieval)
+- [Facts](#facts)
+- [Conditionals](#conditionals)
+  - [Formatting](#conditionals-formatting)
+- [Loops](#loops)
+  - [Loop variables in role task files](#role-loop-variables)
+- [Tasks and play declaration](#tasks-plays)
+  - [Handlers](#handlers)
+  - [Roles](#roles)
+- [External commands](#external-commands)
+  - [Scripts](#scripts)
+- [Comments](#comments)
+- [Linting](#linting)
+- [Miscellaneous](#misc)
+- [Linguistic guidelines](#linguistic-guidelines)
+- [Author information](#author-information)
 
 
 ## YAML files<a id="yaml-files"></a>
@@ -40,28 +45,41 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 
 **You MUST:**
 
-* Follow the [YAML 1.2.2 specification](https://yaml.org/spec/1.2.2/).
-* Use spaces for [indentation](https://yaml.org/spec/1.2.2/#61-indentation-spaces).
-* Use Unix line feed (LF, `\n`) for new lines.
-* Use [UTF-8 encoding](https://yaml.org/spec/1.2.2/#52-character-encodings).
-* Trim trailing whitespace whenever possible, but ensure files end with a new line.
-* Keep line lengths below 160 characters whenever technically possible.
-* Use JSON syntax only when it makes sense (e.g., for an automatically generated file) or when it improves readability.
-
+- Follow the [YAML 1.2.2 specification](https://yaml.org/spec/1.2.2/).
+- Use spaces for
+  [indentation](https://yaml.org/spec/1.2.2/#61-indentation-spaces).
+- Use Unix line feed (LF, `\n`) for new lines.
+- Use [UTF-8 encoding](https://yaml.org/spec/1.2.2/#52-character-encodings).
+- Trim trailing whitespace whenever possible, but ensure files end with a new
+  line.
+- Keep line lengths below 160 characters whenever technically possible.
+- Use JSON syntax only when it makes sense (e.g., for an automatically generated
+  file) or when it improves readability.
 
 **You SHOULD:**
 
-* Use `.yml` as the extension for new playbooks (or tasks files in roles, and collections).
-  * Stay consistent with existing extensions if `.yaml` is already used in a role or collection.
-* Start files with comments explaining their purpose, including example usage if reasonable.
-* Include blank lines before and after the `---` separator, followed by the rest of the file.
-* Check all [`YAML_FILENAME_EXTENSIONS`](https://docs.ansible.com/ansible/latest/reference_appendices/config.html#yaml-filename-extensions) when searching for files (e.g., `vars_files`, `include_vars`, plugins, or similar functions).
-* Keep content around 80 characters in length, and ensure the overall line length, including indentation, stays below 120 characters.
-  * Use [block scalars](https://yaml-multiline.info/#block-scalars) (`>` and `|`) as needed to manage long strings.
-  * Include a chomping indicator (`-`) behind [block scalars](https://yaml-multiline.info/#block-scalars) (`>` and `|`) when it is important to exclude the trailing newline from the string (e.g., when defining a string variable).
-* Refer to [Conditional formatting](#conditionals-formatting) for rules on writing `when`, `changed_when`, and `failed_when` clauses.
-
-
+- Use `.yml` as the extension for new playbooks (or tasks files in roles, and
+  collections).
+  - Stay consistent with existing extensions if `.yaml` is already used in a
+    role or collection.
+- Start files with comments explaining their purpose, including example usage if
+  reasonable.
+- Include blank lines before and after the `---` separator, followed by the rest
+  of the file.
+- Check all
+  [`YAML_FILENAME_EXTENSIONS`](https://docs.ansible.com/ansible/latest/reference_appendices/config.html#yaml-filename-extensions)
+  when searching for files (e.g., `vars_files`, `include_vars`, plugins, or
+  similar functions).
+- Keep content around 80 characters in length, and ensure the overall line
+  length, including indentation, stays below 120 characters.
+  - Use [block scalars](https://yaml-multiline.info/#block-scalars) (`>` and
+    `|`) as needed to manage long strings.
+  - Include a chomping indicator (`-`) behind
+    [block scalars](https://yaml-multiline.info/#block-scalars) (`>` and `|`)
+    when it is important to exclude the trailing newline from the string (e.g.,
+    when defining a string variable).
+- Refer to [Conditional formatting](#conditionals-formatting) for rules on
+  writing `when`, `changed_when`, and `failed_when` clauses.
 
 **Good examples:**
 
@@ -126,7 +144,6 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 
 ```
 
-
 **Bad examples:**
 
 ```yaml
@@ -150,16 +167,26 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
         files_matching: "^mswindows.yml$" # unexpected filename, no fallback, only .yml
 ```
 
-
 **Reasoning:**
 
-* YAML 1.2 has been the standard since 2009 and uses only `true` and `false` for booleans, avoiding many potential edge-case issues. Allowing YAML 1.1 is no longer practical.
-* The `.yml` extension must be used for consistency. It is predominant in the Ansible ecosystem, even though [yaml.org](https://yaml.org/faq.html) recommends `.yaml`.
-* Adding comments at the very beginning of a file allows for quickly identifying the purpose or usage of it, either by opening the file or using the `head` command.
-* Ending files with a new line is a common Unix best practice. It prevents terminal prompt misalignment when printing files to [STDOUT](https://en.wikipedia.org/wiki/Standard_streams#Standard_output_(stdout)).
-* Long lines are difficult to read. Many projects ask for a line length limit around 120-150 character and [`ansible-lint`](#linting) checks for 160 characters by default ([yaml rule](https://ansible.readthedocs.io/projects/lint/rules/yaml/)).
-* Even though JSON is syntactically valid YAML and understood by Ansible, nobody expects it in playbooks.
-
+- YAML 1.2 has been the standard since 2009 and uses only `true` and `false` for
+  booleans, avoiding many potential edge-case issues. Allowing YAML 1.1 is no
+  longer practical.
+- The `.yml` extension must be used for consistency. It is predominant in the
+  Ansible ecosystem, even though [yaml.org](https://yaml.org/faq.html)
+  recommends `.yaml`.
+- Adding comments at the very beginning of a file allows for quickly identifying
+  the purpose or usage of it, either by opening the file or using the `head`
+  command.
+- Ending files with a new line is a common Unix best practice. It prevents
+  terminal prompt misalignment when printing files to
+  [STDOUT](https://en.wikipedia.org/wiki/Standard_streams#Standard_output_(stdout)).
+- Long lines are difficult to read. Many projects ask for a line length limit
+  around 120-150 character and [`ansible-lint`](#linting) checks for 160
+  characters by default
+  ([yaml rule](https://ansible.readthedocs.io/projects/lint/rules/yaml/)).
+- Even though JSON is syntactically valid YAML and understood by Ansible, nobody
+  expects it in playbooks.
 
 
 ## Indentation<a id="indentation"></a>
@@ -168,15 +195,13 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 
 **You MUST:**
 
-* Use two spaces to represent sub-maps when indenting.
-* Especially indent list contents beyond the list definition.
-* Start multi-line maps with a dash (`-`).
-
+- Use two spaces to represent sub-maps when indenting.
+- Especially indent list contents beyond the list definition.
+- Start multi-line maps with a dash (`-`).
 
 **Reasoning:**
 
 Following the indentation rules produces consistent code that is easy to read.
-
 
 **Good examples:**
 
@@ -190,7 +215,6 @@ Following the indentation rules produces consistent code that is easy to read.
       - "Dummy 3"
 ```
 
-
 **Bad examples:**
 
 ```yaml
@@ -203,27 +227,26 @@ Following the indentation rules produces consistent code that is easy to read.
 ```
 
 
-
 ## Spacing<a id="spacing"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
 **You SHOULD:**
 
-* Add one blank line:
-  * After `pre_tasks:`, `tasks:`, `post_tasks:`, or `block:`
-  * Before and after the YAML `---` document separator
-  * At the end of a file
-* Add two blank lines:
-  * After each task block
-* Use a single space to separate Jinja2 template markers from variable names or expressions.
-* Break up lengthy Jinja templates into multiple templates when they contain distinct logical sections.
-
+- Add one blank line:
+  - After `pre_tasks:`, `tasks:`, `post_tasks:`, or `block:`
+  - Before and after the YAML `---` document separator
+  - At the end of a file
+- Add two blank lines:
+  - After each task block
+- Use a single space to separate Jinja2 template markers from variable names or
+  expressions.
+- Break up lengthy Jinja templates into multiple templates when they contain
+  distinct logical sections.
 
 **Reasoning:**
 
 Following the spacing rules produces consistent code that is easy to read.
-
 
 **Good examples:**
 
@@ -256,7 +279,6 @@ Following the spacing rules produces consistent code that is easy to read.
       ansible.builtin.set_fact:
         bar: "{{ baz | default('foo, barbaz') }}"
 ```
-
 
 **Bad examples:**
 
@@ -293,22 +315,23 @@ Following the spacing rules produces consistent code that is easy to read.
 
 **You MUST:**
 
-* Use [block scalars](https://yaml-multiline.info/#block-scalars) (`>` and `|`) for writing long strings or to simplify complicated quoting.
-
+- Use [block scalars](https://yaml-multiline.info/#block-scalars) (`>` and `|`)
+  for writing long strings or to simplify complicated quoting.
 
 **You SHOULD:**
 
-* Quote all strings.
-* Use double quotes (`"`) for YAML strings.
-  * Use single quotes only when they simplify nested expressions, such as Jinja map references with mixed quoting styles.
-* Use single quotes (`'`) for Jinja2 strings.
-
+- Quote all strings.
+- Use double quotes (`"`) for YAML strings.
+  - Use single quotes only when they simplify nested expressions, such as Jinja
+    map references with mixed quoting styles.
+- Use single quotes (`'`) for Jinja2 strings.
 
 **You MUST NOT:**
 
-* Quote non-string types, such as booleans (`true`, `false`) or numbers (e.g., `1337`).
-* Quote references to the local Ansible environment, such as the names of variables being assigned values.
-
+- Quote non-string types, such as booleans (`true`, `false`) or numbers (e.g.,
+  `1337`).
+- Quote references to the local Ansible environment, such as the names of
+  variables being assigned values.
 
 **Good examples:**
 
@@ -369,7 +392,6 @@ Following the spacing rules produces consistent code that is easy to read.
     baz: "{{ foo }}" # explicitly references the variable foo
 ```
 
-
 **Bad examples:**
 
 ```yaml
@@ -387,26 +409,32 @@ Following the spacing rules produces consistent code that is easy to read.
     baz: another_var  # can cause ambiguity if `another_var` (string or existing variable?)
 ```
 
-
 **Reasoning:**
 
-* We have stricter rules than much of the community (cf. [8.2. YAML and Jinja2 Syntax](https://redhat-cop.github.io/automation-good-practices/#_yaml_and_jinja2_syntax)):
-  * We believe all strings [should be quoted](https://news.ycombinator.com/item?id=34509789).
-  * The number of rules to remember, if you want to use the quotes only when they are really needed, is somewhat excessive for such a simple thing as specifying one of the most common datatypes.
-  * However, since laxer rules are so common, we have categorized this as SHOULD instead of MUST.
-* Single quotes in YAML behave differently than most programmers expect:
-  * Escaping with `\` is **not** possible; instead, `''` (two single quotes) is used.
-  * They do **not** prevent variable interpolation.
-* Properly escaped strings makes it easier to troubleshoot malformed strings and ensures the desired effect.
-* YAML requires you to quote the entire line if it starts with `{{ foo }}` to distinguish between a value and a YAML dictionary.
-* Syntax highlighting generally works better when strings are explicitly quoted.
-* Refer to the following for more information about edge cases:
-  * [Ansible FAQ: "When should I use {{ }}? Also, how to interpolate variables or dynamic variable names"](https://docs.ansible.com/ansible/latest/reference_appendices/faq.html#when-should-i-use-also-how-to-interpolate-variables-or-dynamic-variable-names)
-  * [Ansible Lint rule: `risky-octal`](https://ansible.readthedocs.io/projects/lint/rules/risky-octal/)
-* Further discussion:
-  * [Ansible Lint: add rule to prefer double quotes instead of single (like black) #584](https://github.com/ansible/ansible-lint/discussions/584)
-  * [YAML: Do I need quotes for strings in YAML?](https://stackoverflow.com/questions/19109912/yaml-do-i-need-quotes-for-strings-in-yaml)
-
+- We have stricter rules than much of the community (cf.
+  [8.2. YAML and Jinja2 Syntax](https://redhat-cop.github.io/automation-good-practices/#_yaml_and_jinja2_syntax)):
+  - We believe all strings
+    [should be quoted](https://news.ycombinator.com/item?id=34509789).
+  - The number of rules to remember, if you want to use the quotes only when
+    they are really needed, is somewhat excessive for such a simple thing as
+    specifying one of the most common datatypes.
+  - However, since laxer rules are so common, we have categorized this as SHOULD
+    instead of MUST.
+- Single quotes in YAML behave differently than most programmers expect:
+  - Escaping with `\` is **not** possible; instead, `''` (two single quotes) is
+    used.
+  - They do **not** prevent variable interpolation.
+- Properly escaped strings makes it easier to troubleshoot malformed strings and
+  ensures the desired effect.
+- YAML requires you to quote the entire line if it starts with `{{ foo }}` to
+  distinguish between a value and a YAML dictionary.
+- Syntax highlighting generally works better when strings are explicitly quoted.
+- Refer to the following for more information about edge cases:
+  - [Ansible FAQ: "When should I use {{ }}? Also, how to interpolate variables or dynamic variable names"](https://docs.ansible.com/ansible/latest/reference_appendices/faq.html#when-should-i-use-also-how-to-interpolate-variables-or-dynamic-variable-names)
+  - [Ansible Lint rule: `risky-octal`](https://ansible.readthedocs.io/projects/lint/rules/risky-octal/)
+- Further discussion:
+  - [Ansible Lint: add rule to prefer double quotes instead of single (like black) #584](https://github.com/ansible/ansible-lint/discussions/584)
+  - [YAML: Do I need quotes for strings in YAML?](https://stackoverflow.com/questions/19109912/yaml-do-i-need-quotes-for-strings-in-yaml)
 
 
 ## Naming<a id="naming"></a>
@@ -415,13 +443,15 @@ Following the spacing rules produces consistent code that is easy to read.
 
 **You MUST:**
 
-* Use Fully Qualified Collection Names (FQCN) for all modules, plugins, tests, filters, and lookups (e.g., `ansible.builtin.copy` instead of `copy`).
-* Use [`snake_case`](https://en.wikipedia.org/wiki/Snake_case) for variables, roles, collections and modules.
-* Only use characters from the set `[a-z0-9_]`.
-* Start variable names with a letter or underscore.
-* Prefix role variables with the collection and/or role name.
-* Prefix internal variables (those that are not expected to be set by users) by two underscores.
-
+- Use Fully Qualified Collection Names (FQCN) for all modules, plugins, tests,
+  filters, and lookups (e.g., `ansible.builtin.copy` instead of `copy`).
+- Use [`snake_case`](https://en.wikipedia.org/wiki/Snake_case) for variables,
+  roles, collections and modules.
+- Only use characters from the set `[a-z0-9_]`.
+- Start variable names with a letter or underscore.
+- Prefix role variables with the collection and/or role name.
+- Prefix internal variables (those that are not expected to be set by users) by
+  two underscores.
 
 **Good examples:**
 
@@ -449,7 +479,6 @@ Following the spacing rules produces consistent code that is easy to read.
   register: __foo_installed_result
 ```
 
-
 **Bad examples:**
 
 ```yaml
@@ -476,16 +505,32 @@ Following the spacing rules produces consistent code that is easy to read.
   register: installed_result
 ```
 
-
 **Reasoning:**
 
-* Using FQCN prevents ambiguity when multiple collections provide modules with the same name, ensures consistent behavior across different Ansible configurations, and makes dependencies explicit. Ansible recommends FQCN as a best practice.
-* Ansible uses `snake_case` for module names and parameters. As this convention influences a wide range of playbooks, it is logical to extend it to variable names, even though they are not technically restricted to this format.
-* Names of plugins, roles, and most parts of Ansible must follow Python namespace rules, which disallow certain characters, such as hyphens  (`-`) or dots (`.`). See [StackOverflow](https://stackoverflow.com/a/37831973), [Galaxy Issue 775](https://github.com/ansible/galaxy/issues/775), and a [comment from Issue 779](https://github.com/ansible/galaxy/issues/779#issuecomment-401632750) for more information:
-  > For that to work, namespaces need to be Python compatible, which means they can’t contain ‘-’.
-* Refer to the [Ansible Galaxy documentation on role names](https://galaxy.ansible.com/docs/contributing/creating_role.html#role-names) for additional guidance.
-* Role variables, registered variables, and custom facts are not truly local. They persist globally and can pollute the namespace. Prefixing them with the role name reduces conflicts, while two underscores indicate they are internal. This applies to variables set by `set_fact` and `register`, as they remain after the role completes. The two underscores for internal variables are [a community convention](https://redhat-cop.github.io/automation-good-practices/#_naming_parameters).
-
+- Using FQCN prevents ambiguity when multiple collections provide modules with
+  the same name, ensures consistent behavior across different Ansible
+  configurations, and makes dependencies explicit. Ansible recommends FQCN as a
+  best practice.
+- Ansible uses `snake_case` for module names and parameters. As this convention
+  influences a wide range of playbooks, it is logical to extend it to variable
+  names, even though they are not technically restricted to this format.
+- Names of plugins, roles, and most parts of Ansible must follow Python
+  namespace rules, which disallow certain characters, such as hyphens (`-`) or
+  dots (`.`). See [StackOverflow](https://stackoverflow.com/a/37831973),
+  [Galaxy Issue 775](https://github.com/ansible/galaxy/issues/775), and a
+  [comment from Issue 779](https://github.com/ansible/galaxy/issues/779#issuecomment-401632750)
+  for more information:
+  > For that to work, namespaces need to be Python compatible, which means they
+  > can't contain '-'.
+- Refer to the
+  [Ansible Galaxy documentation on role names](https://galaxy.ansible.com/docs/contributing/creating_role.html#role-names)
+  for additional guidance.
+- Role variables, registered variables, and custom facts are not truly local.
+  They persist globally and can pollute the namespace. Prefixing them with the
+  role name reduces conflicts, while two underscores indicate they are internal.
+  This applies to variables set by `set_fact` and `register`, as they remain
+  after the role completes. The two underscores for internal variables are
+  [a community convention](https://redhat-cop.github.io/automation-good-practices/#_naming_parameters).
 
 
 ## Scoping (collections and roles)<a id="scoping"></a>
@@ -494,27 +539,52 @@ Following the spacing rules produces consistent code that is easy to read.
 
 **You MUST:**
 
-* Scope collections by **managed subsystem or encapsulated, self-contained software** (examples: `foundata.sshd`, `foundata.logrotate`, `foundata.ad`) — never by machine role, edition, or SKU (no `windows_server`, no `linux_desktop`). Express platform or edition restrictions via supported-platform metadata and asserts; express per-host-class differences via inventory data.
-* Keep exactly one base collection per operating system (`foundata.linux`, `foundata.windows`) and define its content **positively**: primitives that the upstream base collections lack, plus machine-lifecycle roles applicable to any host of that OS (`reboot`, `disk`, `user`, …). The base collection is not a bin for leftovers: a subsystem without a home stays a documented script or playbook until it earns a collection.
-* Create a separate collection for a subsystem only when there is concrete automation demand **and** at least one of the following holds — otherwise implement it as a role in the base collection:
-  * it imposes a distinct upstream dependency other consumers should not inherit (e.g., `microsoft.ad`),
-  * it carries a distinct risk or review domain (e.g., destructive directory operations),
-  * it has an independent consumer set (usable without the rest).
-
+- Scope collections by
+  **managed subsystem or encapsulated, self-contained software** (examples:
+  `foundata.sshd`, `foundata.logrotate`, `foundata.ad`) — never by machine role,
+  edition, or SKU (no `windows_server`, no `linux_desktop`). Express platform or
+  edition restrictions via supported-platform metadata and asserts; express
+  per-host-class differences via inventory data.
+- Keep exactly one base collection per operating system (`foundata.linux`,
+  `foundata.windows`) and define its content **positively**: primitives that the
+  upstream base collections lack, plus machine-lifecycle roles applicable to any
+  host of that OS (`reboot`, `disk`, `user`, …). The base collection is not a
+  bin for leftovers: a subsystem without a home stays a documented script or
+  playbook until it earns a collection.
+- Create a separate collection for a subsystem only when there is concrete
+  automation demand **and** at least one of the following holds — otherwise
+  implement it as a role in the base collection:
+  - it imposes a distinct upstream dependency other consumers should not inherit
+    (e.g., `microsoft.ad`),
+  - it carries a distinct risk or review domain (e.g., destructive directory
+    operations),
+  - it has an independent consumer set (usable without the rest).
 
 **You MUST NOT:**
 
-* Build 1:1 wrapper modules or roles around upstream functionality. Facades are legitimate only when they compose several primitives under one opinionated contract (n:1 — e.g., a `user` role that also manages SSH authorized keys).
-
+- Build 1:1 wrapper modules or roles around upstream functionality. Facades are
+  legitimate only when they compose several primitives under one opinionated
+  contract (n:1 — e.g., a `user` role that also manages SSH authorized keys).
 
 **You SHOULD:**
 
-* Mirror upstream collection boundaries when in doubt (`foundata.ad` ↔ `microsoft.ad`; domain join lives on the AD side because `microsoft.ad.membership` does).
-* Name collections after the software's own distinctive name (`nginx`, `sshd`, `ad`). When the name is a generic protocol or service term with implementations on several platforms, add the platform prefix `win_` for Windows subsystems (`win_fileserver`, `win_dhcp`). Do not use vendor prefixes such as `ms_`: they mark the vendor, not the platform gate (SQL Server also runs on Linux).
-* Use a single `run` role for single-lifecycle collections and named lifecycle roles for multi-lifecycle ones (`foundata.podman`: `host`, `quadlet`). Drop scope prefixes that repeat the collection name (role `objects` in `foundata.ad`, not `ad_objects`).
-* Keep dependencies one-way: verticals may depend on the base collection, never the reverse.
-* Reserve names for foreseeable subsystems in design documents instead of creating empty collections.
-
+- Mirror upstream collection boundaries when in doubt (`foundata.ad` ↔
+  `microsoft.ad`; domain join lives on the AD side because
+  `microsoft.ad.membership` does).
+- Name collections after the software's own distinctive name (`nginx`, `sshd`,
+  `ad`). When the name is a generic protocol or service term with
+  implementations on several platforms, add the platform prefix `win_` for
+  Windows subsystems (`win_fileserver`, `win_dhcp`). Do not use vendor prefixes
+  such as `ms_`: they mark the vendor, not the platform gate (SQL Server also
+  runs on Linux).
+- Use a single `run` role for single-lifecycle collections and named lifecycle
+  roles for multi-lifecycle ones (`foundata.podman`: `host`, `quadlet`). Drop
+  scope prefixes that repeat the collection name (role `objects` in
+  `foundata.ad`, not `ad_objects`).
+- Keep dependencies one-way: verticals may depend on the base collection, never
+  the reverse.
+- Reserve names for foreseeable subsystems in design documents instead of
+  creating empty collections.
 
 **Good examples:**
 
@@ -526,7 +596,6 @@ foundata.win_fileserver   # vertical: generic term -> win_ prefix
 foundata.ad.objects       # role: no "ad_" stutter; vars objects_ad_*
 ```
 
-
 **Bad examples:**
 
 ```text
@@ -537,14 +606,23 @@ foundata.windows.registry # 1:1 wrapper around ansible.windows.win_regedit
 foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_objects_ad_*)
 ```
 
-
 **Reasoning:**
 
-* The subsystem axis matches both our namespace practice and the upstream ecosystems: the `microsoft.*` namespace consists exclusively of subsystem/product verticals (ad, iis, sql, wsl, hyperv, scvmm, scom, mecm). Machine-role collections have no positive definition and degenerate into grab-bags (the `community.windows` effect).
-* Every collection costs a skeleton, CI, releases, and documentation; FQCN moves after consumers exist are breaking changes (upstream needed multi-year deprecation cycles for `win_domain*` → `microsoft.ad`). The demand gate prevents premature micro-collections; the split criteria catch the cases where a late split would be the more expensive mistake.
-* Dependency hygiene: a base collection that depends on a vertical (or its upstream) forces those pins onto every consumer.
-* 1:1 wrappers double the documentation surface, lag upstream features, and hide the ecosystem from users. Opinionated composition is where in-house collections add value.
-
+- The subsystem axis matches both our namespace practice and the upstream
+  ecosystems: the `microsoft.*` namespace consists exclusively of
+  subsystem/product verticals (ad, iis, sql, wsl, hyperv, scvmm, scom, mecm).
+  Machine-role collections have no positive definition and degenerate into
+  grab-bags (the `community.windows` effect).
+- Every collection costs a skeleton, CI, releases, and documentation; FQCN moves
+  after consumers exist are breaking changes (upstream needed multi-year
+  deprecation cycles for `win_domain*` → `microsoft.ad`). The demand gate
+  prevents premature micro-collections; the split criteria catch the cases where
+  a late split would be the more expensive mistake.
+- Dependency hygiene: a base collection that depends on a vertical (or its
+  upstream) forces those pins onto every consumer.
+- 1:1 wrappers double the documentation surface, lag upstream features, and hide
+  the ecosystem from users. Opinionated composition is where in-house
+  collections add value.
 
 
 ## Booleans<a id="booleans"></a>
@@ -552,7 +630,6 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
 **You MUST:** use `true` and `false` only (all lowercase without quotes).
-
 
 **Good examples:**
 
@@ -565,7 +642,6 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
     enabled: true
 ```
 
-
 **Bad examples:**
 
 ```yaml
@@ -577,12 +653,12 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
     enabled: 1
 ```
 
-
 **Reasoning:**
 
-* Using `true` / `false` prevents [the Norway problem](https://hitchdev.com/strictyaml/why/implicit-typing-removed/).
-* YAML 1.2 only allows `true` / `false` as boolean literals. YAML 1.1 (which is less strict on this) is old and deprecated.
-
+- Using `true` / `false` prevents
+  [the Norway problem](https://hitchdev.com/strictyaml/why/implicit-typing-removed/).
+- YAML 1.2 only allows `true` / `false` as boolean literals. YAML 1.1 (which is
+  less strict on this) is old and deprecated.
 
 
 ## Maps (`key: value`)<a id="maps"></a>
@@ -591,9 +667,8 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
 
 **You MUST:**
 
-* Use only one space after the colon when specifying a key-value pair.
-* Always use the map syntax, regardless of the number of pairs in the map.
-
+- Use only one space after the colon when specifying a key-value pair.
+- Always use the map syntax, regardless of the number of pairs in the map.
 
 **Good examples:**
 
@@ -620,7 +695,6 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
     src: "files/filters/sshd.conf"
 ```
 
-
 **Bad examples:**
 
 ```yaml
@@ -639,12 +713,11 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
   ansible.builtin.copy: "dest=/etc/fail2ban/filter.d/ src=files/filters/sshd.conf"
 ```
 
-
 **Reasoning:**
 
-* The map syntax is easier to read and less error-prone.
-* Version control diffs are cleaner and more meaningful, as only new or changed parameters are highlighted.
-
+- The map syntax is easier to read and less error-prone.
+- Version control diffs are cleaner and more meaningful, as only new or changed
+  parameters are highlighted.
 
 
 ### Value retrieval: bracket notation<a id="value-retrieval"></a>
@@ -653,18 +726,16 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
 
 **You MUST:**
 
-* Use bracket notation for value retrieval.
-
+- Use bracket notation for value retrieval.
 
 **You SHOULD:**
 
-* Refactor projects to use bracket notation instead of dot notation, provided the project maintainers agree.
-
+- Refactor projects to use bracket notation instead of dot notation, provided
+  the project maintainers agree.
 
 **You MUST NOT:**
 
-* Mix dot and bracket notation within the same project.
-
+- Mix dot and bracket notation within the same project.
 
 **Good examples:**
 
@@ -700,7 +771,6 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
 
 ```
 
-
 **Bad examples:**
 
 ```yaml
@@ -734,13 +804,15 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
     msg: "{{ platforms.1.versions[1] }}"
 ```
 
-
 **Reasoning:**
 
-* Bracket notation makes it easier to distinguish between keys and attributes or methods of Python dictionaries. It also usually results in better editor highlighting.
-* Bracket notation supports variables as keys.
-* Dot notation can fail when keys collide with attributes or methods of Python dictionaries, such as `count`, `copy`, or `title`. Use bracket notation consistently within a playbook.
-
+- Bracket notation makes it easier to distinguish between keys and attributes or
+  methods of Python dictionaries. It also usually results in better editor
+  highlighting.
+- Bracket notation supports variables as keys.
+- Dot notation can fail when keys collide with attributes or methods of Python
+  dictionaries, such as `count`, `copy`, or `title`. Use bracket notation
+  consistently within a playbook.
 
 
 ## Facts<a id="facts"></a>
@@ -749,15 +821,18 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
 
 **You MUST:**
 
-* Ensure roles and collections are compatible with playbooks using `gather_facts: false`.
-* Use the `ansible_facts` dictionary to access facts (e.g., `ansible_facts['distribution']`).
-
+- Ensure roles and collections are compatible with playbooks using
+  `gather_facts: false`.
+- Use the `ansible_facts` dictionary to access facts (e.g.,
+  `ansible_facts['distribution']`).
 
 **You MUST NOT:**
 
-* Rely on the [`INJECT_FACTS_AS_VARS`](https://docs.ansible.com/ansible/latest/reference_appendices/config.html#inject-facts-as-vars) setting being enabled.
-* Use `ansible_<factname>` legacy variables (e.g., `ansible_distribution`) to access facts.
-
+- Rely on the
+  [`INJECT_FACTS_AS_VARS`](https://docs.ansible.com/ansible/latest/reference_appendices/config.html#inject-facts-as-vars)
+  setting being enabled.
+- Use `ansible_<factname>` legacy variables (e.g., `ansible_distribution`) to
+  access facts.
 
 **Good examples:**
 
@@ -789,7 +864,6 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
       {{ ansible_facts['virtualization_type'] | default('physical hardware') }}.
 ```
 
-
 **Bad examples:**
 
 ```yaml
@@ -801,15 +875,23 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
       (major {{ ansible_distribution_major_version }}) box from the {{ ansible_os_family }} family.
 ```
 
-
 **Reasoning:**
 
-* Fact gathering is slow and consumes resources. Disabling it globally with `gather_facts: false` is a legitimate optimization for administrators. Your code should not depend on externally defined behavior and should gather only the facts it needs.
-* Gathering only specific facts using `ansible.builtin.setup` with `gather_subset` makes roles more robust and faster, as they explicitly declare and load their dependencies.
-* The `ansible_<factname>` variables are legacy convenience variables. Using `ansible_facts['<factname>']` is the modern, explicit approach and makes it clear that you are accessing facts rather than regular variables.
-* Compatibility with `INJECT_FACTS_AS_VARS = false` ensures playbooks work regardless of the Ansible configuration.
-* The conditional `when: not (__used_facts is subset(ansible_facts.keys()))` ensures facts are only gathered if they are not already available, preventing redundant operations if another role or the playbook already gathered them.
-
+- Fact gathering is slow and consumes resources. Disabling it globally with
+  `gather_facts: false` is a legitimate optimization for administrators. Your
+  code should not depend on externally defined behavior and should gather only
+  the facts it needs.
+- Gathering only specific facts using `ansible.builtin.setup` with
+  `gather_subset` makes roles more robust and faster, as they explicitly declare
+  and load their dependencies.
+- The `ansible_<factname>` variables are legacy convenience variables. Using
+  `ansible_facts['<factname>']` is the modern, explicit approach and makes it
+  clear that you are accessing facts rather than regular variables.
+- Compatibility with `INJECT_FACTS_AS_VARS = false` ensures playbooks work
+  regardless of the Ansible configuration.
+- The conditional `when: not (__used_facts is subset(ansible_facts.keys()))`
+  ensures facts are only gathered if they are not already available, preventing
+  redundant operations if another role or the playbook already gathered them.
 
 
 ## Conditionals<a id="conditionals"></a>
@@ -818,27 +900,38 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
 
 **You MUST:**
 
-* Ensure all conditional expressions (`when`, `changed_when`, `failed_when`, `assert.that`) evaluate to actual boolean values, not truthy/falsy values.
-* Use explicit boolean predicates instead of relying on implicit truthiness:
-  * `myvar | ansible.builtin.length > 0` instead of just `myvar`
-  * `myvar is ansible.builtin.defined` for existence checks
-  * `myvar is ansible.builtin.truthy` or `myvar | ansible.builtin.bool` for explicit truthiness conversion
-  * `myvar == 'value'` for string comparisons
-* Quote conditional expressions containing `: ` (colon followed by space) to prevent YAML from parsing them as mappings.
-* Use parentheses to control Jinja2 order of operations when using operators like `~` (concatenation) with tests.
-
+- Ensure all conditional expressions (`when`, `changed_when`, `failed_when`,
+  `assert.that`) evaluate to actual boolean values, not truthy/falsy values.
+- Use explicit boolean predicates instead of relying on implicit truthiness:
+  - `myvar | ansible.builtin.length > 0` instead of just `myvar`
+  - `myvar is ansible.builtin.defined` for existence checks
+  - `myvar is ansible.builtin.truthy` or `myvar | ansible.builtin.bool` for
+    explicit truthiness conversion
+  - `myvar == 'value'` for string comparisons
+- Quote conditional expressions containing `:` (colon followed by space) to
+  prevent YAML from parsing them as mappings.
+- Use parentheses to control Jinja2 order of operations when using operators
+  like `~` (concatenation) with tests.
 
 **You MUST NOT:**
 
-* Rely on implicit truthy evaluation of strings, lists, or dictionaries.
-* Accidentally quote sub-expressions within a conditional (the quoted part becomes a literal string and is always truthy).
-
+- Rely on implicit truthy evaluation of strings, lists, or dictionaries.
+- Accidentally quote sub-expressions within a conditional (the quoted part
+  becomes a literal string and is always truthy).
 
 **You SHOULD:**
 
-* Use the [`ansible.builtin.success`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/success_test.html) and [`ansible.builtin.failed`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/failed_test.html) tests instead of comparing return codes directly (e.g., `['rc'] == 0` or `['rc'] != 0`).
-* Normalize categorical string facts (such as `os_family` or `distribution`) to lowercase at comparison time with [`ansible.builtin.lower`](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/lower_filter.html), and use lowercase comparison values, unless letter case is semantically significant.
-
+- Use the
+  [`ansible.builtin.success`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/success_test.html)
+  and
+  [`ansible.builtin.failed`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/failed_test.html)
+  tests instead of comparing return codes directly (e.g., `['rc'] == 0` or
+  `['rc'] != 0`).
+- Normalize categorical string facts (such as `os_family` or `distribution`) to
+  lowercase at comparison time with
+  [`ansible.builtin.lower`](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/lower_filter.html),
+  and use lowercase comparison values, unless letter case is semantically
+  significant.
 
 **Good examples:**
 
@@ -922,7 +1015,6 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
     - __myapp_check_result is ansible.builtin.failed
 ```
 
-
 **Bad examples:**
 
 ```yaml
@@ -985,16 +1077,28 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
     - __myapp_check_result['rc'] != 0  # use "is ansible.builtin.failed" instead
 ```
 
-
 **Reasoning:**
 
-* Python and Jinja2 provide implicit "truthy" evaluation of most non-empty, non-boolean values. While sometimes convenient, this often masks serious logic errors.
-* Ansible 12 enforces boolean results for conditionals by default. Non-boolean results now [raise an error (like `Conditional result (<True|False>) was derived from value of type '<Type>'`)]((https://docs.ansible.com/ansible/latest/porting_guides/porting_guide_12.html#broken-conditionals)) instead of being silently evaluated as truthy.
-* Writing explicit boolean predicates makes the intent clear and prevents subtle bugs that are hard to diagnose.
-* YAML interprets unquoted strings containing `: ` as mappings. Since non-empty mappings are truthy, this silently breaks comparisons. Quoting the entire expression prevents this.
-* The `success` and `failed` tests are semantic, self-documenting, and work consistently across modules. They abstract the implementation detail of return codes, making conditionals more readable and resilient to future changes in how modules report status.
-* Facts are external inputs. Normalizing categorical values only at the comparison boundary gives conditional logic a canonical interface and prevents capitalization differences from changing control flow, while preserving the original fact value for display, file names, or other case-sensitive uses.
-
+- Python and Jinja2 provide implicit "truthy" evaluation of most non-empty,
+  non-boolean values. While sometimes convenient, this often masks serious logic
+  errors.
+- Ansible 12 enforces boolean results for conditionals by default. Non-boolean
+  results now
+  [raise an error (like `Conditional result (<True|False>) was derived from value of type '<Type>'`)](https://docs.ansible.com/ansible/latest/porting_guides/porting_guide_12.html#broken-conditionals)
+  instead of being silently evaluated as truthy.
+- Writing explicit boolean predicates makes the intent clear and prevents subtle
+  bugs that are hard to diagnose.
+- YAML interprets unquoted strings containing `:` as mappings. Since non-empty
+  mappings are truthy, this silently breaks comparisons. Quoting the entire
+  expression prevents this.
+- The `success` and `failed` tests are semantic, self-documenting, and work
+  consistently across modules. They abstract the implementation detail of return
+  codes, making conditionals more readable and resilient to future changes in
+  how modules report status.
+- Facts are external inputs. Normalizing categorical values only at the
+  comparison boundary gives conditional logic a canonical interface and prevents
+  capitalization differences from changing control flow, while preserving the
+  original fact value for display, file names, or other case-sensitive uses.
 
 
 ### Formatting<a id="conditionals-formatting"></a>
@@ -1003,11 +1107,13 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
 
 **You MUST:**
 
-* Always use the list format for `when`, `changed_when`, and `failed_when` conditions, even for single conditions.
-* Place the pipe operator (`|`) at the beginning of continuation lines for long piped expressions.
-* Break lines after unparenthesized `or` operators.
-* Avoid chaining unparenthesized `and` operators; use separate list entries instead.
-
+- Always use the list format for `when`, `changed_when`, and `failed_when`
+  conditions, even for single conditions.
+- Place the pipe operator (`|`) at the beginning of continuation lines for long
+  piped expressions.
+- Break lines after unparenthesized `or` operators.
+- Avoid chaining unparenthesized `and` operators; use separate list entries
+  instead.
 
 **Good examples:**
 
@@ -1055,7 +1161,6 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
     - condition_c
 ```
 
-
 **Bad examples:**
 
 ```yaml
@@ -1083,13 +1188,15 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
        map(attribute='versions') | ansible.builtin.flatten | ansible.builtin.list | ansible.builtin.length) < 1
 ```
 
-
 **Reasoning:**
 
-* Using list format for all conditions ensures cleaner diffs when adding or removing conditions, making changes more readable and easier to review.
-* Placing the pipe operator at the beginning of continuation lines improves readability by making the data flow through filters immediately visible.
-* Breaking lines after `or` operators and using separate list entries for `and` conditions creates a consistent, scannable structure that reflects the logical grouping.
-
+- Using list format for all conditions ensures cleaner diffs when adding or
+  removing conditions, making changes more readable and easier to review.
+- Placing the pipe operator at the beginning of continuation lines improves
+  readability by making the data flow through filters immediately visible.
+- Breaking lines after `or` operators and using separate list entries for `and`
+  conditions creates a consistent, scannable structure that reflects the logical
+  grouping.
 
 
 ## Loops<a id="loops"></a>
@@ -1098,14 +1205,15 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
 
 **You MUST:**
 
-* Use `loop` for iterating over simple lists and variables.
-* Migrate `with_*` constructs to loop if listed at "[Migrating from with_X to loop](https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_loops.html#migrating-from-with-x-to-loop)", especially `with_items` and `with_list`.
-
+- Use `loop` for iterating over simple lists and variables.
+- Migrate `with_*` constructs to loop if listed at
+  "[Migrating from with_X to loop](https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_loops.html#migrating-from-with-x-to-loop)",
+  especially `with_items` and `with_list`.
 
 **You SHOULD NOT:**
 
-* Convert `with_*` to `loop` statements that requires using `lookup()` within a `loop` to use the loop keyword.
-
+- Convert `with_*` to `loop` statements that requires using `lookup()` within a
+  `loop` to use the loop keyword.
 
 **Good examples:**
 
@@ -1137,7 +1245,6 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
   loop: "{{ lookup('fileglob', 'foo/*.yml', wantlist=True) | sort }}"
 ```
 
-
 **Bad examples:**
 
 ```yaml
@@ -1148,14 +1255,13 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
   loop: "{{ lookup('fileglob', '../tasks/cleanup/*.yml', wantlist=True) }}"
 ```
 
-
 **Reasoning:**
 
-* [Ansible documentation: Comparing loops](https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_loops.html#comparing-loops)
-* The Ansible team has not deprecated `with_<lookup>` in general. The syntax remains valid despite
+- [Ansible documentation: Comparing loops](https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_loops.html#comparing-loops)
+- The Ansible team has not deprecated `with_<lookup>` in general. The syntax
+  remains valid despite
   [earlier](https://github.com/ansible/ansible/issues/51153#issuecomment-456219258)
   [discussions](https://github.com/ansible/ansible-lint/issues/2204#issue-1266269947).
-
 
 
 ### Loop variables in role task files<a id="role-loop-variables"></a>
@@ -1164,12 +1270,16 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
 
 **You MUST:**
 
-* Set `loop_control.loop_var` explicitly for every `loop` or `with_*` in a role's task files.
-* Use a private name built from the role's public variable prefix and the loop's purpose:
-  `__<public-variable-prefix><purpose>_item`. The public variable prefix includes its trailing underscore.
-  For example, use `__role_collection_package_item` for a package loop in a role whose public variables start with `role_collection_`. A generic dispatch loop in `tasks/main.yml` can use `__role_collection_loop_item`.
-* Use different purpose names for nested loops, including loops in task files called by a looping `include_tasks` task.
-
+- Set `loop_control.loop_var` explicitly for every `loop` or `with_*` in a
+  role's task files.
+- Use a private name built from the role's public variable prefix and the loop's
+  purpose: `__<public-variable-prefix><purpose>_item`. The public variable
+  prefix includes its trailing underscore. For example, use
+  `__role_collection_package_item` for a package loop in a role whose public
+  variables start with `role_collection_`. A generic dispatch loop in
+  `tasks/main.yml` can use `__role_collection_loop_item`.
+- Use different purpose names for nested loops, including loops in task files
+  called by a looping `include_tasks` task.
 
 **Good examples:**
 
@@ -1184,7 +1294,6 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
     loop_var: "__role_collection_package_item"
 ```
 
-
 **Bad examples:**
 
 ```yaml
@@ -1196,38 +1305,46 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
   loop: "{{ role_collection_packages }}"
 ```
 
-
 **Reasoning:**
 
-* Consumers can run `include_role` in a loop and pass role parameters templated from that loop's `item`. Ansible evaluates these parameters when the role accesses them. A role task that also loops over `item` replaces the consumer's value while the parameter is evaluated.
-* This collision can silently produce an empty or incorrect value when the parameter uses `default(...)`. The role may then change or remove the wrong data. An explicit, namespaced loop variable prevents the role from rebinding `item`.
-* Purpose-specific names also prevent collisions between [nested loops](https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_loops.html#nested-loops).
-
+- Consumers can run `include_role` in a loop and pass role parameters templated
+  from that loop's `item`. Ansible evaluates these parameters when the role
+  accesses them. A role task that also loops over `item` replaces the consumer's
+  value while the parameter is evaluated.
+- This collision can silently produce an empty or incorrect value when the
+  parameter uses `default(...)`. The role may then change or remove the wrong
+  data. An explicit, namespaced loop variable prevents the role from rebinding
+  `item`.
+- Purpose-specific names also prevent collisions between
+  [nested loops](https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_loops.html#nested-loops).
 
 
 ## Tasks and play declaration<a id="tasks-plays"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-
 **You MUST:**
 
-* Use `name:` as the first key for plays, tasks and handlers.
-* Begin all names with an uppercase letter.
-* Use the `block`, `rescue` and `always` as the last key on tasks.
-
+- Use `name:` as the first key for plays, tasks and handlers.
+- Begin all names with an uppercase letter.
+- Use the `block`, `rescue` and `always` as the last key on tasks.
 
 **You SHOULD:**
 
-* Arrange keys in tasks to follow this general order (omit any keys that are not needed):
-  1. Attributes defining what the task is, where to run it and what its parameters are:
-     - `name`: Always first, providing a clear description of what the task does.
+- Arrange keys in tasks to follow this general order (omit any keys that are not
+  needed):
+  1. Attributes defining what the task is, where to run it and what its
+     parameters are:
+     - `name`: Always first, providing a clear description of what the task
+       does.
      - `delegate_to`
      - `become`
      - `module`: The actual action.
-       * Place primary, mandatory module parameters (e.g., `name`, `state`, `path`) directly under the module name for clarity.
-       * Place `owner`, `group` and `mode` together (in this order).
-       * Arrange all other, optional module parameters in alphabetical order, unless doing so negatively impacts readability or logic.
+       - Place primary, mandatory module parameters (e.g., `name`, `state`,
+         `path`) directly under the module name for clarity.
+       - Place `owner`, `group` and `mode` together (in this order).
+       - Arrange all other, optional module parameters in alphabetical order,
+         unless doing so negatively impacts readability or logic.
      - `args`: If using the args syntax for complex module parameters.
      - `vars`: If using additional or inline variables to the module.
      - `environment`: If setting environment variables for an action.
@@ -1248,16 +1365,20 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
      - `notify`
      - `listen`
   6. `tags`
-* Always use a list format for `when`, `changed_when`, and `failed_when`, even if there is only one condition.
-* If it is necessary to make task names dynamic, do so by appending `{{ variables }}` at the end of the string.
-* The `include_*` and `import_*` statements are not treated differently from other tasks/plays. This clarification is included because many other style guides impose separate rules for these.
-
+- Always use a list format for `when`, `changed_when`, and `failed_when`, even
+  if there is only one condition.
+- If it is necessary to make task names dynamic, do so by appending
+  `{{ variables }}` at the end of the string.
+- The `include_*` and `import_*` statements are not treated differently from
+  other tasks/plays. This clarification is included because many other style
+  guides impose separate rules for these.
 
 **You MUST NOT:**
 
-* Use variables (wrapped in Jinja2 templates) in play names (the `name` attribute of a playbook), as they do not expand properly.
-* Use loop variables (e.g., the default `item`) in task names within a loop, as they also do not expand properly.
-
+- Use variables (wrapped in Jinja2 templates) in play names (the `name`
+  attribute of a playbook), as they do not expand properly.
+- Use loop variables (e.g., the default `item`) in task names within a loop, as
+  they also do not expand properly.
 
 **Good examples:**
 
@@ -1348,7 +1469,6 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
       failed_when: false
 ```
 
-
 **Bad examples:**
 
 ```yaml
@@ -1387,16 +1507,29 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
       device: "{{ device_name }}"
 ```
 
-
 **Reasoning:**
 
-* Well-defined parameter rules are helping to create consistent code. Version control diffs are cleaner and more meaningful, as only new or changed parameters are highlighted.
-* The proposed ordering creates a logical flow: "what the task is and where to run it" → "when to run it" → "how to process results" → "what to do afterwards". `register:` is placed after loops since the registered variable structure depends on whether loops are used.
-* Keep in mind that using variables in task names can make it harder for users to correlate logs with the corresponding code when searching for an actual variable value (e.g., `/dev/foo gets managed as device` instead of `{{ device_name }} gets managed as device`). Placing the variable part at the end of a task name improves log readability and makes it easier to search for the corresponding code.
-* The reasoning of the [Ansible Lint rule: `key-order`](https://ansible.readthedocs.io/projects/lint/rules/key-order/#correct-code).
-* Further discussion:
-  * [Ansible Lint: ansible lint should check order of tasks attributes for when and name #578](https://github.com/ansible/ansible-lint/issues/578). Many people at Red Hat place `when:` immediately after `name:`. This is a subjective choice and we think our approach of grouping it with other control attributes is logical and the `name:` as well as the module describe what is done *together* as a unit.
-
+- Well-defined parameter rules are helping to create consistent code. Version
+  control diffs are cleaner and more meaningful, as only new or changed
+  parameters are highlighted.
+- The proposed ordering creates a logical flow: "what the task is and where to
+  run it" → "when to run it" → "how to process results" → "what to do
+  afterwards". `register:` is placed after loops since the registered variable
+  structure depends on whether loops are used.
+- Keep in mind that using variables in task names can make it harder for users
+  to correlate logs with the corresponding code when searching for an actual
+  variable value (e.g., `/dev/foo gets managed as device` instead of
+  `{{ device_name }} gets managed as device`). Placing the variable part at the
+  end of a task name improves log readability and makes it easier to search for
+  the corresponding code.
+- The reasoning of the
+  [Ansible Lint rule: `key-order`](https://ansible.readthedocs.io/projects/lint/rules/key-order/#correct-code).
+- Further discussion:
+  - [Ansible Lint: ansible lint should check order of tasks attributes for when and name #578](https://github.com/ansible/ansible-lint/issues/578).
+    Many people at Red Hat place `when:` immediately after `name:`. This is a
+    subjective choice and we think our approach of grouping it with other
+    control attributes is logical and the `name:` as well as the module describe
+    what is done *together* as a unit.
 
 
 ### Handlers<a id="handlers"></a>
@@ -1405,15 +1538,14 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
 
 **You MUST:**
 
-* Use `listen` to trigger handlers instead of relying on the handler's `name`.
-* Always use list notation for `listen` values.
-* Use all lowercase for `listen` values.
-
+- Use `listen` to trigger handlers instead of relying on the handler's `name`.
+- Always use list notation for `listen` values.
+- Use all lowercase for `listen` values.
 
 **You SHOULD:**
 
-* When refactoring existing code that uses different notation, add the old value as an alias with a comment for backwards compatibility.
-
+- When refactoring existing code that uses different notation, add the old value
+  as an alias with a comment for backwards compatibility.
 
 **Good examples:**
 
@@ -1454,7 +1586,6 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
     - "reload nginx"
 ```
 
-
 **Bad examples:**
 
 ```yaml
@@ -1491,14 +1622,18 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
     - "Restart Nginx"  # should be all lowercase
 ```
 
-
 **Reasoning:**
 
-* Handler names must be unique within a play, while multiple handlers can share the same `listen` value. This allows one notification to trigger multiple handlers.
-* Using `listen` decouples the trigger mechanism from the display name, making maintenance easier and allowing names to follow their own readability rules without affecting notification logic.
-* List notation signals that multiple trigger aliases are supported and maintains consistency with other list-based attributes.
-* Lowercase values prevent case-sensitivity issues and ensure consistent matching across the codebase.
-
+- Handler names must be unique within a play, while multiple handlers can share
+  the same `listen` value. This allows one notification to trigger multiple
+  handlers.
+- Using `listen` decouples the trigger mechanism from the display name, making
+  maintenance easier and allowing names to follow their own readability rules
+  without affecting notification logic.
+- List notation signals that multiple trigger aliases are supported and
+  maintains consistency with other list-based attributes.
+- Lowercase values prevent case-sensitivity issues and ensure consistent
+  matching across the codebase.
 
 
 ### Roles<a id="roles"></a>
@@ -1507,8 +1642,9 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
 
 **You MUST:**
 
-* Use [`meta/argument_specs.yml`](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_reuse_roles.html#specification-format) to describe role parameters.
-
+- Use
+  [`meta/argument_specs.yml`](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_reuse_roles.html#specification-format)
+  to describe role parameters.
 
 **Good examples:**
 
@@ -1544,44 +1680,58 @@ argument_specs:
         description: "Whether to enable the example service."
 ```
 
-
 **Reasoning:**
 
-* The `argument_specs.yml` file documents role parameters, including types, defaults, and descriptions.
-* Tools such as [DocSmith for Ansible](https://github.com/foundata/ansible-docsmith) can generate documentation from it.
-* Ansible uses this specification to validate role arguments at runtime, catching configuration errors early.
-* It is the machine-readable source for role parameter documentation and stays with the role implementation.
-
+- The `argument_specs.yml` file documents role parameters, including types,
+  defaults, and descriptions.
+- Tools such as
+  [DocSmith for Ansible](https://github.com/foundata/ansible-docsmith) can
+  generate documentation from it.
+- Ansible uses this specification to validate role arguments at runtime,
+  catching configuration errors early.
+- It is the machine-readable source for role parameter documentation and stays
+  with the role implementation.
 
 
 ## External commands<a id="external-commands"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-This section covers the use of [`ansible.builtin.command`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/command_module.html) and [`ansible.builtin.shell`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/shell_module.html) modules.
-
+This section covers the use of
+[`ansible.builtin.command`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/command_module.html)
+and
+[`ansible.builtin.shell`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/shell_module.html)
+modules.
 
 **You MUST:**
 
-* Use dedicated Ansible modules instead of shell commands when available (e.g., `ansible.builtin.apt` instead of `apt-get`, `ansible.builtin.file` instead of `mkdir`).
-* Prefer `ansible.builtin.command` over `ansible.builtin.shell` unless shell features (pipes, redirects, globbing, environment variable expansion) are required.
-* When using the `cmd` attribute with variables, apply the [`quote` filter](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/quote_filter.html) to prevent command injection: `{{ myvar | ansible.builtin.quote }}`
-* Include a comment explaining why `command` or `shell` is necessary instead of a dedicated module (see [Comments](#comments)). Example:
-  ```
+- Use dedicated Ansible modules instead of shell commands when available (e.g.,
+  `ansible.builtin.apt` instead of `apt-get`, `ansible.builtin.file` instead of
+  `mkdir`).
+- Prefer `ansible.builtin.command` over `ansible.builtin.shell` unless shell
+  features (pipes, redirects, globbing, environment variable expansion) are
+  required.
+- When using the `cmd` attribute with variables, apply the
+  [`quote` filter](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/quote_filter.html)
+  to prevent command injection: `{{ myvar | ansible.builtin.quote }}`
+- Include a comment explaining why `command` or `shell` is necessary instead of
+  a dedicated module (see [Comments](#comments)). Example:
+
+  ```text
   # The command or shell module is used intentionally:
   # Ansible provides no dedicated module to perform this operation.
   ```
 
-
 **You SHOULD:**
 
-* Use the `argv` attribute (list) instead of `cmd` for `ansible.builtin.command`:
-  * Avoids quoting issues entirely.
-  * Allows comments above individual parameters.
-  * Easier to build command arguments conditionally from variables.
-* Use `creates` or `removes` parameters to achieve idempotency when the command creates or removes files.
-* Set `changed_when` and/or `failed_when` to properly reflect command outcomes.
-
+- Use the `argv` attribute (list) instead of `cmd` for
+  `ansible.builtin.command`:
+  - Avoids quoting issues entirely.
+  - Allows comments above individual parameters.
+  - Easier to build command arguments conditionally from variables.
+- Use `creates` or `removes` parameters to achieve idempotency when the command
+  creates or removes files.
+- Set `changed_when` and/or `failed_when` to properly reflect command outcomes.
 
 **Good examples:**
 
@@ -1633,7 +1783,6 @@ This section covers the use of [`ansible.builtin.command`](https://docs.ansible.
     creates: "/var/lib/myapp/.db_initialized"
 ```
 
-
 **Bad examples:**
 
 ```yaml
@@ -1656,50 +1805,76 @@ This section covers the use of [`ansible.builtin.command`](https://docs.ansible.
     # quoting is error-prone, use argv instead
 ```
 
-
 **Reasoning:**
 
-* Dedicated Ansible modules are idempotent by design, provide better error handling, and integrate properly with Ansible's change detection and check mode.
-* [`ansible.builtin.command`](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/command_module.html) executes commands directly without a shell, avoiding shell injection vulnerabilities and unexpected shell interpretation.
-* [`ansible.builtin.shell`](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/shell_module.html) spawns a shell process, which is necessary for shell features but introduces security risks if variables are not properly quoted.
-* The `argv` attribute passes arguments directly to the executable without shell parsing, eliminating all quoting issues and making the command structure explicit.
-* The [`quote` filter](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/quote_filter.html) escapes special characters to prevent command injection when variables contain user-controlled or untrusted data.
-
+- Dedicated Ansible modules are idempotent by design, provide better error
+  handling, and integrate properly with Ansible's change detection and check
+  mode.
+- [`ansible.builtin.command`](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/command_module.html)
+  executes commands directly without a shell, avoiding shell injection
+  vulnerabilities and unexpected shell interpretation.
+- [`ansible.builtin.shell`](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/shell_module.html)
+  spawns a shell process, which is necessary for shell features but introduces
+  security risks if variables are not properly quoted.
+- The `argv` attribute passes arguments directly to the executable without shell
+  parsing, eliminating all quoting issues and making the command structure
+  explicit.
+- The
+  [`quote` filter](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/quote_filter.html)
+  escapes special characters to prevent command injection when variables contain
+  user-controlled or untrusted data.
 
 
 ### Scripts<a id="scripts"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-This subsection covers shell scripts used with Ansible, including inline scripts embedded in `ansible.builtin.shell` tasks and standalone scripts executed via `ansible.builtin.script`.
-
+This subsection covers shell scripts used with Ansible, including inline scripts
+embedded in `ansible.builtin.shell` tasks and standalone scripts executed via
+`ansible.builtin.script`.
 
 **You MUST:**
 
-* Write POSIX-compliant scripts (avoid Bashisms) for maximum portability, even when executing with Bash.
-* Use `executable: "/bin/bash"` with `ansible.builtin.shell` since there is no way to define a shebang for inline scripts.
-* Use block scalar style (`|`) for multi-line scripts and the chomping indicator (`|-`) when trailing newlines matter.
-* Follow applicable parts of the [Shell scripting style guide](./shell-scripting-style-guide.md)
-* Use `changed_when` and/or `failed_when` to properly reflect script outcomes.
-* Start *inline* scripts with:
+- Write POSIX-compliant scripts (avoid Bashisms) for maximum portability, even
+  when executing with Bash.
+- Use `executable: "/bin/bash"` with `ansible.builtin.shell` since there is no
+  way to define a shebang for inline scripts.
+- Use block scalar style (`|`) for multi-line scripts and the chomping indicator
+  (`|-`) when trailing newlines matter.
+- Follow applicable parts of the
+  [Shell scripting style guide](./shell-scripting-style-guide.md)
+- Use `changed_when` and/or `failed_when` to properly reflect script outcomes.
+- Start *inline* scripts with:
+
   ```sh
   set -u # no uninitialized vars
   ```
 
-
 **You SHOULD:**
 
-* Keep inline scripts short (roughly 50 lines maximum).
-* Start *inline* scripts with:
+- Keep inline scripts short (roughly 50 lines maximum).
+- Start *inline* scripts with:
+
   ```sh
   set -u              # no uninitialized vars
   set -e -o pipefail  # exit on (pipeline) errors
   ```
-  This deviates from the usual [Shell scripting style guide](./shell-scripting-style-guide.md) for *stand alone* script recommendations (where `set -e` is prohibited) but simplifies inline scripts by providing automatic error handling without complex failure logic.
-* For complex logic, use the [`ansible.builtin.script`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/script_module.html) module, which allows maintaining the script as a standalone file that can be linted, tested, and version-controlled separately.
-* Lint and format scripts as standalone files before transferring them into an Ansible task.
-* Prefer [`ansible.builtin.raw`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/raw_module.html) over `ansible.builtin.shell` when no Python is available on the target (e.g., during bootstrapping).
 
+  This deviates from the usual
+  [Shell scripting style guide](./shell-scripting-style-guide.md) for
+  *stand alone* script recommendations (where `set -e` is prohibited) but
+  simplifies inline scripts by providing automatic error handling without
+  complex failure logic.
+- For complex logic, use the
+  [`ansible.builtin.script`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/script_module.html)
+  module, which allows maintaining the script as a standalone file that can be
+  linted, tested, and version-controlled separately.
+- Lint and format scripts as standalone files before transferring them into an
+  Ansible task.
+- Prefer
+  [`ansible.builtin.raw`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/raw_module.html)
+  over `ansible.builtin.shell` when no Python is available on the target (e.g.,
+  during bootstrapping).
 
 **Good examples:**
 
@@ -1750,7 +1925,6 @@ fi
 printf 'Changes applied\n'
 ```
 
-
 **Bad examples:**
 
 ```yaml
@@ -1774,15 +1948,27 @@ printf 'Changes applied\n'
       # ... many more lines ...
 ```
 
-
 **Reasoning:**
 
-* It is generally preferable to write Ansible modules rather than using scripts. Modules provide better integration with Ansible's features (check mode, diff mode, proper return values, documentation). However, scripting is an acceptable approach when you are not yet capable of writing modules (yet). It is better to implement needed functionality via high-quality scripts than to not implement it at all.
-* A well-parameterized, linted standalone script (used with `ansible.builtin.script`) is a better intermediate step towards a fully-featured Ansible module than inline scripting. It encourages proper structure, parameters, testability, and can later be converted to a module.
-* POSIX-compliant scripts maximize portability across different systems and shells. Even when executing with Bash, avoiding Bashisms ensures scripts can be reused (partially) in other contexts.
-* The `ansible.builtin.script` module transfers a local script to the remote host, executes it, and removes it afterward. This allows complex scripts to be maintained as proper files with syntax highlighting, linting (shellcheck), testing, and version control benefits.
-* Block scalar style (`|`) preserves line breaks and makes scripts readable within YAML.
-
+- It is generally preferable to write Ansible modules rather than using scripts.
+  Modules provide better integration with Ansible's features (check mode, diff
+  mode, proper return values, documentation). However, scripting is an
+  acceptable approach when you are not yet capable of writing modules (yet). It
+  is better to implement needed functionality via high-quality scripts than to
+  not implement it at all.
+- A well-parameterized, linted standalone script (used with
+  `ansible.builtin.script`) is a better intermediate step towards a
+  fully-featured Ansible module than inline scripting. It encourages proper
+  structure, parameters, testability, and can later be converted to a module.
+- POSIX-compliant scripts maximize portability across different systems and
+  shells. Even when executing with Bash, avoiding Bashisms ensures scripts can
+  be reused (partially) in other contexts.
+- The `ansible.builtin.script` module transfers a local script to the remote
+  host, executes it, and removes it afterward. This allows complex scripts to be
+  maintained as proper files with syntax highlighting, linting (shellcheck),
+  testing, and version control benefits.
+- Block scalar style (`|`) preserves line breaks and makes scripts readable
+  within YAML.
 
 
 ## Comments<a id="comments"></a>
@@ -1791,53 +1977,85 @@ printf 'Changes applied\n'
 
 **You MUST:**
 
-* Provide explanations for role and collection variables using comments in `/defaults` or `/vars` where they are defined.
-* Whenever [`ansible.builtin.command`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/command_module.html) or [`ansible.builtin.shell`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/shell_module.html) modules are used, include a comment with a justification why they are needed to aid future maintenance.
-
+- Provide explanations for role and collection variables using comments in
+  `/defaults` or `/vars` where they are defined.
+- Whenever
+  [`ansible.builtin.command`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/command_module.html)
+  or
+  [`ansible.builtin.shell`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/shell_module.html)
+  modules are used, include a comment with a justification why they are needed
+  to aid future maintenance.
 
 **You SHOULD:**
 
-* Use descriptive enough `name` values to tell what a task does instead of comments whenever possible.
-* Keep comments concise: explain only non-obvious intent, constraints, or workarounds; do not narrate or repeat what the task, module arguments, or surrounding code already show. When both a problem and its workaround require explanation, use at most one short paragraph for each.
-* Keep multi-line comments below 80 characters per line (excluding indentation).
-
+- Use descriptive enough `name` values to tell what a task does instead of
+  comments whenever possible.
+- Keep comments concise: explain only non-obvious intent, constraints, or
+  workarounds; do not narrate or repeat what the task, module arguments, or
+  surrounding code already show. When both a problem and its workaround require
+  explanation, use at most one short paragraph for each.
+- Keep multi-line comments below 80 characters per line (excluding indentation).
 
 **Reasoning:**
 
-* Descriptive `name` values appear in Ansible's output; comments do not.
-* Variables documented in the `/defaults` or `/vars` directories do not require explanation within the playbooks themselves.
-* Concise comments preserve context that the code cannot express. Narrating visible behavior adds noise and is more likely to become outdated when the implementation changes.
-
+- Descriptive `name` values appear in Ansible's output; comments do not.
+- Variables documented in the `/defaults` or `/vars` directories do not require
+  explanation within the playbooks themselves.
+- Concise comments preserve context that the code cannot express. Narrating
+  visible behavior adds noise and is more likely to become outdated when the
+  implementation changes.
 
 
 ## Linting<a id="linting"></a>
 
 **You MUST:**
 
-* Check your playbooks, collections, roles, and other applicable files with [`ansible-lint --profile production --strict --skip-list use-loop`](https://docs.ansible.com/ansible-lint/).
-
+- Check your playbooks, collections, roles, and other applicable files with
+  [`ansible-lint --profile production --strict --skip-list use-loop`](https://docs.ansible.com/ansible-lint/).
 
 **Reasoning:**
 
-* Ansible Lint is an official project by the Ansible Core Team and is widely adopted. It can be run offline and provides a command-line tool for linting playbooks, helping to identify areas for potential improvement. Following its recommendations promotes consistent, high-quality code.
-* Ansible Lint automatically [runs `ansible-playbook --syntax-check`](https://ansible.readthedocs.io/projects/lint/rules/syntax-check/).
-* The `with_<lookup>` syntax is not deprecated and remains valid. See the [Loops](#loops) section for when to use `with_*` vs `loop`. The ansible-lint behaviour is [still discussed](https://github.com/ansible/ansible-lint/issues/2204).
+- Ansible Lint is an official project by the Ansible Core Team and is widely
+  adopted. It can be run offline and provides a command-line tool for linting
+  playbooks, helping to identify areas for potential improvement. Following its
+  recommendations promotes consistent, high-quality code.
+- Ansible Lint automatically
+  [runs `ansible-playbook --syntax-check`](https://ansible.readthedocs.io/projects/lint/rules/syntax-check/).
+- The `with_<lookup>` syntax is not deprecated and remains valid. See the
+  [Loops](#loops) section for when to use `with_*` vs `loop`. The ansible-lint
+  behaviour is
+  [still discussed](https://github.com/ansible/ansible-lint/issues/2204).
 
 
 ## Miscellaneous<a id="misc"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-* Ensure that all tasks are idempotent.
-* Avoid overriding role defaults, variables, or input parameters using `set_fact`. Instead, use a distinct variable name.
-* Do not use `meta: end_play`, as it terminates the entire play rather than just the tasks for a specific host (when working with multiple hosts in the inventory). If absolutely necessary, consider using `meta: end_host` instead.
-* Limit the use of the [`ansible.builtin.copy`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/copy_module.html) module to scenarios such as copying remote files, static files, or uploading binary blobs. For most file operations, prefer using [`ansible.builtin.template`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/template_module.html). Even if the file currently does not require templating, this preemptively simplifies future updates, especially when templating functionality needs to be added later.
-* When using the [`ansible.builtin.template`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/template_module.html) module, append `.j2` to the template file name for clarity and convention.
-* [Use tags with caution](https://redhat-cop.github.io/automation-good-practices/#_use_tags_cautiously_either_for_roles_or_for_complete_purposes).
-* [Use the verbosity parameter with debug statements](https://redhat-cop.github.io/automation-good-practices/#_use_the_verbosity_parameter_with_debug_statements).
-* Use Jinja templates for generating text and semi-structured data, not for creating structured data.
-* Specify file permissions using symbolic notation with the octal equivalent as a trailing comment for clarity. Example: `mode: "u=rw,g=r,o=r" # 0644`. This improves readability by showing intent (who can do what) while preserving the familiar numeric representation for quick reference.
-
+- Ensure that all tasks are idempotent.
+- Avoid overriding role defaults, variables, or input parameters using
+  `set_fact`. Instead, use a distinct variable name.
+- Do not use `meta: end_play`, as it terminates the entire play rather than just
+  the tasks for a specific host (when working with multiple hosts in the
+  inventory). If absolutely necessary, consider using `meta: end_host` instead.
+- Limit the use of the
+  [`ansible.builtin.copy`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/copy_module.html)
+  module to scenarios such as copying remote files, static files, or uploading
+  binary blobs. For most file operations, prefer using
+  [`ansible.builtin.template`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/template_module.html).
+  Even if the file currently does not require templating, this preemptively
+  simplifies future updates, especially when templating functionality needs to
+  be added later.
+- When using the
+  [`ansible.builtin.template`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/template_module.html)
+  module, append `.j2` to the template file name for clarity and convention.
+- [Use tags with caution](https://redhat-cop.github.io/automation-good-practices/#_use_tags_cautiously_either_for_roles_or_for_complete_purposes).
+- [Use the verbosity parameter with debug statements](https://redhat-cop.github.io/automation-good-practices/#_use_the_verbosity_parameter_with_debug_statements).
+- Use Jinja templates for generating text and semi-structured data, not for
+  creating structured data.
+- Specify file permissions using symbolic notation with the octal equivalent as
+  a trailing comment for clarity. Example: `mode: "u=rw,g=r,o=r" # 0644`. This
+  improves readability by showing intent (who can do what) while preserving the
+  familiar numeric representation for quick reference.
 
 
 ## Linguistic guidelines<a id="linguistic-guidelines"></a>
@@ -1846,31 +2064,37 @@ printf 'Changes applied\n'
 
 **You SHOULD:**
 
-* Follow the official [Ansible Developers Style Guide](https://docs.ansible.com/ansible/latest/dev_guide/style_guide/index.html).
-* Follow [Spelling - Word Usage - Common Words and Phrases to Use and Avoid](https://docs.ansible.com/ansible/latest/dev_guide/style_guide/spelling_word_choice.html) recommendations.
+- Follow the official
+  [Ansible Developers Style Guide](https://docs.ansible.com/ansible/latest/dev_guide/style_guide/index.html).
+- Follow
+  [Spelling - Word Usage - Common Words and Phrases to Use and Avoid](https://docs.ansible.com/ansible/latest/dev_guide/style_guide/spelling_word_choice.html)
+  recommendations.
 
 
 Excerpt of the **most important rules**:
 
-* Headers should be written in sentence case. For example, this section's title is `Header case`, not `Header Case` or `HEADER CASE`.
-* [Stylistic cheat-sheet](https://docs.ansible.com/ansible/latest/dev_guide/style_guide/index.html#stylistic-cheat-sheet):
+- Headers should be written in sentence case. For example, this section's title
+  is `Header case`, not `Header Case` or `HEADER CASE`.
+- [Stylistic cheat-sheet](https://docs.ansible.com/ansible/latest/dev_guide/style_guide/index.html#stylistic-cheat-sheet):
 
-  | Rule                  | Good Example            | Bad Example                |
-  |-----------------------|-------------------------|----------------------------|
-  | Use active voice      | You can run a task by   | A task can be run by       |
+  |         Rule          |      Good Example       | Bad Example |
+  | --------------------- | ----------------------- | ----------- |
+  | Use active voice      | You can run a task by   | A task can be run by |
   | Use the present tense | This command creates a  | This command will create a |
-  | Use standard English  | Return to this page     | Hop back to this page      |
-  | Use American English  | The color of the output | The colour of the output   |
-
+  | Use standard English  | Return to this page     | Hop back to this page |
+  | Use American English  | The color of the output | The colour of the output |
 
 **Reasoning:**
 
-The official rules are based on experience of technical writers. As these are also rules for Ansible developers, they are influencing the whole community. It makes sense to apply them in-house to have a consistent user experience.
-
+The official rules are based on experience of technical writers. As these are
+also rules for Ansible developers, they are influencing the whole community. It
+makes sense to apply them in-house to have a consistent user experience.
 
 
 ## Author information
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-This guide was written by [foundata](https://foundata.com/) to produce robust, readable and consistent code. It was inspired by [Whitecloud Analytics's Ansible styleguide](https://github.com/whitecloud/ansible-styleguide).
+This guide was written by [foundata](https://foundata.com/) to produce robust,
+readable and consistent code. It was inspired by
+[Whitecloud Analytics's Ansible styleguide](https://github.com/whitecloud/ansible-styleguide).
