@@ -88,7 +88,7 @@ Our **guides are updated continuously**, meaning:
 * There is no special versioning, neither for the documents themselves nor for the repository.
 * As Git and a repository hosting are used, permanent links to specific "versions" are still easy and possible if needed.
 
-The [OCI container image build and release guide](./oci-container-image-guide.md) is an exception to this continuous-release model. It is a versioned ruleset implemented by [ContainerWright](https://foundata.com/en/projects/containerwright), so a revised guide becomes effective only when its coordinated, compatible ContainerWright release is available. ContainerWright embeds the exact guide commit it implements and owns stable identifiers for its automated checks. Its conformance documentation maps each check to the guide's stable section anchor; the guide itself does not maintain a parallel rule-number registry.
+The [OCI container image build and release guide](./oci-container-image-guide.md) is an exception to this continuous-release model. It is a versioned ruleset implemented by [ConClear](https://foundata.com/en/projects/conclear), so a revised guide becomes effective only when its coordinated, compatible ConClear release is available. ConClear embeds the exact guide commit it implements and owns stable identifiers for its automated checks. Its conformance documentation maps each check to the guide's stable section anchor; the guide itself does not maintain a parallel rule-number registry.
 
 We believe that guides are work in progress and will probably never be finished as our understanding of each topic evolves. This fits our overall agile approach.
 

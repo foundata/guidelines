@@ -4,7 +4,7 @@ This guide defines how foundata builds and publishes Linux [OCI container images
 
 The image is the release artifact. The guide covers its Containerfile, build context, registry references, platforms, runtime contract, [software bill of materials (SBOM)](https://spdx.dev/use/specifications/), scans, provenance, signatures and verification. [Reasoning](#reasoning) explains the contested rules.
 
-[ContainerWright](#terminology) enforces automatable rules. Its conformance documentation maps each check to its guide section. Review covers the remaining rules.
+[ConClear](#terminology) enforces automatable rules. Its conformance documentation maps each check to its guide section. Review covers the remaining rules.
 
 The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119) and [RFC 8174](https://datatracker.ietf.org/doc/html/rfc8174).
 
@@ -15,7 +15,7 @@ The terms MUST, SHOULD, and other key words are used as defined in [RFC 2119](ht
 - [Terminology](#terminology)
 - [Release workflow](#release-workflow)
 - [Supported tools, syntax and platforms](#supported-tools-syntax-and-platforms)
-  - [ContainerWright version identity](#containerwright-version-identity)
+  - [ConClear version identity](#conclear-version-identity)
 - [When to create a container image](#when-to-create-a-container-image)
 - [Files and layout](#files-and-layout)
 - [Registries and image names](#registries-and-image-names)
@@ -90,14 +90,14 @@ This guide covers Linux application and service images built from Containerfiles
 - An **attestation** is signed metadata about an image, such as an SBOM or provenance statement.
 - **Release provenance**<a id="release-provenance"></a> is machine-readable evidence of how and where an image was built and which source code and dependencies were used.
 - A **release image** is an image manifest or image index that has passed the required tests and policy gates and has been published by the release process.
-- **ContainerWright** is the foundata command-line tool that implements this guide's automatable rules. Each release identifies its guide revision and maps its checks to guide sections.
-- **Repository configuration** is the version-controlled `containerwright.toml` file containing project facts and permitted exceptions. It may narrow built-in rules but cannot relax an unconditional `MUST` or `MUST NOT` or extend a built-in maximum.
+- **ConClear** is the foundata command-line tool that implements this guide's automatable rules. Each release identifies its guide revision and maps its checks to guide sections.
+- **Repository configuration** is the version-controlled `conclear.toml` file containing project facts and permitted exceptions. It may narrow built-in rules but cannot relax an unconditional `MUST` or `MUST NOT` or extend a built-in maximum.
 - A **platform qualification** is the per-image, per-platform record (`platform-qualification.json`) of observations, evidence digests and the platform verdict produced by qualification on one build worker.
 - A **release candidate** is the aggregate record (`release-candidate.json`) produced by assembly from one or more accepted platform qualifications. It identifies the exact image manifest or image index eligible for publication.
 - A **candidate reference** is a reserved, single-use tag for one publication attempt of an accepted digest. Its `-candidate.` suffix follows the release version or source revision so related tags sort together.
 - **Evidence** is the machine-readable, digest-bound output of the release process, including SBOMs, scans, qualifications and verification results. Signed registry attestations are the authoritative retained evidence.
 - A **trust root** is the approved set of public signing keys or managed-key identities against which signatures and attestations are verified. It is supplied through maintainer-controlled release configuration or protected deployment configuration, not by the repository being verified.
-- An **authorized release environment** is a maintainer-controlled Linux workstation or protected CI job. It runs ContainerWright on a reviewed commit and obtains trust configuration and signing authority outside the repository and arbitrary command-line input.
+- An **authorized release environment** is a maintainer-controlled Linux workstation or protected CI job. It runs ConClear on a reviewed commit and obtains trust configuration and signing authority outside the repository and arbitrary command-line input.
 
 
 
@@ -106,10 +106,10 @@ This guide covers Linux application and service images built from Containerfiles
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
 - Every image repository owner MUST automate the repository's release-security controls; a release assembled by hand is not a release.
-- A release MUST run through ContainerWright in an authorized release environment, using a clean release checkout of a reviewed, committed source revision.
+- A release MUST run through ConClear in an authorized release environment, using a clean release checkout of a reviewed, committed source revision.
 - The complete release workflow through promotion MUST be runnable on a secure, maintainer-controlled Linux workstation. CI MAY invoke the same workflow but MUST NOT be the only implementation of release logic.
-- For a local release, ContainerWright MUST build from an isolated checkout or detached worktree of the selected application commit. This repository contains the Containerfile, `containerwright.toml`, build scripts and dependency declarations. The ordinary worktree may be dirty, but uncommitted or untracked files MUST NOT enter the release.
-- The release workflow MUST execute these steps in order. ContainerWright orders its steps; the authorized release environment orders external steps.
+- For a local release, ConClear MUST build from an isolated checkout or detached worktree of the selected application commit. This repository contains the Containerfile, `conclear.toml`, build scripts and dependency declarations. The ordinary worktree may be dirty, but uncommitted or untracked files MUST NOT enter the release.
+- The release workflow MUST execute these steps in order. ConClear orders its steps; the authorized release environment orders external steps.
 
 The links define each step's requirements.
 
@@ -128,8 +128,8 @@ The links define each step's requirements.
 13. Retain verifiable [evidence](#release-evidence-and-retention) and arrange the organization's scheduled [rescans](#rescans-and-remediation) and [rebuilds](#rebuildability-and-reproducibility).
 
 
-- The release workflow MUST NOT sign before the image has its final registry digest. ContainerWright refuses subjects not resolved and digest-checked at the registry.
-- The release workflow MUST NOT promote by rebuilding; promotion copies or retags the already verified digest so the artifact that passed policy remains the artifact consumers receive, enforced by ContainerWright.
+- The release workflow MUST NOT sign before the image has its final registry digest. ConClear refuses subjects not resolved and digest-checked at the registry.
+- The release workflow MUST NOT promote by rebuilding; promotion copies or retags the already verified digest so the artifact that passed policy remains the artifact consumers receive, enforced by ConClear.
 
 
 
@@ -142,12 +142,12 @@ The links define each step's requirements.
 
 **You MUST:**
 
-- Make the Containerfile build successfully with a Buildah version supported by the selected ContainerWright release in rootless mode.
+- Make the Containerfile build successfully with a Buildah version supported by the selected ConClear release in rootless mode.
 - Produce OCI image format. This is Buildah and Podman's default; specify `--format oci` when a surrounding tool or configuration could change the default.
 - Test the image with Podman.
 - Build and publish `linux/amd64` images.
 - Use syntax documented by the [Containerfile manual](https://github.com/containers/common/blob/main/docs/Containerfile.5.md).
-- Use a ContainerWright release that implements the selected guide revision. At release start, it resolves and records host-tool versions and tool-image digests, rejects unsupported versions and holds the toolchain constant.
+- Use a ConClear release that implements the selected guide revision. At release start, it resolves and records host-tool versions and tool-image digests, rejects unsupported versions and holds the toolchain constant.
 
 
 **You SHOULD:**
@@ -172,7 +172,7 @@ The recommended supporting tools are:
 | Build | [Buildah](https://github.com/containers/buildah) | Rootless OCI image and image-index construction | Apache-2.0 |
 | Run and smoke-test | [Podman](https://github.com/containers/podman) | Daemonless container runtime | Apache-2.0 |
 | Inspect and copy | [Skopeo](https://github.com/containers/skopeo) | Registry inspection, digest resolution and transport | Apache-2.0 |
-| Guide enforcement | ContainerWright | Deterministic checks, qualification, publication and verification per this guide | To be released |
+| Guide enforcement | ConClear | Deterministic checks, qualification, publication and verification per this guide | To be released |
 | Dependency updates | [Renovate](https://docs.renovatebot.com/modules/manager/dockerfile/) | Reviewable tag and digest updates; the sole pin write path | AGPL-3.0-only |
 | Static linting | [Hadolint](https://github.com/hadolint/hadolint) | Containerfile correctness and maintainability checks | GPL-3.0-only |
 | Smoke and structure tests | [Testinfra](https://testinfra.readthedocs.io/) | pytest-based assertions against a running container | Apache-2.0 |
@@ -183,25 +183,25 @@ The recommended supporting tools are:
 
 
 
-### ContainerWright version identity<a id="containerwright-version-identity"></a>
+### ConClear version identity<a id="conclear-version-identity"></a>
 
-Every ContainerWright release MUST expose human-readable and machine-readable version information. It MUST include the tool version and full source revision, plus the title, repository, path and full revision of the implemented guide. These values must be embedded at build time, not read from the repository under test.
+Every ConClear release MUST expose human-readable and machine-readable version information. It MUST include the tool version and full source revision, plus the title, repository, path and full revision of the implemented guide. These values must be embedded at build time, not read from the repository under test.
 
 Human-readable output should use this form:
 
 ```text
-$ containerwright version
-ContainerWright <version> (commit <containerwright-source-revision>)
+$ conclear version
+ConClear <version> (commit <conclear-source-revision>)
 Implements the automatable rules of foundata "OCI container image build and release guide", oci-container-image-guide.md at commit <guide-revision>
 ```
 
-`containerwright version --format json` MUST expose the same identity through stable fields for release evidence:
+`conclear version --format json` MUST expose the same identity through stable fields for release evidence:
 
 ```json
 {
-  "name": "containerwright",
+  "name": "conclear",
   "version": "<version>",
-  "sourceRevision": "<containerwright-source-revision>",
+  "sourceRevision": "<conclear-source-revision>",
   "guide": {
     "title": "OCI container image build and release guide",
     "repository": "https://github.com/foundata/guidelines",
@@ -211,7 +211,7 @@ Implements the automatable rules of foundata "OCI container image build and rele
 }
 ```
 
-ContainerWright MUST NOT claim to implement rules that require human review. Its conformance documentation MUST state the release's built-in limits and defaults.
+ConClear MUST NOT claim to implement rules that require human review. Its conformance documentation MUST state the release's built-in limits and defaults.
 
 
 
@@ -281,7 +281,7 @@ The approved registry for publishing public foundata images is currently [Quay.i
 
 **You MUST:**
 
-- Publish public foundata images under an approved `quay.io` organization and repository, usually [foundata](https://quay.io/organization/foundata). ContainerWright verifies the registry and configured release repository.
+- Publish public foundata images under an approved `quay.io` organization and repository, usually [foundata](https://quay.io/organization/foundata). ConClear verifies the registry and configured release repository.
 - Use fully qualified registry and repository names for every image reference.
 - Verify the publisher and pin every external image input by digest as described in [Pinning image references](#pinning-image-references).
 - Use lowercase repository names consisting of stable product or component names.
@@ -316,15 +316,15 @@ The approved registry for publishing public foundata images is currently [Quay.i
 
 **Candidate references.** A candidate reference makes an accepted digest addressable for attestation and verification before promotion. It is not a release tag and receives no release-retention guarantee.
 
-- By default, a publication attempt MUST use a version-first candidate tag in the final repository. A versioned release uses `<version>-candidate.<run-id>.g<source-revision-short>`, for example `1.8.2-candidate.01k3z8h6v4n7c2m9p5q1r0s8tx.g7ac94d12`. An unversioned project uses `g<source-revision-short>-candidate.<run-id>`. ContainerWright generates and validates the tag.
+- By default, a publication attempt MUST use a version-first candidate tag in the final repository. A versioned release uses `<version>-candidate.<run-id>.g<source-revision-short>`, for example `1.8.2-candidate.01k3z8h6v4n7c2m9p5q1r0s8tx.g7ac94d12`. An unversioned project uses `g<source-revision-short>-candidate.<run-id>`. ConClear generates and validates the tag.
 - A candidate reference MUST NOT be intentionally reused for a different publication attempt; every attempt, including a rebuild of the same source revision, uses a new reference.
 - Candidate content and evidence MUST be safe to disclose publicly. Deleting or expiring a Quay tag may leave unreferenced manifests and blobs until garbage collection.
 - Where the registry supports tag immutability, the release workflow SHOULD enable it for candidate and release tags.
-- ContainerWright MUST set a [bounded default candidate lifetime](https://docs.redhat.com/en/documentation/red_hat_quay/3.15/html/use_red_hat_quay/image-tags-overview) and refuse promotion after expiry. Repository configuration MAY shorten but MUST NOT extend or disable it. Immediately after publication, ContainerWright MUST set the expiration through the [Quay tag API](https://docs.redhat.com/en/documentation/red_hat_quay/3/html/red_hat_quay_api_reference/tag).
+- ConClear MUST set a [bounded default candidate lifetime](https://docs.redhat.com/en/documentation/red_hat_quay/3.15/html/use_red_hat_quay/image-tags-overview) and refuse promotion after expiry. Repository configuration MAY shorten but MUST NOT extend or disable it. Immediately after publication, ConClear MUST set the expiration through the [Quay tag API](https://docs.redhat.com/en/documentation/red_hat_quay/3/html/red_hat_quay_api_reference/tag).
 - A workflow MUST NOT use a separate candidate repository unless it copies or recreates every signature and attestation in the final repository, then verifies the subjects and identities before promotion. [OCI referrers](https://docs.redhat.com/en/documentation/red_hat_quay/3.15/html/red_hat_quay_api_reference/referrers), Cosign signatures and attestations are repository-scoped; `skopeo copy --all` does not move them.
-- The run identifier MUST be a lowercase [ULID](https://github.com/ulid/spec) generated by ContainerWright as its release-run identity. It sorts by time and prevents reference collisions. Each rebuild gets a new identifier, locally or in CI.
+- The run identifier MUST be a lowercase [ULID](https://github.com/ulid/spec) generated by ConClear as its release-run identity. It sorts by time and prevents reference collisions. Each rebuild gets a new identifier, locally or in CI.
 - After writing a release or convenience tag, promotion MUST compare it with the verified digest and record the result. A missing or different tag is an operational failure.
-- After successful promotion, ContainerWright MUST delete the temporary candidate tag. A rejected or abandoned candidate MUST be deleted explicitly or left to its configured expiration. Delayed removal of unreferenced manifests and blobs by [Quay garbage collection](https://docs.redhat.com/en/documentation/red_hat_quay/3.15/html/manage_red_hat_quay/garbage-collection) is not a release failure.
+- After successful promotion, ConClear MUST delete the temporary candidate tag. A rejected or abandoned candidate MUST be deleted explicitly or left to its configured expiration. Delayed removal of unreferenced manifests and blobs by [Quay garbage collection](https://docs.redhat.com/en/documentation/red_hat_quay/3.15/html/manage_red_hat_quay/garbage-collection) is not a release failure.
 
 
 
@@ -401,9 +401,9 @@ printf '%s@%s\n' "${image}" "${digest}"
 
 **Pin intent and freshness.** Every pin declares what its tag is expected to do so that divergence between tag and digest becomes measurable.
 
-- Every pinned reference declared in `containerwright.toml` MUST declare `tag_intent = "immutable-version"` or `tag_intent = "moving-release-line"`; ContainerWright's pin gate rejects a declaration without a valid intent.
+- Every pinned reference declared in `conclear.toml` MUST declare `tag_intent = "immutable-version"` or `tag_intent = "moving-release-line"`; ConClear's pin gate rejects a declaration without a valid intent.
 - Evidence MUST record, for every pinned reference, the tag, the pinned digest, the resolved digest, the resolution time and the first-observed divergence time.
-- ContainerWright MUST define and enforce both the maximum permitted time since successful resolution and the maximum permitted divergence interval for pinned references; repository configuration MAY shorten but MUST NOT extend or disable these limits.
+- ConClear MUST define and enforce both the maximum permitted time since successful resolution and the maximum permitted divergence interval for pinned references; repository configuration MAY shorten but MUST NOT extend or disable these limits.
 - The pin gate MUST apply the effective freshness and divergence limits and emit a result; it MUST NOT edit files.
 - The pin gate MUST fail when the declared `tag_intent` set and the Containerfile's actual pinned references diverge; an undeclared pin and an orphaned declaration are both policy failures.
 - A digest change under an `immutable-version` tag MUST be reviewed by the repository owner as a supply-chain event.
@@ -415,7 +415,7 @@ printf '%s@%s\n' "${image}" "${digest}"
 
 **You MUST:**
 
-- Use reviewable automation to propose base-image digest updates; self-hosted Renovate is the sole proposal and write path for tag or digest updates, and ContainerWright checks declared pins but does not edit them.
+- Use reviewable automation to propose base-image digest updates; self-hosted Renovate is the sole proposal and write path for tag or digest updates, and ConClear checks declared pins but does not edit them.
 - Rebuild, test, scan and sign after an image input changes.
 - Review an unexpected digest change under an unchanged immutable-version tag as a supply-chain event.
 - Keep supported release branches receiving relevant base-image and toolchain updates.
@@ -427,7 +427,7 @@ printf '%s@%s\n' "${image}" "${digest}"
 
 - Configure Renovate's Containerfile manager and `docker:pinDigests` behavior for image references.
 - Group routine digest refreshes where this does not obscure a high-risk or breaking update.
-- Set a repository-specific update schedule that is shorter than the effective vulnerability remediation deadline enforced by ContainerWright.
+- Set a repository-specific update schedule that is shorter than the effective vulnerability remediation deadline enforced by ConClear.
 - Maintain one organization-level Renovate preset that repositories extend, so schedule, grouping and digest policy are decided once instead of per repository.
 - Use Renovate custom managers to update digest pins embedded outside Containerfiles, such as pinned tool digests in scripts and deployment files.
 
@@ -838,7 +838,7 @@ OCI has no health-check field, so Buildah drops `HEALTHCHECK` from OCI-format ou
 **Build and test execution modes.**
 
 - Per-platform evidence and provenance MUST record the target, host and execution architectures, plus any emulation or cross-build mechanism, for both build and test. A single `uname` value is insufficient.
-- Native build and runtime tests satisfy the platform requirement. Without native target hardware, QEMU-emulated build and runtime tests MAY qualify if ContainerWright records the emulation and the repository explains why native testing was impractical. Repository configuration MAY still require native testing.
+- Native build and runtime tests satisfy the platform requirement. Without native target hardware, QEMU-emulated build and runtime tests MAY qualify if ConClear records the emulation and the repository explains why native testing was impractical. Repository configuration MAY still require native testing.
 - KVM accelerates a guest only when the host can execute the guest architecture and does not replace QEMU for cross-architecture emulation.
 
 
@@ -883,7 +883,7 @@ Rebuildability is mandatory: the project can create a working replacement from d
 
 - Record the source revision, Containerfile, build arguments, builder identity, builder version and resolved external materials in provenance.
 - Use lock files and checksum verification provided by the application language's dependency system.
-- Record the ContainerWright version, host-tool versions and tool-image digests, and keep them unchanged until the release completes.
+- Record the ConClear version, host-tool versions and tool-image digests, and keep them unchanged until the release completes.
 - Make release builds independent of a developer's local image store, environment and uncommitted files.
 - Pull and verify required external images instead of accepting an unreviewed local substitute.
 
@@ -952,9 +952,9 @@ Trivy is the standard scanner.
 
 **A vulnerability exception MUST:**
 
-- Be stored in `containerwright.toml` on the protected, reviewed source revision and receive the required security-owner review before merge.
+- Be stored in `conclear.toml` on the protected, reviewed source revision and receive the required security-owner review before merge.
 - Identify the image, component and advisory; explain the lack of remediation; assess reachability and exposure; list compensating controls; and name the accountable owner, expiry and review trigger.
-- Be rejected by ContainerWright when it is malformed, expired or does not match the finding; ContainerWright records every applied exception in evidence.
+- Be rejected by ConClear when it is malformed, expired or does not match the finding; ConClear records every applied exception in evidence.
 
 
 Example local vulnerability gate:
@@ -986,10 +986,10 @@ These rules apply when a supported digest gains a finding above the release thre
 
 - The remediation clock MUST start when the authoritative rescan result is recorded; it MUST NOT start from an informal local scanner invocation.
 - A finding MUST be treated as fixable when the scanner reports a fixed version or other concrete remediation, unless triage shows it does not apply.
-- ContainerWright MUST define and enforce a non-disableable maximum remediation deadline; repository configuration MAY shorten but MUST NOT extend it.
+- ConClear MUST define and enforce a non-disableable maximum remediation deadline; repository configuration MAY shorten but MUST NOT extend it.
 - Within the effective remediation deadline, the project owner MUST either release a newly qualified remediated digest or obtain and record an approved exception as defined above.
-- Immutable version and release tags MUST NOT be repointed for remediation. The registry owner enforces immutability; ContainerWright refuses a different existing digest and reports observed repointing as a policy failure.
-- A convenience tag MUST advance only through ContainerWright's verified promotion, never as an unrecorded scan response.
+- Immutable version and release tags MUST NOT be repointed for remediation. The registry owner enforces immutability; ConClear refuses a different existing digest and reports observed repointing as a policy failure.
+- A convenience tag MUST advance only through ConClear's verified promotion, never as an unrecorded scan response.
 - Evidence MUST identify the affected digest and the remediating digest or the applied exception.
 - The project owner SHOULD publish an advisory when consumers are affected, identifying the affected digest and the remediating digest or exception.
 
@@ -1066,19 +1066,19 @@ test "${local_digest}" = "${remote_digest}"
 - The canonical source repository and complete source revision.
 - The Containerfile and relevant build configuration.
 - External image materials by digest.
-- The ContainerWright builder identity, release-environment mode and release-run identity, derived from embedded tool information and observed execution data.
+- The ConClear builder identity, release-environment mode and release-run identity, derived from embedded tool information and observed execution data.
 - Relevant build parameters without secret values.
 - Whether the build started locally or in CI, and its reviewed source revision.
 
 
 **Identity separation.** Three identity families appear in a release and must never be conflated or accepted from untrusted input:
 
-- The SLSA `runDetails.builder.id` identifies the ContainerWright builder implementation and comes from ContainerWright's embedded version information.
+- The SLSA `runDetails.builder.id` identifies the ConClear builder implementation and comes from ConClear's embedded version information.
 - The Cosign signing-key identity identifies the signing authority and comes from the approved public key or KMS/HSM key identity.
 - The source repository, revision and release event identify the input and invocation that caused the build.
 
-- Builder, signer and source or release-event identities MUST remain distinct and come from their authoritative sources; ContainerWright refuses to conflate them.
-- ContainerWright MUST reject these identities when supplied by repository configuration, arbitrary command-line flags or ordinary environment overrides.
+- Builder, signer and source or release-event identities MUST remain distinct and come from their authoritative sources; ConClear refuses to conflate them.
+- ConClear MUST reject these identities when supplied by repository configuration, arbitrary command-line flags or ordinary environment overrides.
 
 
 **You MUST:**
@@ -1091,7 +1091,7 @@ test "${local_digest}" = "${remote_digest}"
 
 ### Signing and verification<a id="signing-and-verification"></a>
 
-Cosign is the standard signing and attestation client. Command examples in this section use Cosign 3.x syntax; ContainerWright's supported-version matrix defines the exact accepted versions. The baseline signing model is a foundata-managed key pair. Generate the initial key material in a controlled environment:
+Cosign is the standard signing and attestation client. Command examples in this section use Cosign 3.x syntax; ConClear's supported-version matrix defines the exact accepted versions. The baseline signing model is a foundata-managed key pair. Generate the initial key material in a controlled environment:
 
 ```sh
 umask 077
@@ -1104,7 +1104,7 @@ Sign immutable digests after uploading all image content. Upload makes the subje
 
 Release signatures and signed attestations MUST use Cosign's supported default public [Sigstore transparency service](https://docs.sigstore.dev/logging/overview/) (Rekor). Signing MUST fail if log inclusion cannot be obtained, and release verification MUST verify that inclusion. Release commands MUST NOT disable transparency-log upload, use a no-log signing configuration or ignore transparency-log verification. Candidate signatures are the release signatures because promotion assigns tags to the same verified digest; the candidate and its evidence are already public by construction.
 
-ContainerWright MUST NOT sign during checks, builds, tests, evidence generation or qualification. A workflow that does not publish a candidate therefore creates no transparency-log entry.
+ConClear MUST NOT sign during checks, builds, tests, evidence generation or qualification. A workflow that does not publish a candidate therefore creates no transparency-log entry.
 
 
 **You MUST:**
@@ -1168,7 +1168,7 @@ cosign verify-attestation \
   'quay.io/foundata/example@sha256:<image-index-digest>'
 ```
 
-Manual signing experiments are outside ContainerWright and SHOULD use a disposable test key, never the release key. Keep them out of the public log. With Cosign 3.x, create a test-only [signing configuration](https://docs.sigstore.dev/cosign/system_config/custom_components/) without Fulcio, an OpenID Connect provider, Rekor or a timestamp authority. Store the signature in a Sigstore bundle and explicitly allow verification without transparency-log evidence:
+Manual signing experiments are outside ConClear and SHOULD use a disposable test key, never the release key. Keep them out of the public log. With Cosign 3.x, create a test-only [signing configuration](https://docs.sigstore.dev/cosign/system_config/custom_components/) without Fulcio, an OpenID Connect provider, Rekor or a timestamp authority. Store the signature in a Sigstore bundle and explicitly allow verification without transparency-log evidence:
 
 ```sh
 cosign signing-config create \
@@ -1205,17 +1205,17 @@ Podman, Buildah and Skopeo consumers use the `sigstoreSigned` type in `container
 
 Signed registry attestations are the authoritative release evidence: each platform SBOM, SLSA provenance for the index and platforms, and the release-verification result. Workspace and CI artifacts are convenience copies.
 
-After final verification, ContainerWright MUST generate the intermediate predicate `release-verification.json`. It is not a source comment or committed file. It MUST contain:
+After final verification, ConClear MUST generate the intermediate predicate `release-verification.json`. It is not a source comment or committed file. It MUST contain:
 
 - Released repository, digest and verdict.
-- ContainerWright version and source revision.
+- ConClear version and source revision.
 - Guide title, repository, path and revision.
-- SHA-256 digest of `containerwright.toml`.
-- Release-environment mode, host architecture and ContainerWright run identity.
+- SHA-256 digest of `conclear.toml`.
+- Release-environment mode, host architecture and ConClear run identity.
 - Signer mode and identity.
 - Digests of verified evidence.
 
-Identities MUST come from embedded ContainerWright data and observations by the authorized release environment, not caller-supplied values.
+Identities MUST come from embedded ConClear data and observations by the authorized release environment, not caller-supplied values.
 
 Release-environment mode MUST be `local` or `ci`. `local` identifies a release run on a maintainer-controlled workstation.
 
@@ -1229,21 +1229,21 @@ An illustrative predicate has this shape:
     "digest": "sha256:<release-digest>"
   },
   "ruleset": {
-    "containerwrightVersion": "<version>",
-    "containerwrightRevision": "<containerwright-source-revision>",
+    "conclearVersion": "<version>",
+    "conclearRevision": "<conclear-source-revision>",
     "guideTitle": "OCI container image build and release guide",
     "guideRepository": "https://github.com/foundata/guidelines",
     "guidePath": "oci-container-image-guide.md",
     "guideRevision": "<guide-revision>"
   },
   "repositoryConfiguration": {
-    "path": "containerwright.toml",
+    "path": "conclear.toml",
     "sha256": "<configuration-digest>"
   },
   "releaseEnvironment": {
     "mode": "local",
     "hostArchitecture": "amd64",
-    "runId": "<containerwright-generated-run-id>"
+    "runId": "<conclear-generated-run-id>"
   },
   "signer": {
     "mode": "managed-key",
@@ -1268,7 +1268,7 @@ Cosign wraps the predicate in an in-toto Statement and attaches it to the releas
 **Scheduled rescans.**
 
 - A scheduled rescan MUST resolve the subject by digest, enumerate every platform in an index, retrieve each SBOM attestation from the registry and verify its subject, signer and transparency-log inclusion against the trust root before scanning.
-- An authoritative rescan result MUST record the scanner version; vulnerability database version or timestamp; guide revision; ContainerWright version and source revision; repository-configuration digest; rescan-job identity; subject digest; per-platform findings; triage state; and verdict.
+- An authoritative rescan result MUST record the scanner version; vulnerability database version or timestamp; guide revision; ConClear version and source revision; repository-configuration digest; rescan-job identity; subject digest; per-platform findings; triage state; and verdict.
 - An informal local rescan is a useful diagnostic but is not release evidence and does not start or satisfy remediation duties.
 
 
@@ -1434,10 +1434,10 @@ The example is a structural reference, not a universal base-image choice.
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
 - **Toolchain and Docker.** Buildah, Podman and Skopeo are rootless, daemonless and open source. Docker compatibility is incidental, untested and unsupported. Although based on open-source software, Quay.io and Sigstore's public infrastructure are hosted services with separate terms. Distributing tools may create license obligations even when their licenses do not cover generated images.
-- **Local releases.** CI automates releases but is not the trust boundary. A maintainer workstation is safe when ContainerWright builds an isolated reviewed revision, runs the same gates, obtains external signing authority and records the environment. A local workflow also avoids dependence on one CI service.
-- **Release tool versions.** Tool changes during a release make its evidence inconsistent. ContainerWright therefore resolves compatible versions once, records them and holds them constant. Global pins would impede upgrades without adding release identity: evidence identifies the tools, and the ContainerWright version identifies the rules.
-- **Tool-owned rule identifiers.** ContainerWright needs stable check identifiers for precise findings and suppressions. Like Hadolint's `DL` codes, they belong to the tool, not this guide. Its conformance documentation maps them to stable guide anchors.
-- **Versioned ruleset.** Embedding the guide revision identifies ContainerWright's implemented rules without a separate policy artifact. Recording both revisions distinguishes guide changes from implementation changes.
+- **Local releases.** CI automates releases but is not the trust boundary. A maintainer workstation is safe when ConClear builds an isolated reviewed revision, runs the same gates, obtains external signing authority and records the environment. A local workflow also avoids dependence on one CI service.
+- **Release tool versions.** Tool changes during a release make its evidence inconsistent. ConClear therefore resolves compatible versions once, records them and holds them constant. Global pins would impede upgrades without adding release identity: evidence identifies the tools, and the ConClear version identifies the rules.
+- **Tool-owned rule identifiers.** ConClear needs stable check identifiers for precise findings and suppressions. Like Hadolint's `DL` codes, they belong to the tool, not this guide. Its conformance documentation maps them to stable guide anchors.
+- **Versioned ruleset.** Embedding the guide revision identifies ConClear's implemented rules without a separate policy artifact. Recording both revisions distinguishes guide changes from implementation changes.
 - **Candidate references.** One source revision can rebuild to different digests, so the revision alone cannot identify an attempt. A version or revision prefix groups related tags; the sortable, collision-resistant run identifier distinguishes attempts. Candidates stay in the final repository because OCI referrers, Cosign signatures and attestations are repository-scoped and `skopeo copy --all` does not move them. A separate repository requires explicit recreation and verification of that evidence at the final location.
 - **Platform transport.** Records claim but do not prove their origin. Digest verification before assembly keeps qualification meaningful without separate transport authentication.
 - **Registries.** Quay centralizes publishing, retention and tag mutation. Consume from the authoritative upstream registry because a similarly named repackaging is not equivalent. Use mirrors only for specific availability or policy needs; an unmaintained mirror becomes stale and unscanned.
@@ -1452,7 +1452,7 @@ The example is a structural reference, not a universal base-image choice.
 - **Entrypoint.** The shell form inserts a shell that changes argument handling and can block signal delivery. Supervisors are limited to documented product contracts because each extra process obscures the signal path and exit status that deployment tooling depends on.
 - **Health checks.** The OCI image format has no health-check field, and health policy is an environment decision, so the deployment layer owns it.
 - **Multi-platform.** Emulated builds can hide target-architecture defects; cross-compiling is fine for the build but never replaces an on-target runtime test.
-- **Execution modes.** A single `uname` value cannot distinguish native, emulated and cross-built execution. Recording target, host, execution architecture and mechanism for build and test gives ContainerWright the evidence needed to apply its rules.
+- **Execution modes.** A single `uname` value cannot distinguish native, emulated and cross-built execution. Recording target, host, execution architecture and mechanism for build and test gives ConClear the evidence needed to apply its rules.
 - **Reproducibility.** Rebuildability is what an incident requires: a working replacement from documented inputs. Bit-for-bit equivalence is desirable evidence but must be measured, not assumed.
 - **Exact-digest releases.** Security statements bind to digests. Local OCI layouts allow content gates before publication; Skopeo's digest-preserving copy and recursive comparison prove that Quay received the accepted manifest and blobs. Rebuilding or transforming the upload breaks that link. Registries lack portable compare-and-swap and multi-tag transactions, so pre-write checks, post-write comparisons and failure records provide detection and fail-closed continuation, not atomicity.
 - **One scanner stack.** Scanner databases and matching differ, so parallel gates create conflicting findings and duplicate exceptions. Second opinions remain non-gating. Trivy also supplies the required secret and configuration scans. Registry scanning adds defense but cannot replace the release gate, and an empty result does not prove security. Busy CI runners can hit Trivy's public database rate limits. Cache it, configure `--db-repository` or host a mirror. Rescan retained SBOMs to reduce cost.
