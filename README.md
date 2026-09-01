@@ -10,6 +10,7 @@ Topics (in alphabetical order):
 * [Container images](#container-images)
 * [Git](#git)
 * [Go](#go)
+* [Markdown](#markdown)
 * [PowerShell scripting](#powershell-scripting)
 * [Python](#python)
 * [Shell scripting](#shell-scripting)
@@ -57,6 +58,13 @@ Resources on how to work with, maintain and host Git repositories.
 Resources on how to develop and maintain Go applications, commands and libraries:
 
 * [Go style guide (`golang-style-guide.md`)](./golang-style-guide.md)
+
+
+## Markdown<a id="markdown"></a>
+
+Resources on how to write and maintain technical Markdown documents:
+
+* [Markdown style guide (`markdown-style-guide.md`)](./markdown-style-guide.md)
 
 
 ## PowerShell Scripting<a id="powershell-scripting"></a>
