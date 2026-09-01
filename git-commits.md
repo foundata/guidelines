@@ -150,7 +150,7 @@ The scope identifies the subsystem, component, package, service, command, docume
 **You MUST NOT:**
 
 - Use a generic change type such as `feature`, `bugfix`, `cleanup`, `refactor`, `chore` or `misc` as the scope.
-- Use a type-like scope merely to classify the change. For example, a bare `docs` prefix is not a scope when it says only that documentation changed.
+- Use a type-like scope merely to classify the change. For example, a *bare* `docs` prefix is not a scope when it says only that documentation changed.
 
 
 **You SHOULD NOT:**
@@ -166,18 +166,23 @@ pdf
 cli
 api/auth
 docs/python
-dependencies
-release
+dependencies    # Dependency version or lock file updates
+release         # Release preparation, e.g. "release: prepare 2.4.0"
+repository      # Repository-wide, non-code concerns: README, CONTRIBUTING.md, .gitignore, repo config
+licensing       # License files, headers, metadata such as REUSE/SPDX
+build           # Build tooling, packaging metadata, distribution artifacts
+tests           # Test suite or fixtures not attributable to one subsystem
 ```
 
 **Bad examples:**
 
 ```text
-feat
-fix
-chore
-misc
-PROJ-123
+feat        # Conventional Commits type, not a project area
+fix         # Conventional Commits type, not a project area
+chore       # Conventional Commits type, not a project area
+docs        # Classifies the change as documentation without saying which part of the project it documents
+misc        # Too vague to scan, filter or blame against
+PROJ-123    # A ticket number is not a scope; put it in a trailer instead
 ```
 
 
