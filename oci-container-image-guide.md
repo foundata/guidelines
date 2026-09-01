@@ -108,7 +108,7 @@ This guide covers Linux application and service images built from Containerfiles
 - Every image repository owner MUST automate the repository's release-security controls; a release assembled by hand is not a release.
 - A release MUST run through ConClear in an authorized release environment, using a clean release checkout of a reviewed, committed source revision.
 - The complete release workflow through promotion MUST be runnable on a secure, maintainer-controlled Linux workstation. CI MAY invoke the same workflow but MUST NOT be the only implementation of release logic.
-- For a local release, ConClear MUST build from an isolated checkout or detached worktree of the selected application commit. This repository contains the Containerfile, `conclear.toml`, build scripts and dependency declarations. The ordinary worktree may be dirty, but uncommitted or untracked files MUST NOT enter the release.
+- For every release, ConClear MUST build from an isolated checkout or detached worktree of the selected application commit. This repository contains the Containerfile, `conclear.toml`, build scripts and dependency declarations. The ordinary worktree may be dirty, but uncommitted or untracked files MUST NOT enter the release.
 - The release workflow MUST execute these steps in order. ConClear orders its steps; the authorized release environment orders external steps.
 
 The links define each step's requirements.
@@ -1066,9 +1066,9 @@ test "${local_digest}" = "${remote_digest}"
 - The canonical source repository and complete source revision.
 - The Containerfile and relevant build configuration.
 - External image materials by digest.
-- The ConClear builder identity, release-environment mode and release-run identity, derived from embedded tool information and observed execution data.
+- The ConClear builder identity and release-run identity, derived from embedded tool information and observed execution data.
 - Relevant build parameters without secret values.
-- Whether the build started locally or in CI, and its reviewed source revision.
+- The reviewed source revision.
 
 
 **Identity separation.** Three identity families appear in a release and must never be conflated or accepted from untrusted input:
@@ -1211,13 +1211,17 @@ After final verification, ConClear MUST generate the intermediate predicate `rel
 - ConClear version and source revision.
 - Guide title, repository, path and revision.
 - SHA-256 digest of `conclear.toml`.
-- Release-environment mode, host architecture and ConClear run identity.
+- Host architecture, ConClear run identity and optional observed CI context.
 - Signer mode and identity.
 - Digests of verified evidence.
 
 Identities MUST come from embedded ConClear data and observations by the authorized release environment, not caller-supplied values.
 
-Release-environment mode MUST be `local` or `ci`. `local` identifies a release run on a maintainer-controlled workstation.
+ConClear's release behavior MUST be independent of the command's caller. A protected release profile MAY configure CI context handling as `omit`, `observe` or `require`. `omit` does not inspect CI environment metadata. `observe` records context from a recognized provider when the observation is complete and agrees with the isolated checkout, but absence, malformed values or disagreement only produce a local diagnostic. `require` treats those conditions as an operational failure.
+
+Observed CI context is correlation metadata, not proof of authorization or provider identity. It MUST NOT override the isolated source repository or revision, ConClear run identity, builder identity, signing authority, artifact digest or release verdict. Repository configuration and arbitrary command-line input MUST NOT supply it. Provider environment variables are ordinary process inputs and MUST be identified as such in public evidence.
+
+When present, public CI context MUST contain only a normalized provider identifier, `provider-environment` as its source, repository name, full source revision and provider run identifier. ConClear MUST verify that the repository and revision agree with the isolated checkout before including the context. Internal service origins and provider-specific details MAY appear in local diagnostics but MUST NOT enter signed public evidence.
 
 An illustrative predicate has this shape:
 
@@ -1241,9 +1245,15 @@ An illustrative predicate has this shape:
     "sha256": "<configuration-digest>"
   },
   "releaseEnvironment": {
-    "mode": "local",
     "hostArchitecture": "amd64",
-    "runId": "<conclear-generated-run-id>"
+    "runId": "<conclear-generated-run-id>",
+    "ciContext": {
+      "provider": "gitlab-ci",
+      "source": "provider-environment",
+      "repository": "foundata/example",
+      "revision": "<full-source-revision>",
+      "runId": "<provider-run-id>"
+    }
   },
   "signer": {
     "mode": "managed-key",
@@ -1434,7 +1444,7 @@ The example is a structural reference, not a universal base-image choice.
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
 - **Toolchain and Docker.** Buildah, Podman and Skopeo are rootless, daemonless and open source. Docker compatibility is incidental, untested and unsupported. Although based on open-source software, Quay.io and Sigstore's public infrastructure are hosted services with separate terms. Distributing tools may create license obligations even when their licenses do not cover generated images.
-- **Local releases.** CI automates releases but is not the trust boundary. A maintainer workstation is safe when ConClear builds an isolated reviewed revision, runs the same gates, obtains external signing authority and records the environment. A local workflow also avoids dependence on one CI service.
+- **Release environments.** CI automates releases but is not the trust boundary. A maintainer workstation is safe when ConClear builds an isolated reviewed revision, runs the same gates, obtains external signing authority and records the environment. Provider-neutral release behavior avoids dependence on one CI service. Optional observed CI context helps correlate public evidence with provider records, but ordinary provider environment variables do not authenticate that context.
 - **Release tool versions.** Tool changes during a release make its evidence inconsistent. ConClear therefore resolves compatible versions once, records them and holds them constant. Global pins would impede upgrades without adding release identity: evidence identifies the tools, and the ConClear version identifies the rules.
 - **Tool-owned rule identifiers.** ConClear needs stable check identifiers for precise findings and suppressions. Like Hadolint's `DL` codes, they belong to the tool, not this guide. Its conformance documentation maps them to stable guide anchors.
 - **Versioned ruleset.** Embedding the guide revision identifies ConClear's implemented rules without a separate policy artifact. Recording both revisions distinguishes guide changes from implementation changes.
