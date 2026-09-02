@@ -754,7 +754,7 @@ $ git diff --check
   from the invocation. Use `rumdl rule` to list available rules,
   `rumdl explain MDxxx` for a rule's detailed behavior and examples, or browse
   `https://rumdl.dev/mdxxx/` directly.
-- Use a pinned installation >= 0.2.62 of `rumdl` so that all needed features are
+- Use a pinned installation >= 0.2.66 of `rumdl` so that all needed features are
   available and changing the version stays a deliberate and reviewable step.
 - Check links and render the document with the publishing system (if any) when
   changing anchors, renderer-specific syntax or complex nesting.
@@ -764,17 +764,14 @@ The following commands implement this guide through command-line options alone.
 They need no `rumdl` configuration file:
 
 ```sh
-# Extended (opt-in) rumdl rules deliberately not enabled everywhere:
-#   MD063 - heading capitalization: corrupts embedded <a id="..."> anchors by
-#           title-casing the HTML attribute itself (upstream bug, see
-#           https://github.com/rvben/rumdl/issues/839, open as of 2026-09-01)
+# Extended (opt-in) rumdl rules deliberately not enabled here:
+#   MD063 - heading capitalization: title-cases proper nouns inside heading
+#           text (for example "Generated Markdown" becomes "Generated
+#           markdown" under the sentence-case style), and this guide has no
+#           actively maintained list of the proper nouns its headings use.
+#           An `ignore-words` list per proper noun avoids this, so this rule
+#           is a candidate to enable later if that list gets maintained.
 #   MD074 - MkDocs nav validation: not applicable, this repo does not use MkDocs
-#
-# MD073 (table of contents sync) is enabled only in `check`, not in `fmt`:
-# its automatic fix, combined with `fmt` reflow, has deleted headings and
-# spliced unrelated lists together (upstream bug, see
-# https://github.com/rvben/rumdl/issues/840, open as of 2026-09-01). Detection
-# alone is safe, because `check` never writes to files.
 #
 # For details on any rule below: `rumdl rule MDxxx` (short summary) or
 # `rumdl explain MDxxx` (full explanation with examples and a doc link), or
@@ -784,7 +781,7 @@ They need no `rumdl` configuration file:
 rumdl fmt \
   --no-config \
   --deny-config-warnings \
-  --extend-enable MD060,MD070,MD072,MD080,MD082,MD083,MD084,MD085,MD087,MD088 \
+  --extend-enable MD060,MD070,MD072,MD073,MD080,MD082,MD083,MD084,MD085,MD087,MD088 \
   --config 'MD003.style="atx"' \
   --config 'MD004.style="dash"' \
   --config 'MD007.indent=2' \
