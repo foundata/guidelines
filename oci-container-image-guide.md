@@ -149,6 +149,9 @@ Containerfiles, including intermediate stages that affect the final artifact.
   identities against which signatures and attestations are verified. It is
   supplied through maintainer-controlled release configuration or protected
   deployment configuration, not by the repository being verified.
+- A **builder identity** is a stable HTTPS URI naming one build-platform trust
+  domain. Its documentation defines the people, systems and software trusted to
+  run the build and record its provenance.
 - An **authorized release environment** is a maintainer-controlled Linux
   workstation or protected CI job. It runs ConClear on a reviewed commit and
   obtains trust configuration and signing authority outside the repository and
@@ -1475,8 +1478,8 @@ candidates expire.
 - The canonical source repository and complete source revision.
 - The Containerfile and relevant build configuration.
 - External image materials by digest.
-- The ConClear builder identity and release-run identity, derived from embedded
-  tool information and observed execution data.
+- The release-profile-selected builder identity, the embedded ConClear version
+  and source revision, and the release-run identity.
 - Relevant build parameters without secret values.
 - The reviewed source revision.
 
@@ -1484,8 +1487,18 @@ candidates expire.
 **Identity separation.** Three identity families appear in a release and must
 never be conflated or accepted from untrusted input:
 
-- The SLSA `runDetails.builder.id` identifies the ConClear builder
-  implementation and comes from ConClear's embedded version information.
+- The SLSA `runDetails.builder.id` identifies the complete build-platform trust
+  domain and comes from maintainer-controlled release configuration. It MUST be
+  a public, credential-free HTTPS URI without a query or fragment.
+- The builder URI SHOULD resolve to documentation defining its scope, claimed
+  SLSA Build level, provenance accuracy and completeness guarantees,
+  tenant-controlled fields and any extension fields.
+- Security-significant execution modes with different trust boundaries or SLSA
+  Build levels MUST use different builder identities. Ordinary CI environment
+  variables MUST NOT select or override the builder identity.
+- The SLSA `runDetails.builder.version` records the embedded ConClear version
+  and full source revision. A ConClear upgrade changes this version data without
+  changing the builder identity's documented trust domain.
 - The Cosign signing-key identity identifies the signing authority and comes
   from the approved public key or KMS/HSM key identity.
 - The source repository, revision and release event identify the input and
@@ -1494,6 +1507,14 @@ never be conflated or accepted from untrusted input:
   and come from their authoritative sources; ConClear refuses to conflate them.
 - ConClear MUST reject these identities when supplied by repository
   configuration, arbitrary command-line flags or ordinary environment overrides.
+- Consumers MUST accept only explicitly trusted signer and builder identity
+  pairs.
+
+ConClear-generated provenance claims SLSA Build L1 only. Running ConClear inside
+a hosted CI job does not establish Build L2 because ConClear, rather than the
+hosted platform's trusted control plane, generates and signs the provenance.
+Any higher-level claim requires separately implemented and audited platform
+controls and provenance.
 
 **You MUST:**
 
@@ -1677,12 +1698,14 @@ MUST contain:
 - ConClear version and source revision.
 - Guide title, repository, path and revision.
 - SHA-256 digest of `conclear.toml`.
-- Host architecture, ConClear run identity and optional observed CI context.
+- Host architecture, ConClear run identity, builder identity and optional
+  observed CI context.
 - Signer mode and identity.
 - Digests of verified evidence.
 
-Identities MUST come from embedded ConClear data and observations by the
-authorized release environment, not caller-supplied values.
+Identities MUST come from protected release configuration, embedded ConClear
+data and observations by the authorized release environment, not
+caller-supplied values.
 
 ConClear's release behavior MUST be independent of the command's caller. A
 protected release profile MAY configure CI context handling as `omit`, `observe`
