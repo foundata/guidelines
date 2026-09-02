@@ -29,7 +29,6 @@ The terms MUST, SHOULD, and other key words are used as defined in
 - [Miscellaneous](#miscellaneous)
 - [Linting and automatic formatting](#linting-and-automatic-formatting)
 - [Appendix: PowerShell edition requirements](#appendix-powershell-edition-requirements)
-- [Appendix: suggested PSScriptAnalyzer settings](#appendix-suggested-psscriptanalyzer-settings)
 - [Author information](#author-information)
 
 
