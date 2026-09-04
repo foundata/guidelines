@@ -282,7 +282,8 @@ The recommended supporting tools are:
 | Run and smoke-test        | [Podman](https://github.com/containers/podman)                                                                             | Daemonless container runtime                                                                                    | Apache-2.0 |
 | Inspect and copy          | [Skopeo](https://github.com/containers/skopeo)                                                                             | Registry inspection, digest resolution and transport                                                            | Apache-2.0 |
 | Guide enforcement         | ConClear                                                                                                                   | Deterministic checks, qualification, publication and verification per this guide                                | To be released |
-| Dependency updates        | [Renovate](https://docs.renovatebot.com/modules/manager/dockerfile/)                                                       | Reviewable tag and digest updates; the sole pin write path                                                      | AGPL-3.0-only |
+| Dependency pin updates    | ConClear                                                                                                                   | Non-mutating pin proposals and verified, all-or-nothing local application                                       | To be released |
+| Update review delivery    | [Renovate](https://docs.renovatebot.com/modules/manager/dockerfile/) or equivalent                                         | Optional branch and pull-request delivery of conforming proposals                                               | Tool-specific |
 | Static linting            | [Hadolint](https://github.com/hadolint/hadolint)                                                                           | Containerfile correctness and maintainability checks                                                            | GPL-3.0-only |
 | Smoke and structure tests | [Testinfra](https://testinfra.readthedocs.io/)                                                                             | pytest-based assertions against a running container                                                             | Apache-2.0 |
 | SBOM and scanning         | [Trivy](https://trivy.dev/docs/latest/target/container_image/)                                                             | [SPDX SBOM](https://trivy.dev/docs/latest/supply-chain/sbom/), vulnerability, secret and configuration scanning | Apache-2.0 |
@@ -639,51 +640,74 @@ so that divergence between tag and digest becomes measurable.
   successful resolution and the maximum permitted divergence interval for pinned
   references; repository configuration MAY shorten but MUST NOT extend or
   disable these limits.
-- The pin gate MUST apply the effective freshness and divergence limits and emit
-  a result; it MUST NOT edit files.
-- The pin gate MUST fail when the declared `tag_intent` set and the
+- The `pins check` operation MUST apply the effective freshness and divergence
+  limits and emit a result; it MUST NOT edit files. Pin proposal and application
+  are separate, explicit operations.
+- The `pins check` operation MUST fail when the declared `tag_intent` set and the
   Containerfile's actual pinned references diverge; an undeclared pin and an
   orphaned declaration are both policy failures.
 - A digest change under an `immutable-version` tag MUST be reviewed by the
   repository owner as a supply-chain event.
 - A changed digest under a `moving-release-line` tag is a normal update proposal
-  but becomes stale according to the effective divergence limit; Renovate
-  proposes the update and the repository owner reviews it.
-- Renovate and repository merge controls MUST NOT auto-apply a digest change
-  under an `immutable-version` tag; the proposal remains blocked until the
-  required human review of the supply-chain event completes.
+  but becomes stale according to the effective divergence limit; the repository
+  owner reviews the verified proposal.
+- Pin-update and repository merge controls MUST NOT automatically accept a
+  digest change under an `immutable-version` tag into a protected branch; the
+  proposal remains blocked until the required human review of the supply-chain
+  event completes.
 
 
 ### Updating pinned references<a id="updating-pinned-references"></a>
 
 **You MUST:**
 
-- Use reviewable automation to propose base-image digest updates; self-hosted
-  Renovate is the sole proposal and write path for tag or digest updates, and
-  ConClear checks declared pins but does not edit them.
+- Generate a machine-readable, non-mutating pin proposal with ConClear or a
+  version- or digest-pinned updater that implements the same contract.
+- Record in the proposal the updater name and version or artifact digest; the
+  repository source revision and configuration digest; the image declaration,
+  tag intent, old digest, resolved digest and resolution time; and every exact
+  repository path, input-file digest, old bytes and occurrence expected to
+  change.
+- Resolve one digest for each proposed tag and use that result for every bound
+  occurrence. Preserve the declared tag, registry and repository spelling; a
+  digest refresh MUST NOT silently change image-selection intent.
+- Apply a proposal only through ConClear or an updater that first verifies the
+  proposal against the current repository state, including its expected old
+  bytes, input-file digests, complete path set and exact occurrence count. On
+  any detected error, application MUST leave every file unchanged.
+- Keep proposal generation, application and acceptance distinct. Proposal
+  generation MUST NOT edit files. Application MAY edit the local worktree or an
+  updater-owned review branch but MUST NOT commit to a protected branch, merge,
+  or publish a release. A repository owner reviews the complete resulting diff
+  before acceptance.
+- Run `conclear pins check` after application and reject a result that does not
+  exactly match the proposal. A proposal or application is not release evidence.
 - Rebuild, test, scan and sign after an image input changes.
 - Review an unexpected digest change under an unchanged immutable-version tag as
   a supply-chain event.
 - Keep supported release branches receiving relevant base-image and toolchain
   updates.
-- Run Renovate self-hosted from a version- or digest-pinned image or package. Do
+- Pin and verify any external updater used to generate or apply proposals. Do
   not grant a hosted update service write access to foundata repositories.
-- Give the update job credentials that can open pull requests but cannot merge
-  them or push to protected branches.
+- When an updater opens branches or pull requests, give it credentials that can
+  create only those review resources and cannot merge or push to protected
+  branches. Branch and pull-request delivery MUST NOT be required for an
+  authorized local maintainer workflow.
 
 **You SHOULD:**
 
-- Configure Renovate's Containerfile manager and `docker:pinDigests` behavior
-  for image references.
+- Use a pinned, self-hosted updater such as Renovate for scheduled branch and
+  pull-request delivery when the organization operates the required runner and
+  least-privileged credentials.
+- Configure an external updater's Containerfile digest behavior and custom
+  managers so its proposal covers every declaration and bound occurrence.
 - Group routine digest refreshes where this does not obscure a high-risk or
   breaking update.
 - Set a repository-specific update schedule that is shorter than the effective
   vulnerability remediation deadline enforced by ConClear.
-- Maintain one organization-level Renovate preset that repositories extend, so
+- Maintain one organization-level updater policy that repositories extend, so
   schedule, grouping and digest policy are decided once instead of per
   repository.
-- Use Renovate custom managers to update digest pins embedded outside
-  Containerfiles, such as pinned tool digests in scripts and deployment files.
 
 
 ## Build context<a id="build-context"></a>
@@ -2040,13 +2064,16 @@ The example is a structural reference, not a universal base-image choice.
 - **Digest pinning and updates.** Tags document intent; digests select bytes.
   Pinning transfers change control to the repository and creates an update duty.
   A forgotten digest freezes its vulnerabilities, and pinning alone does not
-  ensure reproducibility. Renovate therefore proposes, but cannot merge, trusted
-  digest changes. It runs self-hosted and pinned; its AGPL-3.0-only license
-  covers the tool, not updated repositories or images.
+  ensure reproducibility. ConClear therefore separates a non-mutating,
+  identity-bearing proposal from verified, all-or-nothing application. A pinned
+  self-hosted updater may deliver the same proposal through a review branch, but
+  a forge, branch and bot credential are not prerequisites for an authorized
+  local maintainer workflow.
 - **Pin intent and freshness.** Divergence under an immutable-version tag may be
   a supply-chain event; under a moving release line it is routine. Declared
-  intent tells the pin gate which applies. The gate only reports, while Renovate
-  remains the sole writer.
+  intent tells the pin check which applies. Checking only reports; explicit
+  proposal and application operations preserve review boundaries while avoiding
+  partial or opportunistic edits.
 - **Build context.** The context is builder input and may be transferred, cached
   or inspected even when never copied into the image, so it is bounded with an
   allowlist.
