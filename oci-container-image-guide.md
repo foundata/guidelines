@@ -134,8 +134,9 @@ Containerfiles, including intermediate stages that affect the final artifact.
   rules but cannot relax an unconditional `MUST` or `MUST NOT` or extend a
   built-in maximum.
 - A **platform qualification** is the per-image, per-platform record
-  (`platform-qualification.json`) of observations, evidence digests and the
-  platform verdict produced by qualification on one build worker.
+  (`platform-qualification-<platform>.json`, one file per target platform) of
+  observations, evidence digests and the platform verdict produced by
+  qualification on one build worker.
 - A **release candidate** is the aggregate record (`release-candidate.json`)
   produced by assembly from one or more accepted platform qualifications. It
   identifies the exact image manifest or image index eligible for publication.
@@ -1748,15 +1749,15 @@ and revision agree with the isolated checkout before including the context.
 Internal service origins and provider-specific details MAY appear in local
 diagnostics but MUST NOT enter signed public evidence.
 
-An illustrative predicate has this shape:
+An illustrative predicate has this shape. It uses the same envelope as every
+other ConClear record; the release-specific facts live in `payload`:
 
 ```json
 {
   "schemaVersion": 1,
-  "subject": {
-    "repository": "quay.io/foundata/example",
-    "digest": "sha256:<release-digest>"
-  },
+  "recordType": "releaseVerification",
+  "createdAt": "2026-09-06T12:00:00Z",
+  "runId": "<conclear-generated-run-id>",
   "ruleset": {
     "conclearVersion": "<version>",
     "conclearRevision": "<conclear-source-revision>",
@@ -1765,32 +1766,50 @@ An illustrative predicate has this shape:
     "guidePath": "oci-container-image-guide.md",
     "guideRevision": "<guide-revision>"
   },
+  "source": {
+    "repository": "https://github.com/foundata/example",
+    "revision": "<full-source-revision>"
+  },
   "repositoryConfiguration": {
     "path": "conclear.toml",
-    "sha256": "<configuration-digest>"
+    "sha256": "sha256:<configuration-digest>"
   },
-  "releaseEnvironment": {
-    "hostArchitecture": "amd64",
-    "runId": "<conclear-generated-run-id>",
-    "ciContext": {
-      "provider": "gitlab-ci",
-      "source": "provider-environment",
-      "repository": "foundata/example",
-      "revision": "<full-source-revision>",
-      "runId": "<provider-run-id>"
+  "tools": [
+    {"name": "cosign", "version": "<version>", "executableDigest": "sha256:<digest>"}
+  ],
+  "verdict": "accepted",
+  "payload": {
+    "subject": {
+      "repository": "quay.io/foundata/example",
+      "digest": "sha256:<release-digest>"
+    },
+    "platformDigests": {
+      "linux/amd64": "sha256:<platform-manifest-digest>"
+    },
+    "releaseEnvironment": {
+      "hostArchitecture": "x86_64",
+      "runId": "<conclear-generated-run-id>",
+      "ciContext": {
+        "provider": "gitlab-ci",
+        "source": "provider-environment",
+        "repository": "foundata/example",
+        "revision": "<full-source-revision>",
+        "runId": "<provider-run-id>"
+      }
+    },
+    "builder": {"id": "<builder-identity-uri>"},
+    "signer": {
+      "mode": "managed-key",
+      "keyId": "<approved-public-key-identifier>"
+    },
+    "evidence": {
+      "platformQualifications": ["sha256:<qualification-digest>"],
+      "scanResults": ["sha256:<scan-result-digest>"],
+      "sboms": ["sha256:<sbom-digest>"],
+      "provenance": "sha256:<provenance-digest>",
+      "candidateRecord": "sha256:<candidate-record-digest>"
     }
-  },
-  "signer": {
-    "mode": "managed-key",
-    "keyId": "<approved-public-key-identifier>"
-  },
-  "evidence": {
-    "platformQualifications": ["sha256:<qualification-digest>"],
-    "scanResults": ["sha256:<scan-result-digest>"],
-    "sboms": ["sha256:<sbom-digest>"],
-    "provenance": "sha256:<provenance-digest>"
-  },
-  "verdict": "pass"
+  }
 }
 ```
 
