@@ -1330,11 +1330,6 @@ Trivy is the standard scanner.
 
 **You MAY:**
 
-- Replace Trivy SBOM and vulnerability scanning with
-  [Syft](https://github.com/anchore/syft) and
-  [Grype](https://github.com/anchore/grype) when a project documents a concrete
-  benefit. Secret and configuration scanning remain required, which normally
-  still requires Trivy.
 - Run a non-gating second-opinion scan for audits.
 
 **You MUST NOT:**
