@@ -644,8 +644,8 @@ so that divergence between tag and digest becomes measurable.
 - The `pins check` operation MUST apply the effective freshness and divergence
   limits and emit a result; it MUST NOT edit files. Pin proposal and application
   are separate, explicit operations.
-- The `pins check` operation MUST fail when the declared `tag_intent` set and the
-  Containerfile's actual pinned references diverge; an undeclared pin and an
+- The `pins check` operation MUST fail when the declared `tag_intent` set and
+  the Containerfile's actual pinned references diverge; an undeclared pin and an
   orphaned declaration are both policy failures.
 - A digest change under an `immutable-version` tag MUST be reviewed by the
   repository owner as a supply-chain event.
