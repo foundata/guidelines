@@ -73,7 +73,7 @@ Resources on how to write and maintain technical Markdown documents:
 - [Markdown style guide (`markdown-style-guide.md`)](./markdown-style-guide.md)
 
 
-## PowerShell Scripting<a id="powershell-scripting"></a>
+## PowerShell scripting<a id="powershell-scripting"></a>
 
 Resources on how to develop and maintain PowerShell scripts:
 
@@ -88,7 +88,7 @@ scripts:
 - [Python style guide (`python-style-guide.md`)](./python-style-guide.md)
 
 
-## Shell Scripting<a id="shell-scripting"></a>
+## Shell scripting<a id="shell-scripting"></a>
 
 Resources on how to develop and maintain shell scripts:
 
