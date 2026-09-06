@@ -144,7 +144,7 @@ more information on the syntax and precedence.
 You can add additional stanzas when using multiple licenses and/or third-party
 components in the same project. Here are some good real-world examples:
 
-- [reuse-tool `REUSE.toml` file](https://github.com/fsfe/reuse-tool/blob/main/REUSE.toml).
+- [reuse-tool `REUSE.toml` file](https://codeberg.org/fsfe/reuse-tool/raw/branch/main/REUSE.toml).
 
 Legacy file examples (for REUSE ≤ [v3.0](https://reuse.software/spec-3.0/)):
 
@@ -436,7 +436,7 @@ A workaround to fix the automatic license detection of GitHub and
 is to place an *additional* `LICENSE` or `COPYING` file in the root directory of
 your project. This is [allowed by REUSE](https://reuse.software/faq/#tradition).
 These files are explicitly
-[ignored by the toolset](https://github.com/fsfe/reuse-tool/blob/0e111c423ccf927f73a9ae7b39d3f88268b015b9/src/reuse/__init__.py#L66-L77)
+[ignored by the toolset](https://codeberg.org/fsfe/reuse-tool/src/commit/0e111c423ccf927f73a9ae7b39d3f88268b015b9/src/reuse/__init__.py#L66-L77)
 and do not need an additional `.license` file or header.
 
 Please use this workaround *only* if a single license is used for all of the
