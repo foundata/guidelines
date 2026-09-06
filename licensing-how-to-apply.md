@@ -376,7 +376,7 @@ by adding `REUSE-IgnoreStart` and `REUSE-IgnoreEnd`.
 <!--REUSE-IgnoreEnd-->
 
 
-## Step 7: Register as compliant repository (optional)<a id="reuse-api"></a>
+## Step 8: Register as compliant repository (optional)<a id="reuse-api"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
