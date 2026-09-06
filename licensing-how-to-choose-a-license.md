@@ -1,4 +1,4 @@
-# Licensing guide: How to choose a license
+# Licensing guide: how to choose a license
 <!--REUSE-IgnoreStart-->
 
 
