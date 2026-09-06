@@ -165,11 +165,21 @@ template to do so:
 ## Licensing, copyright
 
 <!--REUSE-IgnoreStart-->
-Copyright (c) YYYY, foundata GmbH (https://foundata.com)
+Copyright (c) YYYY, foundata GmbH (<https://foundata.com>)
 
-This project is licensed under the GNU General Public License v3.0 or later (SPDX-License-Identifier: `GPL-3.0-or-later`), see [`LICENSES/GPL-3.0-or-later.txt`](LICENSES/GPL-3.0-or-later.txt) for the full text.
+This project is licensed under the GNU General Public License v3.0 or later
+(SPDX-License-Identifier: `GPL-3.0-or-later`), see
+[`LICENSES/GPL-3.0-or-later.txt`](LICENSES/GPL-3.0-or-later.txt) for the full
+text.
 
-The [`REUSE.toml`](REUSE.toml) file provides detailed licensing and copyright information in a human- and machine-readable format. This includes parts that may be subject to different licensing or usage terms, such as third-party components. The repository conforms to the [REUSE specification](https://reuse.software/spec/). You can use [`reuse spdx`](https://reuse.readthedocs.io/en/latest/readme.html#cli) to create a [SPDX software bill of materials (SBOM)](https://en.wikipedia.org/wiki/Software_Package_Data_Exchange).
+The [`REUSE.toml`](REUSE.toml) file provides detailed licensing and copyright
+information in a human- and machine-readable format. This includes parts that
+may be subject to different licensing or usage terms, such as third-party
+components. The repository conforms to the
+[REUSE specification](https://reuse.software/spec/). You can use
+[`reuse spdx`](https://reuse.readthedocs.io/en/latest/readme.html#cli) to create
+a
+[SPDX software bill of materials (SBOM)](https://en.wikipedia.org/wiki/Software_Package_Data_Exchange).
 <!--REUSE-IgnoreEnd-->
 ```
 
@@ -185,7 +195,8 @@ Feel free to add additional author information not suitable for the
 ```markdown
 ## Author information
 
-This project was created and is maintained by [foundata](https://foundata.com/). If you like it, you might [buy them a coffee](https://buy-me-a.coffee/).
+This project was created and is maintained by [foundata](https://foundata.com/).
+If you like it, you might [buy them a coffee](https://buy-me-a.coffee/).
 
 Special thanks to:
 
@@ -209,8 +220,12 @@ as needed):
 ```markdown
 The project is dual-licensed under the
 
-- GNU General Public License v3.0 or later (SPDX-License-Identifier: `GPL-3.0-or-later`), see [`LICENSES/GPL-3.0-or-later.txt`](./LICENSES/GPL-3.0-or-later.txt) for the full text.
-- Apache License 2.0 (SPDX-License-Identifier: `Apache-2.0`), see [`LICENSES/Apache-2.0.txt`](./LICENSES/Apache-2.0.txt) for the full text.
+- GNU General Public License v3.0 or later (SPDX-License-Identifier:
+  `GPL-3.0-or-later`), see
+  [`LICENSES/GPL-3.0-or-later.txt`](./LICENSES/GPL-3.0-or-later.txt) for the
+  full text.
+- Apache License 2.0 (SPDX-License-Identifier: `Apache-2.0`), see
+  [`LICENSES/Apache-2.0.txt`](./LICENSES/Apache-2.0.txt) for the full text.
 
 [... usual template follows ...]
 ```
@@ -218,8 +233,14 @@ The project is dual-licensed under the
 ```markdown
 This work is licensed under multiple licences. Here is a brief summary:
 
-- The project is primarily licensed under the GNU General Public License v3.0 or later (SPDX-License-Identifier: `GPL-3.0-or-later`), see [`LICENSES/GPL-3.0-or-later.txt`](./LICENSES/GPL-3.0-or-later.txt) for the full text.
-- Files below `/doc` are licensed under the [Creative Commons Attribution Share Alike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/deed) license, see [`LICENSES/CC-BY-SA-4.0.txt`](./LICENSES/CC-BY-SA-4.0.txt) for the full text.
+- The project is primarily licensed under the GNU General Public License v3.0 or
+  later (SPDX-License-Identifier: `GPL-3.0-or-later`), see
+  [`LICENSES/GPL-3.0-or-later.txt`](./LICENSES/GPL-3.0-or-later.txt) for the
+  full text.
+- Files below `/doc` are licensed under the
+  [Creative Commons Attribution Share Alike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/deed)
+  license, see [`LICENSES/CC-BY-SA-4.0.txt`](./LICENSES/CC-BY-SA-4.0.txt) for
+  the full text.
 
 The above list might not be exhaustive. [... usual template follows ...]
 ```
