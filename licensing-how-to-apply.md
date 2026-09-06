@@ -1,4 +1,4 @@
-# Licensing guide: How to apply licenses
+# Licensing guide: how to apply licenses
 
 This document explains how to apply one or more licenses to your project after
 [choosing](./licensing-how-to-choose-a-license.md) them.
@@ -21,7 +21,7 @@ version of the [REUSE specification](https://reuse.software/spec/)
   - [Issues](#license-comment-headers-issues)
 - [Step 7: REUSE linting](#linting)
 - [Step 8: Register as compliant repository (optional)](#reuse-api)
-- [Frequently Asked Questions (FAQ)](#faq)
+- [Frequently asked questions (FAQ)](#faq)
   - [How to update the copyright year?](#update-copyright-year)
   - [Why does the license detection of GitHub and others not work?](#broken-repo-hoster-license-detection)
 - [Disclaimer](#disclaimer)
@@ -189,8 +189,8 @@ This project was created and is maintained by [foundata](https://foundata.com/).
 
 Special thanks to:
 
-* John Doe fixing the bug in `foo.cpp`
-* [... List of additional people or projects ...]
+- John Doe fixing the bug in `foo.cpp`
+- [... List of additional people or projects ...]
 ```
 
 
@@ -209,8 +209,8 @@ as needed):
 ```markdown
 The project is dual-licensed under the
 
-* GNU General Public License v3.0 or later (SPDX-License-Identifier: `GPL-3.0-or-later`), see [`LICENSES/GPL-3.0-or-later.txt`](./LICENSES/GPL-3.0-or-later.txt) for the full text.
-* Apache License 2.0 (SPDX-License-Identifier: `Apache-2.0`), see [`LICENSES/Apache-2.0.txt`](./LICENSES/Apache-2.0.txt) for the full text.
+- GNU General Public License v3.0 or later (SPDX-License-Identifier: `GPL-3.0-or-later`), see [`LICENSES/GPL-3.0-or-later.txt`](./LICENSES/GPL-3.0-or-later.txt) for the full text.
+- Apache License 2.0 (SPDX-License-Identifier: `Apache-2.0`), see [`LICENSES/Apache-2.0.txt`](./LICENSES/Apache-2.0.txt) for the full text.
 
 [... usual template follows ...]
 ```
@@ -218,8 +218,8 @@ The project is dual-licensed under the
 ```markdown
 This work is licensed under multiple licences. Here is a brief summary:
 
-* The project is primarily licensed under the GNU General Public License v3.0 or later (SPDX-License-Identifier: `GPL-3.0-or-later`), see [`LICENSES/GPL-3.0-or-later.txt`](./LICENSES/GPL-3.0-or-later.txt) for the full text.
-* Files below `/doc` are licensed under the [Creative Commons Attribution Share Alike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/deed) license, see [`LICENSES/CC-BY-SA-4.0.txt`](./LICENSES/CC-BY-SA-4.0.txt) for the full text.
+- The project is primarily licensed under the GNU General Public License v3.0 or later (SPDX-License-Identifier: `GPL-3.0-or-later`), see [`LICENSES/GPL-3.0-or-later.txt`](./LICENSES/GPL-3.0-or-later.txt) for the full text.
+- Files below `/doc` are licensed under the [Creative Commons Attribution Share Alike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/deed) license, see [`LICENSES/CC-BY-SA-4.0.txt`](./LICENSES/CC-BY-SA-4.0.txt) for the full text.
 
 The above list might not be exhaustive. [... usual template follows ...]
 ```
@@ -396,7 +396,7 @@ REUSE compliant:
 [![REUSE status](https://api.reuse.software/badge/github.com/foundata/guidelines)](https://api.reuse.software/info/github.com/foundata/guidelines)
 
 
-## Frequently Asked Questions (FAQ)<a id="faq"></a>
+## Frequently asked questions (FAQ)<a id="faq"></a>
 
 
 ### How to update the copyright year?<a id="update-copyright-year"></a>
