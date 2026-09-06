@@ -185,8 +185,8 @@ The links define each step's requirements.
 2. Validate declared container-image dependency and
    [base-image pins](#pinning-image-references).
 3. First build, import, re-verify and [test](#linting-and-testing) `linux/amd64`
-   natively or with the documented [emulation fallback](#multi-platform-images);
-   every release requires this platform.
+   in a [recorded execution mode](#multi-platform-images); every release
+   requires this platform.
 4. Repeat the build, import, re-verification and test sequence on every other
    required platform worker.
 5. Generate each platform [SBOM](#sboms), run the local
@@ -255,16 +255,17 @@ without running it.
 
 **You SHOULD:**
 
-- Build and publish `linux/arm64` images.
-- Run architecture-dependent build steps on native workers. Use
-  [QEMU user-mode emulation](https://www.qemu.org/docs/master/user/) only when a
-  native worker is not practical and test the resulting image on real target
-  hardware before release; the
-  [recorded execution modes](#multi-platform-images) make the combination
-  visible.
+- Build and test each platform natively or under
+  [QEMU user-mode emulation](https://www.qemu.org/docs/master/user/). Prefer a
+  native worker when the image compiles or ships architecture-specific native
+  code or depends on kernel or CPU features that emulation does not reproduce.
 - Keep local and continuous-integration tool versions aligned.
 - Pin supporting tools when predictable upgrades or reconstruction justify it.
   Supported, recorded tool upgrades between releases are permitted.
+
+**You MAY:**
+
+- Build and publish `linux/arm64` images.
 
 **You MUST NOT:**
 
@@ -1138,8 +1139,7 @@ documented exception to the OCI-format rule.
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
 - Every public release MUST include a `linux/amd64` image.
-- Public releases SHOULD include `linux/arm64` unless an application dependency,
-  runtime requirement or support constraint prevents it.
+- Public releases MAY include `linux/arm64`.
 
 **You MUST:**
 
@@ -1153,7 +1153,7 @@ documented exception to the OCI-format rule.
 
 **You SHOULD:**
 
-- Use native `linux/amd64` and `linux/arm64` workers.
+- Use the same execution mode to build and test one platform.
 - Keep platform-independent build steps identical.
 - Test the index through Podman's normal platform selection after publication.
 
@@ -1183,9 +1183,6 @@ service, object store or local directory, subject to these rules:
   qualification per required platform, reject missing, duplicate or unexpected
   records, and match each target to its OCI descriptor and image-configuration
   metadata.
-- When a public release omits the recommended `linux/arm64` image, the
-  repository owner SHOULD maintain a documented issue that identifies the
-  blocking constraint and tracks its removal.
 
 
 **Build and test execution modes.**
@@ -1193,10 +1190,9 @@ service, object store or local directory, subject to these rules:
 - Per-platform evidence and provenance MUST record the target, host and
   execution architectures, plus any emulation or cross-build mechanism, for both
   build and test. A single `uname` value is insufficient.
-- Native build and runtime tests satisfy the platform requirement. Without
-  native target hardware, QEMU-emulated build and runtime tests MAY qualify if
-  ConClear records the emulation and the repository explains why native testing
-  was impractical. Repository configuration MAY still require native testing.
+- Native and QEMU-emulated build and runtime tests both satisfy the platform
+  requirement when the execution mode is recorded. Repository configuration MAY
+  require native execution for a platform.
 - KVM accelerates a guest only when the host can execute the guest architecture
   and does not replace QEMU for cross-architecture emulation.
 
@@ -2111,9 +2107,9 @@ The example is a structural reference, not a universal base-image choice.
   that deployment tooling depends on.
 - **Health checks.** The OCI image format has no health-check field, and health
   policy is an environment decision, so the deployment layer owns it.
-- **Multi-platform.** Emulated builds can hide target-architecture defects;
-  cross-compiling is fine for the build but never replaces an on-target runtime
-  test.
+- **Multi-platform.** Emulation runs a platform's real binaries but not its CPU
+  features or kernel interfaces, so the execution mode is recorded and native
+  workers remain the preference for architecture-specific native code.
 - **Execution modes.** A single `uname` value cannot distinguish native,
   emulated and cross-built execution. Recording target, host, execution
   architecture and mechanism for build and test gives ConClear the evidence
