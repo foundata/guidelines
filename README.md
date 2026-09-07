@@ -111,9 +111,9 @@ an exception to this continuous-release model. It is a versioned ruleset
 implemented by [ConClear](https://foundata.com/en/projects/conclear), so a
 revised guide becomes effective only when its coordinated, compatible ConClear
 release is available. ConClear embeds the exact guide commit it implements and
-owns stable identifiers for its automated checks. Its conformance documentation
-maps each check to the guide's stable section anchor; the guide itself does not
-maintain a parallel rule-number registry.
+owns stable identifiers for its automated checks. The guide assigns a stable
+identifier to every requirement; ConClear's conformance documentation maps each
+check to the requirements it covers.
 
 We believe that guides are work in progress and will probably never be finished
 as our understanding of each topic evolves. This fits our overall agile
