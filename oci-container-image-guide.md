@@ -143,13 +143,12 @@ provider-neutral variants are not a goal.
   containing project facts and permitted exceptions. It may narrow built-in
   rules but cannot relax an unconditional `MUST` or `MUST NOT` or extend a
   built-in maximum.
-- A **platform qualification** is the per-image, per-platform record
-  (`platform-qualification-<platform>.json`, one file per target platform) of
+- A **platform qualification** is the per-image, per-platform record of
   observations, evidence digests and the platform verdict produced by
-  qualification on one build worker.
-- A **release candidate** is the aggregate record (`release-candidate.json`)
-  produced by assembly from one or more accepted platform qualifications. It
-  identifies the exact image manifest or image index eligible for publication.
+  qualification on one build worker, one record per target platform.
+- A **release candidate** is the aggregate record produced by assembly from one
+  or more accepted platform qualifications. It identifies the exact image
+  manifest or image index eligible for publication.
 - A **candidate reference** is a reserved, single-use tag for one publication
   attempt of an accepted digest. Its `-candidate.` suffix follows the release
   version or source revision so related tags sort together.
@@ -185,10 +184,10 @@ provider-neutral variants are not a goal.
   Containerfile, `conclear.toml`, build scripts and dependency declarations. The
   ordinary worktree may be dirty, but uncommitted or untracked files MUST NOT
   enter the release.
-- The release workflow MUST execute these steps in order. ConClear orders its
-  steps; the authorized release environment orders external steps.
 
-The links define each step's requirements.
+**The release workflow MUST execute these steps in order.** ConClear orders its
+steps; the authorized release environment orders external steps. The links
+define each step's requirements:
 
 1. Run source, dependency-lock, [Containerfile](#linting-and-testing),
    [context](#build-context) and repository checks.
@@ -306,12 +305,26 @@ The recommended supporting tools are:
 
 ### ConClear version identity<a id="conclear-version-identity"></a>
 
-Every ConClear release MUST expose human-readable and machine-readable version
-information. It MUST include the tool version and full source revision, plus the
-title, repository, path and full revision of the implemented guide. These values
-must be embedded at build time, not read from the repository under test.
+**Every ConClear release MUST:**
 
-Human-readable output should use this form:
+- Expose human-readable and machine-readable version information that includes
+  the tool version, its full source revision, and the title, repository, path
+  and full revision of the implemented guide.
+- Embed these values at build time, not read them from the repository under
+  test.
+- Expose the machine-readable identity through stable fields defined by
+  ConClear's record schemas, so release evidence names the implemented ruleset.
+- Map every check to the requirement identifiers it covers and state, for every
+  identifier of the implemented guide revision, whether it is automated, needs
+  human review, is left to an external control or is unsupported.
+- State the release's built-in limits and defaults in its conformance
+  documentation.
+
+**ConClear MUST NOT:**
+
+- Claim to implement a rule that requires human review.
+
+The human-readable output looks like this:
 
 ```text
 $ conclear version
@@ -319,8 +332,8 @@ ConClear <version> (commit <conclear-source-revision>)
 Implements the automatable rules of foundata "OCI container image build and release guide", oci-container-image-guide.md at commit <guide-revision>
 ```
 
-`conclear version --format json` MUST expose the same identity through stable
-fields for release evidence:
+`conclear version --format json` exposes the same identity; ConClear's schemas
+define the exact fields:
 
 ```json
 {
@@ -335,10 +348,6 @@ fields for release evidence:
   }
 }
 ```
-
-ConClear MUST NOT claim to implement rules that require human review. Its
-conformance documentation MUST state the release's built-in limits and defaults.
-
 
 ## When to create a container image<a id="when-to-create-a-container-image"></a>
 
@@ -490,18 +499,17 @@ ConClear releases MUST:
   ambiguous writes.
 - Use externally supplied, narrowly scoped credentials without placing secret
   values in repository configuration or release evidence.
-
-The candidate lifetime MAY be enforced by a native per-tag expiration, a
-verified retention rule restricted to ConClear candidate names or another
-provider control that remains effective if the releasing process never resumes.
-A local timestamp or best-effort cleanup attempt is not sufficient.
+- Enforce the candidate lifetime through a native per-tag expiration, a verified
+  retention rule restricted to ConClear candidate names or another provider
+  control that remains effective if the releasing process never resumes; a local
+  timestamp or best-effort cleanup attempt is not sufficient.
 
 
 **Release-tag model.** Tags communicate a release channel or human-readable
 version; digests identify content.
 
-- Publish an immutable version tag such as `:1.8.2` when the project has
-  versions.
+- A project with versions MUST publish an immutable version tag such as
+  `:1.8.2`.
 - Moving convenience tags such as `:1`, `:stable` or `:latest` MAY exist.
 - Deployment environment owners MUST configure digest-only admission and
   deployment controls so every moving convenience tag is resolved to a digest
@@ -1245,9 +1253,10 @@ qualification and assembly steps without transport.
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-Rebuildability is mandatory: the project can create a working replacement from
-documented inputs. Bit-for-bit reproducibility is strongly desirable, but must
-be measured and claimed precisely rather than assumed.
+- Rebuildability is mandatory: the project MUST be able to create a working
+  replacement from documented inputs.
+- Bit-for-bit reproducibility is strongly desirable, but it MUST be measured and
+  claimed precisely rather than assumed.
 
 **You MUST:**
 
@@ -1579,19 +1588,21 @@ subject digest available to Cosign but does not promote the candidate. Registry
 and deployment policy reject it until signatures and required attestations pass
 verification.
 
-Release signatures and signed attestations MUST use Cosign's supported default
-public
-[Sigstore transparency service](https://docs.sigstore.dev/logging/overview/)
-(Rekor). Signing MUST fail if log inclusion cannot be obtained, and release
-verification MUST verify that inclusion. Release commands MUST NOT disable
-transparency-log upload, use a no-log signing configuration or ignore
-transparency-log verification. Candidate signatures are the release signatures
-because promotion assigns tags to the same verified digest; the candidate and
-its evidence are already public by construction.
+- Release signatures and signed attestations MUST use Cosign's supported default
+  public
+  [Sigstore transparency service](https://docs.sigstore.dev/logging/overview/)
+  (Rekor).
+- Signing MUST fail if log inclusion cannot be obtained, and release
+  verification MUST verify that inclusion.
+- Release commands MUST NOT disable transparency-log upload, use a no-log
+  signing configuration or ignore transparency-log verification.
+- ConClear MUST NOT sign during checks, builds, tests, evidence generation or
+  qualification; a workflow that does not publish a candidate therefore creates
+  no transparency-log entry.
 
-ConClear MUST NOT sign during checks, builds, tests, evidence generation or
-qualification. A workflow that does not publish a candidate therefore creates no
-transparency-log entry.
+Candidate signatures are the release signatures because promotion assigns tags
+to the same verified digest; the candidate and its evidence are already public
+by construction.
 
 **You MUST:**
 
@@ -1663,9 +1674,10 @@ cosign verify-attestation \
   'quay.io/foundata/example@sha256:<image-index-digest>'
 ```
 
-Manual signing experiments are outside ConClear and SHOULD use a disposable test
-key, never the release key. Keep them out of the public log. With Cosign 3.x,
-create a test-only
+- Manual signing experiments are outside ConClear and SHOULD use a disposable
+  test key, never the release key, and SHOULD stay out of the public log.
+
+With Cosign 3.x, create a test-only
 [signing configuration](https://docs.sigstore.dev/cosign/system_config/custom_components/)
 without Fulcio, an OpenID Connect provider, Rekor or a timestamp authority.
 Store the signature in a Sigstore bundle and explicitly allow verification
@@ -1692,8 +1704,7 @@ cosign verify-blob \
   './test-artifact'
 ```
 
-These opt-outs are test-only and MUST NOT be used for a release.
-
+- These opt-outs are test-only and MUST NOT be used for a release.
 - The approved public key or KMS/HSM identity MUST come from
   maintainer-controlled release configuration for release verification and
   protected deployment configuration for admission. It MUST NOT come from the
@@ -1718,9 +1729,11 @@ Signed registry attestations are the authoritative release evidence: each
 platform SBOM, SLSA provenance for the index and platforms, and the
 release-verification result. Workspace and CI artifacts are convenience copies.
 
-After final verification, ConClear MUST generate the intermediate predicate
-`release-verification.json`. It is not a source comment or committed file. It
-MUST contain:
+- After final verification, ConClear MUST generate a release-verification
+  predicate for the signed release-verification attestation; it is not a source
+  comment or committed file.
+
+**The release-verification predicate MUST contain:**
 
 - Released repository, digest and verdict.
 - ConClear version and source revision.
@@ -1731,34 +1744,36 @@ MUST contain:
 - Signer mode and identity.
 - Digests of verified evidence.
 
-Identities MUST come from protected release configuration, embedded ConClear
-data and observations by the authorized release environment, not
-caller-supplied values.
+**Identities and CI context.** Observed CI context is correlation metadata, not
+proof of authorization or provider identity.
 
-ConClear's release behavior MUST be independent of the command's caller. A
-protected release profile MAY configure CI context handling as `omit`, `observe`
-or `require`. `omit` does not inspect CI environment metadata. `observe` records
-context from a recognized provider when the observation is complete and agrees
-with the isolated checkout, but absence, malformed values or disagreement only
-produce a local diagnostic. `require` treats those conditions as an operational
-failure.
+- Identities MUST come from protected release configuration, embedded ConClear
+  data and observations by the authorized release environment, not
+  caller-supplied values.
+- ConClear's release behavior MUST be independent of the command's caller.
+- A protected release profile MAY configure CI context handling as `omit`,
+  `observe` or `require`. `omit` does not inspect CI environment metadata.
+  `observe` records context from a recognized provider when the observation is
+  complete and agrees with the isolated checkout, but absence, malformed values
+  or disagreement only produce a local diagnostic. `require` treats those
+  conditions as an operational failure.
+- Observed CI context MUST NOT override the isolated source repository or
+  revision, ConClear run identity, builder identity, signing authority, artifact
+  digest or release verdict.
+- Repository configuration and arbitrary command-line input MUST NOT supply CI
+  context.
+- Provider environment variables are ordinary process inputs and MUST be
+  identified as such in public evidence.
+- When present, public CI context MUST contain only a normalized provider
+  identifier, `provider-environment` as its source, repository name, full source
+  revision and provider run identifier.
+- ConClear MUST verify that the repository and revision agree with the isolated
+  checkout before including the context.
+- Internal service origins and provider-specific details MAY appear in local
+  diagnostics but MUST NOT enter signed public evidence.
 
-Observed CI context is correlation metadata, not proof of authorization or
-provider identity. It MUST NOT override the isolated source repository or
-revision, ConClear run identity, builder identity, signing authority, artifact
-digest or release verdict. Repository configuration and arbitrary command-line
-input MUST NOT supply it. Provider environment variables are ordinary process
-inputs and MUST be identified as such in public evidence.
-
-When present, public CI context MUST contain only a normalized provider
-identifier, `provider-environment` as its source, repository name, full source
-revision and provider run identifier. ConClear MUST verify that the repository
-and revision agree with the isolated checkout before including the context.
-Internal service origins and provider-specific details MAY appear in local
-diagnostics but MUST NOT enter signed public evidence.
-
-An illustrative predicate has this shape. It uses the same envelope as every
-other ConClear record; the release-specific facts live in `payload`:
+An illustrative predicate has this shape; ConClear's record schemas define the
+exact envelope and fields, and the release-specific facts live in `payload`:
 
 ```json
 {
@@ -1822,9 +1837,10 @@ other ConClear record; the release-specific facts live in `payload`:
 ```
 
 Cosign wraps the predicate in an in-toto Statement and attaches it to the
-released digest as a signed attestation. The release environment MAY retain the
-JSON file for diagnostics, but the registry attestation is authoritative.
+released digest as a signed attestation.
 
+- The release environment MAY retain the predicate file for diagnostics, but the
+  registry attestation is authoritative.
 - Release-time verification MUST retain the signed release-verification
   attestation before promotion.
 - The organization SHOULD export or back up release evidence so it survives
