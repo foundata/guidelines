@@ -80,9 +80,19 @@ The terms MUST, SHOULD, and other key words are used as defined in
 This guide covers Linux application and service images built from
 Containerfiles, including intermediate stages that affect the final artifact.
 
+It is foundata's release policy for public container images, and it binds its
+toolset deliberately: ConClear, Buildah, Podman, Skopeo, Hadolint, Trivy,
+Cosign, Quay and the public Sigstore transparency log are requirements, not
+examples. Another organization can adopt the guide and the toolset as a whole
+with its own source repositories, Quay organization and repositories; where the
+text names foundata, the adopting organization takes its place. Tool-neutral or
+provider-neutral variants are not a goal.
+
 **The following are explicitly out of scope:**
 
 - Windows containers.
+- Private images. Their transparency and disclosure rules differ from the public
+  rules stated here and are not defined by this guide.
 - GitHub container actions.
 - Docker compatibility testing and Docker-specific build extensions.
 - Orchestrator-specific deployment policy except where it verifies the image
@@ -403,19 +413,20 @@ conformance documentation MUST state the release's built-in limits and defaults.
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-The approved registry for publishing public foundata images is currently
-[Quay.io](https://docs.projectquay.io/quay_io.html) (`quay.io`). This rule
-chooses where foundata publishes images; it does not prohibit consuming upstream
-images from their authoritative registries. ConClear separates standard OCI
-image transport from provider-specific registry controls and uses one explicitly
-configured backend from its compiled support matrix. Quay.io is currently the
-only implemented release-registry backend.
+[Quay.io](https://docs.projectquay.io/quay_io.html) (`quay.io`) is the release
+registry for public images; foundata publishes under its
+[foundata](https://quay.io/organization/foundata) organization. This rule
+chooses where the organization publishes images; it does not prohibit consuming
+upstream images from their authoritative registries. ConClear separates standard
+OCI image transport from provider-specific registry controls and uses one
+explicitly configured backend from its compiled support matrix. Quay.io is
+currently the only implemented release-registry backend.
 
 **You MUST:**
 
-- Publish public foundata images under an approved `quay.io` organization and
-  repository, usually [foundata](https://quay.io/organization/foundata).
-  ConClear verifies the registry and configured release repository.
+- Publish public images under the organization's approved `quay.io` organization
+  and repository. ConClear verifies the registry and configured release
+  repository.
 - Use fully qualified registry and repository names for every image reference.
 - Verify the publisher and pin every external image input by digest as described
   in [Pinning image references](#pinning-image-references).
@@ -431,6 +442,9 @@ only implemented release-registry backend.
   before remote mutation. Checks, builds, tests, qualification, evidence
   generation, assembly and provenance generation remain available for other
   fully qualified repositories.
+- A mirror owner MUST record the upstream repository and digest, preserve
+  required index membership, scan the content, apply the organization's trust
+  policy and automate reviewed refreshes.
 
 **You SHOULD:**
 
@@ -440,7 +454,7 @@ only implemented release-registry backend.
 - Consume an image from its authoritative upstream registry when no equivalent
   Quay source exists. This includes fully qualified Docker Official Image
   references such as `docker.io/library/debian`.
-- Mirror an upstream image when foundata needs additional availability,
+- Mirror an upstream image when the organization needs additional availability,
   retention or policy control.
 
 **You MUST NOT:**
@@ -453,9 +467,6 @@ only implemented release-registry backend.
   alias resolution.
 - Publish credentials, private source references or internal hostnames in public
   labels or attestations.
-- A mirror owner MUST record the upstream repository and digest, preserve
-  required index membership, scan the content, apply foundata trust policy and
-  automate reviewed refreshes.
 
 
 **Supported release-registry contract.** A backend supported for complete
@@ -546,7 +557,7 @@ release tag and receives no release-retention guarantee.
 
 ### Choosing a base image<a id="choosing-a-base-image"></a>
 
-foundata does not mandate one base distribution for every application.
+This guide does not mandate one base distribution for every application.
 
 **You MUST evaluate:**
 
@@ -690,7 +701,8 @@ so that divergence between tag and digest becomes measurable.
 - Keep supported release branches receiving relevant base-image and toolchain
   updates.
 - Pin and verify any external updater used to generate or apply proposals. Do
-  not grant a hosted update service write access to foundata repositories.
+  not grant a hosted update service write access to the organization's
+  repositories.
 - When an updater opens branches or pull requests, give it credentials that can
   create only those review resources and cannot merge or push to protected
   branches. Branch and pull-request delivery MUST NOT be required for an
@@ -1546,8 +1558,8 @@ controls and provenance.
 
 Cosign is the standard signing and attestation client. Command examples in this
 section use Cosign 3.x syntax; ConClear's supported-version matrix defines the
-exact accepted versions. The baseline signing model is a foundata-managed key
-pair. Generate the initial key material in a controlled environment:
+exact accepted versions. The baseline signing model is an organization-managed
+key pair. Generate the initial key material in a controlled environment:
 
 ```sh
 umask 077
@@ -2143,11 +2155,11 @@ The example is a structural reference, not a universal base-image choice.
 - **Provenance and signing.** Correct SLSA fields alone do not establish trust.
   The generator must run in the authorized release environment, and verification
   must use the approved signing key. The managed key pair keeps key custody
-  under foundata's control; the public transparency log makes release signing
-  auditable. Manual experiments use disposable keys without log upload to avoid
-  permanent test entries and release-key associations. KMS or HSM protection can
-  later reduce exposure of exportable keys. Keep builder, signer and source
-  identities separate so one compromise cannot impersonate all three.
+  under the organization's control; the public transparency log makes release
+  signing auditable. Manual experiments use disposable keys without log upload
+  to avoid permanent test entries and release-key associations. KMS or HSM
+  protection can later reduce exposure of exportable keys. Keep builder, signer
+  and source identities separate so one compromise cannot impersonate all three.
 - **Evidence retention.** Registry attestations are authoritative only while
   they remain fetchable and verifiable. A registry migration can orphan them, so
   exports or backups should match the release support lifetime.
