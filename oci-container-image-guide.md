@@ -80,8 +80,9 @@ The terms MUST, SHOULD, and other key words are used as defined in
 - Rebuilt and rescanned through automation.
 
 
-This guide covers Linux application and service images built from
-Containerfiles, including intermediate stages that affect the final artifact.
+This guide covers Linux images built from Containerfiles for services, one-shot
+tasks and OS/integration-test targets. It also covers intermediate stages that
+affect the final artifact.
 
 It is foundata's release policy for public container images, and it binds its
 toolset deliberately: ConClear, Buildah, Podman, Skopeo, Hadolint, Trivy,
@@ -2370,6 +2371,14 @@ The example is a structural reference, not a universal base-image choice.
   them and holds them constant. Global pins would impede upgrades without adding
   release identity: evidence identifies the tools, and the ConClear version
   identifies the rules.
+- **Image purpose and privileges.** An OS test target may need package
+  installation or Ansible privilege escalation; those operations explain a
+  writable-root or sudo requirement. A service or one-shot task can also have
+  justified requirements. Lifecycle profiles select process tests, and each
+  permission is reviewed separately. An image category does not grant
+  privileges or relax digest, provenance, scanner, signature or source-integrity
+  controls. Functional tests exercise the intended operations; restrictive
+  tests check behavior when escalation and writes are denied.
 - **Requirement identifiers.** A stable identifier per statement lets a guide
   revision be reviewed as a list of added, retired and reworded requirements,
   lets ConClear state coverage for every requirement instead of every section,
