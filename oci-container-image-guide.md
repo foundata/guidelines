@@ -984,8 +984,11 @@ distribution or release.
   required semantics. `IG0184`<a id="ig0184"></a>
 - Make executables, configuration and data no more permissive than their runtime
   use requires. `IG0185`<a id="ig0185"></a>
-- Ensure the runtime identity cannot change executable code or immutable
-  configuration, including by changing their permission modes.
+- Ensure unprivileged runtime identities cannot directly change executable code
+  or immutable configuration, including by changing their permission modes.
+  Document intentional administration of those files by an authorized root or
+  sudo identity; unrestricted root access can change them on a writable root
+  filesystem.
   `IG0186`<a id="ig0186"></a>
 - Preserve executable bits in version control for source-controlled executable
   files. `IG0187`<a id="ig0187"></a>
@@ -1008,8 +1011,14 @@ distribution or release.
 - Use remote-URL `ADD`. `IG0193`<a id="ig0193"></a>
 - Depend on `ADD` archive auto-extraction when an explicit extraction command
   would make validation and ownership clearer. `IG0194`<a id="ig0194"></a>
-- Use `chmod -R 777`, world-writable application directories or setuid/setgid
-  executables. `IG0195`<a id="ig0195"></a>
+- Use `chmod -R 777` or world-writable application directories.
+  `IG0195`<a id="ig0195"></a>
+- Include setuid/setgid executables without a reviewed requirement naming each
+  executable, its purpose, owner and review trigger. Check inherited executables
+  as well as files added by the image. Protect each executable and its parent
+  directories against modification by unprivileged callers; a sudo requirement
+  covers only the sudo executable paths it declares.
+  `IG0420`<a id="ig0420"></a>
 - Copy a complete repository merely for convenience. `IG0196`<a id="ig0196"></a>
 - Change ownership recursively in a later layer when ownership can be assigned
   during `COPY`. `IG0197`<a id="ig0197"></a>
@@ -1077,14 +1086,20 @@ buildah build \
 
 **You MUST:**
 
-- Set `USER` to a numeric, non-zero UID in the final stage unless the
-  application has a documented, reviewed requirement for root.
+- Set `USER` to a numeric, non-zero UID in the final stage unless the configured
+  startup identity has a documented, reviewed requirement for UID 0. Record the
+  rationale, owner and review trigger in `runtime.root_requirement`; declare
+  `USER 0` explicitly when it applies.
   `IG0207`<a id="ig0207"></a>
 - Use a stable UID and GID that do not collide with identities already defined
   by the selected base. `IG0208`<a id="ig0208"></a>
 - Make required writable paths explicit. `IG0209`<a id="ig0209"></a>
-- Ensure application startup does not need to change file ownership, install
-  packages or rewrite its executable or static configuration.
+- Ensure ordinary application startup does not need to change file ownership,
+  install packages or rewrite its executable or static configuration. For an
+  image whose purpose includes those administration tasks, document and test the
+  intended operations and required writable paths. A writable root filesystem
+  needs its own rationale, owner and review trigger in
+  `runtime.writable_root_requirement`.
   `IG0210`<a id="ig0210"></a>
 - Document and review every required Linux capability, device, host namespace,
   privileged mode or writable host path. `IG0211`<a id="ig0211"></a>
@@ -1096,8 +1111,10 @@ buildah build \
   `IG0213`<a id="ig0213"></a>
 - Mount an explicit temporary filesystem for `/tmp` or another required scratch
   path. `IG0214`<a id="ig0214"></a>
-- Drop all capabilities and enable `no-new-privileges` in smoke tests, adding
-  back only a documented capability when required. `IG0215`<a id="ig0215"></a>
+- Drop all capabilities and enable `no-new-privileges` in smoke tests. Add back
+  only declared capabilities required by the tested operation. Omit
+  `no-new-privileges` from a functional sudo test only when the reviewed sudo
+  requirement declares escalation. `IG0215`<a id="ig0215"></a>
 - Define and test memory, CPU, PID and `nofile` limits in deployment
   configuration, using per-image measured values from representative startup and
   load tests recorded in repository configuration; runtime evidence records the
@@ -1107,13 +1124,36 @@ buildah build \
 
 **You MUST NOT:**
 
-- Install or use `sudo` in the final image. `IG0218`<a id="ig0218"></a>
+- Include or use `sudo` in the final image without a documented, reviewed
+  `runtime.sudo_requirement` giving its rationale, owner, review trigger and
+  authorization scope. State whether the requirement is `presence-only` or
+  `escalation`; installing the package alone does not authorize escalation.
+  `IG0218`<a id="ig0218"></a>
 - Run as root merely to bind a low port, write application files or avoid
   setting ownership during the build. `IG0219`<a id="ig0219"></a>
 - Declare a broad writable directory when one narrow cache or temporary path is
   sufficient. `IG0220`<a id="ig0220"></a>
 - Assume a named user resolves in a `scratch` image without supplying the
   required user database files. `IG0221`<a id="ig0221"></a>
+
+Rootless execution describes the container manager's host privileges. A
+rootless container can start as container UID 0 or support sudo without running
+the manager as host root. Neither requirement authorizes `--privileged`, host
+namespaces, extra capabilities or writable host mounts.
+
+Root and sudo requirements are independent of lifecycle profiles. A systemd
+image that starts as UID 0 and tests sudo from another account needs both. A
+non-root image that supports sudo needs only the sudo requirement. Keep the
+actual authorization in sudoers and retain the policy used by the tests with
+their evidence. Identify intended callers, target identities and permitted
+operations in the scope; explain passwordless or unrestricted access when
+required. For a disposable OS test target, unrestricted sudo may be appropriate,
+but it gives that account root-equivalent access within the container.
+
+- Repository owners MUST review sudo authorization and set-ID requirements when
+  their declared review triggers occur. A reviewed repository change with a
+  named owner is sufficient; a separate approval service is not required.
+  `IG0421`<a id="ig0421"></a>
 
 
 Example hardening smoke test with illustrative resource values:
@@ -2058,8 +2098,20 @@ released digest as a signed attestation.
   platform. `IG0403`<a id="ig0403"></a>
 - Test startup, readiness where applicable, graceful termination and expected
   exit status. `IG0404`<a id="ig0404"></a>
-- Run with a read-only root filesystem, all capabilities dropped and
-  `no-new-privileges` during a hardening test. `IG0405`<a id="ig0405"></a>
+- Test the declared functional runtime contract. When it permits sudo escalation,
+  a writable root filesystem or additional capabilities, also run a separate
+  restrictive test of the same gated artifact with a read-only root filesystem,
+  all capabilities dropped and `no-new-privileges`. In that test, privilege
+  escalation is expected to fail; the image need not complete administration
+  tasks that the restrictions deliberately prevent.
+  `IG0405`<a id="ig0405"></a>
+- For a sudo escalation requirement, test a permitted operation from an actual
+  non-root caller and denial for an unauthorized caller or operation. Repeat the
+  permitted operation under `no-new-privileges` and require escalation to fail.
+  Validate sudoers with the installed implementation's validator. Record the
+  caller identities, policy, commands, outcomes and observed runtime controls.
+  A presence-only requirement does not claim working escalation.
+  `IG0422`<a id="ig0422"></a>
 - Run with measured memory, CPU, PID and `nofile` limits during a
   resource-control test. `IG0406`<a id="ig0406"></a>
 - Inspect the final image configuration, layers, labels, user, entrypoint and
