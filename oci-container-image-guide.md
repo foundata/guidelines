@@ -600,8 +600,12 @@ release tag and receives no release-retention guarantee.
 - Candidate content and evidence MUST be safe to disclose publicly. Deleting or
   expiring a tag may leave unreferenced manifests and blobs until registry
   garbage collection. `IG0091`<a id="ig0091"></a>
-- Where the registry supports tag immutability, the release workflow SHOULD
-  enable it for candidate and release tags. `IG0092`<a id="ig0092"></a>
+- Before uploading a candidate, ConClear MUST verify an effective registry
+  policy that protects the configured immutable release tags on creation and
+  leaves candidate and declared moving tags mutable. It MUST repeat this check
+  before promotion and verify protection of each assigned immutable tag.
+  Missing, unreadable or unenforced protection MUST stop publication or
+  promotion. `IG0092`<a id="ig0092"></a>
 - ConClear MUST set a bounded default candidate lifetime through the selected
   registry-control backend and refuse promotion after expiry. Repository
   configuration MAY shorten but MUST NOT extend or disable it. The backend MUST
