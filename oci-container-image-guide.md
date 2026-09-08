@@ -28,6 +28,7 @@ The terms MUST, SHOULD, and other key words are used as defined in
 - [Terminology](#terminology)
 - [Requirement identifiers](#requirement-identifiers)
 - [Release workflow](#release-workflow)
+  - [First release from a workstation](#first-release-from-a-workstation)
 - [Supported tools, syntax and platforms](#supported-tools-syntax-and-platforms)
   - [ConClear version identity](#conclear-version-identity)
 - [When to create a container image](#when-to-create-a-container-image)
@@ -278,6 +279,58 @@ define each step's requirements:
   retags the already verified digest so the artifact that passed policy remains
   the artifact consumers receive, enforced by ConClear.
   `IG0019`<a id="ig0019"></a>
+
+
+### First release from a workstation<a id="first-release-from-a-workstation"></a>
+
+A native Linux workstation or ordinary Linux VM can run the complete workflow
+in `IG0003`. An x86-64 host provides native execution for the required
+`linux/amd64` platform; additional platforms follow the
+[execution and transport rules](#multi-platform-images). The host needs access
+to source and image registries, scanner databases and public Sigstore services.
+No ConClear container image, CI runner, KMS or new platform service is needed.
+
+The initial setup is:
+
+1. Install a supported Python version and the host tools listed by the selected
+   ConClear release: Git, Buildah, Podman, Skopeo, Hadolint, Trivy and Cosign.
+   Configure rootless Buildah and Podman for the release user.
+2. Install a ConClear wheel whose source revision and checksum the release
+   maintainer has approved. Check its installed source and guide identity with
+   `conclear version --format json`. Before a published wheel is available,
+   ConClear's
+   [distribution release gate](https://github.com/foundata/conclear/blob/main/DEVELOPMENT.md#release-procedure)
+   builds and retains an identified wheel from a clean, reviewed ConClear
+   checkout. That gate runs locally and does not need a container release.
+3. Commit and review the image's Containerfile, build inputs and
+   `conclear.toml`, including the required platforms, runtime tests and release
+   tags. A moving tag such as `latest` belongs in `release.moving_tags`.
+4. Create a protected local release profile outside the image repository, with
+   `ci_context = "omit"`, the documented builder identity, an encrypted local
+   Cosign key and its approved public key. Keep the passphrase and Quay
+   credentials in protected files outside the repository as well.
+5. Prepare the destination Quay repository and its selective version-tag
+   immutability policy, leaving candidates and moving tags mutable. Give the
+   release token the policy-read and candidate-retention permissions described
+   in the
+   [ConClear quick start](https://github.com/foundata/conclear/blob/main/docs/quickstart.md#10-create-a-release-profile).
+   ConClear establishes or reuses candidate retention before uploading.
+
+With the profile named `foundata` and the release image named `app`, run from
+the image repository:
+
+```sh
+conclear doctor --config conclear.toml --profile foundata
+conclear release --source . --revision v1.2.3 --image app \
+  --version 1.2.3 --profile foundata
+```
+
+`doctor` diagnoses prerequisites without publishing or signing; the `release`
+command performs qualification through verified promotion. The
+[quick start](https://github.com/foundata/conclear/blob/main/docs/quickstart.md)
+contains the installation and configuration details. CI can later call the
+same command with its own protected release profile and documented builder
+identity. It does not need a second implementation of the release steps.
 
 
 ## Supported tools, syntax and platforms<a id="supported-tools-syntax-and-platforms"></a>
