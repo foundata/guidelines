@@ -1522,6 +1522,15 @@ Trivy is the standard scanner.
 - Cache the vulnerability database between runs, record the database version or
   timestamp with each scan result, and refresh a stale or corrupted cache
   instead of trusting it. `IG0305`<a id="ig0305"></a>
+- ConClear MUST define a finite qualification window beginning with selection
+  of a fresh common database snapshot. Distributed workers MUST use that exact
+  snapshot within the original window. Qualification completion, assembly,
+  publication and promotion MUST reject expired approval, including on resume.
+  The deadline MUST be recorded with the evidence and MUST NOT outlive pin
+  freshness, permitted pin divergence or applied vulnerability exceptions.
+  Expiry requires renewed qualification; it does not invalidate historical
+  evidence. Rescans MUST assess the unchanged released subject with a fresh
+  database. `IG0423`<a id="ig0423"></a>
 
 **You SHOULD:**
 
@@ -2102,12 +2111,12 @@ released digest as a signed attestation.
   platform. `IG0403`<a id="ig0403"></a>
 - Test startup, readiness where applicable, graceful termination and expected
   exit status. `IG0404`<a id="ig0404"></a>
-- Test the declared functional runtime contract. When it permits sudo escalation,
-  a writable root filesystem or additional capabilities, also run a separate
-  restrictive test of the same gated artifact with a read-only root filesystem,
-  all capabilities dropped and `no-new-privileges`. In that test, privilege
-  escalation is expected to fail; the image need not complete administration
-  tasks that the restrictions deliberately prevent.
+- Test the declared functional runtime contract. When it permits sudo
+  escalation, a writable root filesystem or additional capabilities, also run a
+  separate restrictive test of the same gated artifact with a read-only root
+  filesystem, all capabilities dropped and `no-new-privileges`. In that test,
+  privilege escalation is expected to fail; the image need not complete
+  administration tasks that the restrictions deliberately prevent.
   `IG0405`<a id="ig0405"></a>
 - For a sudo escalation requirement, test a permitted operation from an actual
   non-root caller and denial for an unauthorized caller or operation. Repeat the
