@@ -322,12 +322,13 @@ The initial setup is:
    Scope writer permissions to the intended repositories where the registry
    supports it. A new image repository does not need a new builder identity or
    another copy of the signing keys.
-5. Prepare the destination Quay repository and its selective version-tag
-   immutability policy, leaving candidates and moving tags mutable. Give the
-   release token the policy-read and candidate-retention permissions described
-   in the
-   [ConClear quick start](https://github.com/foundata/conclear/blob/main/docs/quickstart.md#10-create-a-release-profile).
-   ConClear establishes or reuses candidate retention before uploading.
+5. Prepare the destination Quay repository. Prefer selective version-tag
+   protection; where it is unavailable, record the reason and owner in the
+   protected profile. Declare a candidate-cleanup owner, procedure and mode.
+   Native expiration or auto-pruning is recommended; manual cleanup is an
+   accepted fallback. Grant the permissions needed by the selected controls,
+   following the
+   [ConClear quick start](https://github.com/foundata/conclear/blob/main/docs/quickstart.md#5-prepare-release-access).
 
 With the profile named `foundata` and the release image named `app`, run from
 the image repository:
@@ -399,7 +400,7 @@ The operating document can be short:
 | ------------------------------- | --------------------------- |
 | Credentials and keys            | Review authorized access; test backup, rotation and revocation procedures. |
 | Registry writers                | Limit who can publish, change policies or delete supported content; review permission changes. |
-| Candidate retention             | Check that the registry pruner runs and overdue candidate tags disappear. |
+| Candidate retention             | Remove abandoned candidates through the declared procedure; monitor automated expiry or pruning when configured. |
 | Supported releases and evidence | Keep the digest inventory current; check that retained files and registry attestations remain retrievable. |
 | Rescans                         | Run every due supported digest, record the result and notify its owner on failure or a rejecting verdict. |
 | Triage and rebuilds             | Assign findings, track their deadlines, release corrected digests and record superseded or ended support. |
@@ -675,54 +676,60 @@ currently the only implemented release-registry backend.
   labels or attestations. `IG0075`<a id="ig0075"></a>
 
 
-**Supported release-registry contract.** A backend supported for complete
-ConClear releases MUST:
+**Supported release-registry contract.** A supported backend and its operator
+have these responsibilities:
 
-- Preserve the complete OCI manifest, index, configuration and blob graph
-  without digest transformation. `IG0076`<a id="ig0076"></a>
-- Resolve exact tags and digests without treating ambiguous remote state as
-  absence. `IG0077`<a id="ig0077"></a>
-- Store and retrieve Cosign signatures and attestations for image indexes and
-  platform manifests in the released subject's repository.
+- The backend MUST preserve the complete OCI manifest, index, configuration and
+  blob graph without digest transformation. `IG0076`<a id="ig0076"></a>
+- The backend MUST resolve exact tags and digests without treating ambiguous
+  remote state as absence. `IG0077`<a id="ig0077"></a>
+- The backend MUST store and retrieve Cosign signatures and attestations for
+  image indexes and platform manifests in the released subject's repository.
   `IG0078`<a id="ig0078"></a>
-- Enforce and verify a bounded candidate lifetime independently of the ConClear
-  process that published it. `IG0079`<a id="ig0079"></a>
-- Prevent immutable release tags from being repointed while permitting declared
-  moving tags. `IG0080`<a id="ig0080"></a>
-- Assign release tags only to the verified digest and permit an exact post-write
-  observation. `IG0081`<a id="ig0081"></a>
-- Delete an owned candidate reference and permit conclusive verification of its
-  removal. `IG0082`<a id="ig0082"></a>
-- Expose enough remote state for ConClear to recover safely from interrupted or
-  ambiguous writes. `IG0083`<a id="ig0083"></a>
-- Use externally supplied, narrowly scoped credentials without placing secret
-  values in repository configuration or release evidence.
+- The release owner MUST declare an owner and procedure for removing abandoned
+  candidates in the protected release profile. Manual cleanup is an accepted
+  fallback and requires retained ownership records.
+  `IG0079`<a id="ig0079"></a>
+- The registry SHOULD enforce selective version-tag immutability while leaving
+  candidate and declared moving tags mutable. `IG0080`<a id="ig0080"></a>
+- The backend MUST assign release tags only to the verified digest and permit an
+  exact post-write observation. `IG0081`<a id="ig0081"></a>
+- The backend MUST delete an owned candidate reference and permit conclusive
+  verification of its removal. `IG0082`<a id="ig0082"></a>
+- The backend MUST expose enough remote state for ConClear to recover safely
+  from interrupted or ambiguous writes. `IG0083`<a id="ig0083"></a>
+- The backend MUST use externally supplied, narrowly scoped credentials without
+  placing secret values in repository configuration or release evidence.
   `IG0084`<a id="ig0084"></a>
-- Enforce the candidate lifetime through a native per-tag expiration, a verified
-  retention rule restricted to ConClear candidate names or another provider
-  control that remains effective if the releasing process never resumes; a local
-  timestamp or best-effort cleanup attempt is not sufficient.
+- The release owner SHOULD automate candidate cleanup through native tag
+  expiration, a candidate-only pruning policy or a scheduled cleanup command.
+  Automation does not require CI or a new platform service.
   `IG0085`<a id="ig0085"></a>
 
-Control: external (registry operator), with ConClear checks at publication and
-promotion. Quay enforces selective tag immutability against registry writers;
-ConClear checks the effective policies and observed tags and refuses to replace
-a version tag itself. ConClear cannot stop an administrator from disabling a
-policy or deleting a repository later. Writer permissions and policy changes
-remain operator responsibilities.
+Control: ConClear refuses conflicting version-tag writes and verifies each
+assignment. Registry enforcement, where required by the protected profile,
+adds protection against other writers. Without it, the operator owns tag
+stability, narrow writer permissions and release serialization. ConClear cannot
+prevent concurrent or later writes by another client or an administrator.
 
-ConClear establishes and reads back a candidate-retention rule and sets the
-tag's expiration. The registry's asynchronous pruner performs expiry and
-garbage collection. ConClear does not monitor that worker or prove deletion at
-an exact wall-clock instant. The operator monitors overdue tags and pruning
-failures; local cleanup is not a substitute for this external control.
+Candidate authorization expires independently of cleanup. ConClear records the
+original deadline before upload and refuses promotion after it, even if the tag
+still exists. Selected native expiration and pruning controls are verified;
+unavailable controls are not silently treated as successful. A manual profile
+does not require these APIs. An interrupted upload may leave an orphaned tag,
+which the cleanup owner removes. Automatic pruning survives loss of the local
+run state, but its availability is not a prerequisite for a qualified release.
+Pruning and garbage collection remain asynchronous and do not promise erasure
+of published bytes at an exact instant.
 
 
 **Release-tag model.** Tags communicate a release channel or human-readable
 version; digests identify content.
 
-- A project with versions MUST publish an immutable version tag such as
-  `:1.8.2`. `IG0086`<a id="ig0086"></a>
+- A project with versions MUST publish a version tag such as `:1.8.2` and MUST
+  NOT repoint it to different content. Registry enforcement is a separate
+  control; the repository declares these names in `release.version_tags`.
+  `IG0086`<a id="ig0086"></a>
 - Moving convenience tags such as `:1`, `:stable` or `:latest` MAY exist.
   `IG0087`<a id="ig0087"></a>
 - Deployment environment owners MUST configure digest-only admission and
@@ -746,17 +753,19 @@ release tag and receives no release-retention guarantee.
 - Candidate content and evidence MUST be safe to disclose publicly. Deleting or
   expiring a tag may leave unreferenced manifests and blobs until registry
   garbage collection. `IG0091`<a id="ig0091"></a>
-- Before uploading a candidate, ConClear MUST verify an effective registry
-  policy that protects the configured immutable release tags on creation and
-  leaves candidate and declared moving tags mutable. It MUST repeat this check
-  before promotion and verify protection of each assigned immutable tag.
-  Missing, unreadable or unenforced protection MUST stop publication or
-  promotion. `IG0092`<a id="ig0092"></a>
-- ConClear MUST set a bounded default candidate lifetime through the selected
-  registry-control backend and refuse promotion after expiry. Repository
-  configuration MAY shorten but MUST NOT extend or disable it. The backend MUST
-  verify that the provider retained or otherwise enforces the requested
-  deadline. `IG0093`<a id="ig0093"></a>
+- The protected release profile MUST explicitly require registry tag protection
+  or record its reviewed absence with a rationale and owner. Required protection
+  MUST be verified before upload and promotion, including protection on final
+  tag assignment and exclusion of candidate and moving tags. Missing or
+  unreadable required protection MUST stop the operation. ConClear MUST record
+  the selected policy and observed protection without claiming enforcement in
+  the reviewed-absence mode. `IG0092`<a id="ig0092"></a>
+- ConClear MUST record a finite candidate-authorization deadline before upload
+  and enforce it before and during promotion, including resume. Repository
+  configuration MAY shorten but MUST NOT extend or disable the maximum.
+  Retries and registry expiration settings MUST NOT extend the recorded
+  authorization. Registry cleanup metadata is separate from this deadline.
+  `IG0093`<a id="ig0093"></a>
 - A workflow MUST NOT use a separate candidate repository unless it copies or
   recreates every signature and attestation in the final repository, then
   verifies the subjects and identities before promotion.
@@ -770,10 +779,12 @@ release tag and receives no release-retention guarantee.
 - After writing a release or convenience tag, promotion MUST compare it with the
   verified digest and record the result. A missing or different tag is an
   operational failure. `IG0096`<a id="ig0096"></a>
-- After successful promotion, ConClear MUST delete the temporary candidate tag.
-  A rejected or abandoned candidate MUST be deleted explicitly or left to its
-  configured expiration. Delayed removal of unreferenced manifests and blobs by
-  registry garbage collection is not a release failure.
+- After successful promotion, ConClear MUST attempt to delete the temporary
+  candidate tag and verify its removal. Cleanup failure MUST be reported
+  separately without revoking the completed release. The cleanup owner MUST
+  remove rejected or abandoned candidates through the declared procedure.
+  Delayed garbage collection is not a release failure, and cleanup MUST NOT
+  delete supported release tags or their required evidence.
   `IG0097`<a id="ig0097"></a>
 
 
@@ -1782,8 +1793,8 @@ section defines the required project output and evidence.
 - Within the effective remediation deadline, the project owner MUST either
   release a newly qualified remediated digest or obtain and record an approved
   exception as defined above. `IG0315`<a id="ig0315"></a>
-- Immutable version and release tags MUST NOT be repointed for remediation. The
-  registry owner enforces immutability; ConClear refuses a different existing
+- Version and release tags MUST NOT be repointed for remediation. The
+  release owner maintains their stability; ConClear refuses a different existing
   digest and reports observed repointing as a policy failure.
   `IG0316`<a id="ig0316"></a>
 - A convenience tag MUST advance only through ConClear's verified promotion,
@@ -2589,14 +2600,17 @@ The example is a structural reference, not a universal base-image choice.
 - **Platform transport.** Records claim but do not prove their origin. Digest
   verification before assembly keeps qualification meaningful without separate
   transport authentication.
-- **Registries.** OCI image transport is portable, but candidate expiry,
-  selective tag protection and conclusive mutation recovery depend on provider
-  controls. The explicit backend matrix prevents a nominally compatible registry
-  from weakening release behavior. Quay.io currently satisfies the complete
-  contract and remains foundata's approved destination. Consume from the
+- **Registries.** OCI image transport is portable, but control APIs and
+  conclusive mutation recovery depend on the deployment. A compiled backend
+  alone does not establish a tested complete release path. Consume from the
   authoritative upstream registry because a similarly named repackaging is not
   equivalent. Use mirrors only for specific availability or policy needs; an
   unmaintained mirror becomes stale and unscanned.
+- **Version-tag protection.** Registry-side tag protection is not uniformly
+  available, so version-tag stability remains mandatory while provider
+  enforcement is recommended.
+- **Candidate cleanup.** Automatic cleanup limits abandoned artifacts, while
+  ConClear independently enforces release-authorization deadlines.
 - **Base images.** One mandatory distribution would sacrifice compatibility,
   lifecycle fit and diagnostic knowledge for superficial consistency. Image size
   is an incomplete measure of attack surface, which depends on reachable
