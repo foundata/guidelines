@@ -29,6 +29,7 @@ The terms MUST, SHOULD, and other key words are used as defined in
 - [Requirement identifiers](#requirement-identifiers)
 - [Release workflow](#release-workflow)
   - [First release from a workstation](#first-release-from-a-workstation)
+  - [Operating supported releases](#operating-supported-releases)
 - [Supported tools, syntax and platforms](#supported-tools-syntax-and-platforms)
   - [ConClear version identity](#conclear-version-identity)
 - [When to create a container image](#when-to-create-a-container-image)
@@ -56,6 +57,7 @@ The terms MUST, SHOULD, and other key words are used as defined in
   - [Provenance](#provenance)
   - [Signing and verification](#signing-and-verification)
   - [Release evidence and retention](#release-evidence-and-retention)
+    - [Retaining the referenced bytes](#retaining-the-referenced-bytes)
 - [Linting and testing](#linting-and-testing)
 - [Reference Containerfile](#reference-containerfile)
 - [Reasoning](#reasoning)
@@ -183,8 +185,10 @@ an identifier is never reused. ConClear owns the identifiers of its checks and
 maps each check to the requirements it covers; its conformance documentation
 states, for every identifier at the implemented guide revision, whether ConClear
 automates the requirement, lists it for human review, leaves it to an external
-control or does not support it. The guide itself makes no claim about
-automation.
+control or does not support it. Control notes beside the rules distinguish a
+ConClear check from manual review or an external control. A check can observe
+part of an external control without taking over its operation; the conformance
+documentation identifies the coverage of the selected ConClear release.
 
 **When editing this guide:**
 
@@ -228,6 +232,10 @@ No identifiers are retired.
   Containerfile, `conclear.toml`, build scripts and dependency declarations. The
   ordinary worktree may be dirty, but uncommitted or untracked files MUST NOT
   enter the release. `IG0004`<a id="ig0004"></a>
+
+Control: manual review establishes that the selected commit is approved.
+ConClear checks the checkout's identity and bytes; a matching Git revision does
+not establish who reviewed its contents.
 
 **The release workflow MUST execute these steps in order.** ConClear orders its
 steps; the authorized release environment orders external steps. The links
@@ -332,6 +340,63 @@ command performs qualification through verified promotion. The
 contains the installation and configuration details. CI can later call the
 same command with its own protected release profile and documented builder
 identity. It does not need a second implementation of the release steps.
+
+
+### Operating supported releases<a id="operating-supported-releases"></a>
+
+The first release provisions the workstation, credentials and registry policy.
+Supported releases also need continuing operation. These duties can belong to
+one maintainer and run on an existing managed host.
+
+- The organization MUST name an owner for credential and signing-key custody,
+  registry writer permissions, candidate and release retention, the supported
+  release inventory, scheduled rescans, vulnerability triage and rebuilds.
+  Record the owners and procedures in a maintained operating document outside
+  the public evidence bundle; one person may own several duties.
+  `IG0424`<a id="ig0424"></a>
+- The release owner MUST maintain a supported-release inventory keyed by
+  repository and immutable digest. Each entry MUST identify its platforms,
+  support status, owner, source revision, exact repository-configuration digest
+  and retained checkout, evidence location, trusted signer, latest verified
+  authoritative rescan digest when one exists, completed-assessment time and
+  next due time.
+  Operational failures or missed jobs MUST NOT advance the completed-assessment
+  time. `IG0425`<a id="ig0425"></a>
+- The scheduling owner MUST provide an available execution host, protected
+  persistent state and credentials, monitoring for failed or overdue work, and
+  an owned recovery procedure. Preserve pin observations and rescan history
+  across jobs and host replacement; verify recovery without resetting an
+  existing remediation clock. `IG0426`<a id="ig0426"></a>
+
+Control: external (release and scheduling owners). ConClear runs a requested
+release or rescan and records its outcome. It does not maintain the supported
+release inventory, schedule the next invocation, alert an owner or perform a
+remediating rebuild by itself.
+
+Before the first rescan, record the qualifying release assessment and leave
+the rescan history head empty. A verified authoritative rescan that rejects an
+image is still a completed assessment. Its result advances the signed history;
+the scheduling owner alerts the triage owner. An operational failure produces
+no such assessment.
+
+The operating document can be short:
+
+|              Duty               | Operator's continuing check |
+| ------------------------------- | --------------------------- |
+| Credentials and keys            | Review authorized access; test backup, rotation and revocation procedures. |
+| Registry writers                | Limit who can publish, change policies or delete supported content; review permission changes. |
+| Candidate retention             | Check that the registry pruner runs and overdue candidate tags disappear. |
+| Supported releases and evidence | Keep the digest inventory current; check that retained files and registry attestations remain retrievable. |
+| Rescans                         | Run every due supported digest, record the result and notify its owner on failure or a rejecting verdict. |
+| Triage and rebuilds             | Assign findings, track their deadlines, release corrected digests and record superseded or ended support. |
+
+A systemd timer or cron job on an existing managed host can invoke
+`conclear rescan --authoritative` for each due digest using its retained
+configuration and protected release profile. A timer definition alone does not
+provide monitoring or availability. The owner checks missed runs, preserves
+state and arranges recovery after downtime. CI is another possible caller of
+the same commands. The [retention recipe](#retaining-the-referenced-bytes)
+describes the files needed for later rescans.
 
 
 ## Supported tools, syntax and platforms<a id="supported-tools-syntax-and-platforms"></a>
@@ -624,6 +689,19 @@ ConClear releases MUST:
   control that remains effective if the releasing process never resumes; a local
   timestamp or best-effort cleanup attempt is not sufficient.
   `IG0085`<a id="ig0085"></a>
+
+Control: external (registry operator), with ConClear checks at publication and
+promotion. Quay enforces selective tag immutability against registry writers;
+ConClear checks the effective policies and observed tags and refuses to replace
+a version tag itself. ConClear cannot stop an administrator from disabling a
+policy or deleting a repository later. Writer permissions and policy changes
+remain operator responsibilities.
+
+ConClear establishes and reads back a candidate-retention rule and sets the
+tag's expiration. The registry's asynchronous pruner performs expiry and
+garbage collection. ConClear does not monitor that worker or prove deletion at
+an exact wall-clock instant. The operator monitors overdue tags and pruning
+failures; local cleanup is not a substitute for this external control.
 
 
 **Release-tag model.** Tags communicate a release channel or human-readable
@@ -1586,6 +1664,25 @@ Trivy is the standard scanner.
   evidence. Rescans MUST assess the unchanged released subject with a fresh
   database. `IG0423`<a id="ig0423"></a>
 
+Control: ConClear checks evidence age at release authorization boundaries. The
+current qualification maximum is 24 hours from the original fresh database
+selection; `freshness.QUALIFICATION_WINDOW` defines it in code. Earlier pin
+freshness, pin-divergence or applied-exception deadlines shorten it. The start
+and effective expiry are recorded with the qualification and signed release
+verification. Clocks on the participating hosts are an external responsibility.
+
+|                    Boundary                    | Freshness decision |
+| ---------------------------------------------- | ------------------ |
+| New qualification                              | Both Trivy database components are fresh at the original start: updated by then and not yet at their next-update time. |
+| Later worker                                   | The exact pinned snapshot and original start are reused within the same window; pinning never silently substitutes a database. |
+| Completion through promotion, including resume | The recorded window remains current. A delayed phase cannot renew approval. |
+| Historical inspection                          | Age does not invalidate what the evidence records about the past release. |
+| New rescan                                     | The original signed release evidence is verified and a fresh database supplies the new vulnerability assessment. |
+
+The configured candidate lifetime, currently at most seven days, is a separate
+deadline and does not extend qualification approval. A previously passing scan
+also says nothing about advisories published since that scan.
+
 **You SHOULD:**
 
 - Scan the digest pulled from the registry after upload as a non-gating
@@ -1611,6 +1708,10 @@ Trivy is the standard scanner.
   finding; ConClear records every applied exception in evidence.
   `IG0311`<a id="ig0311"></a>
 
+Control: manual review (security owner) establishes the exception's rationale,
+reachability and compensating controls. ConClear validates its fields, match
+and expiry; it does not determine whether the human assessment is correct.
+
 
 Example local vulnerability gate:
 
@@ -1622,8 +1723,7 @@ trivy image \
   --severity HIGH,CRITICAL
 ```
 
-Trivy can also scan a retained SBOM directly, which keeps the required scheduled
-rescans cheap because the released image does not have to be pulled again:
+Trivy can also scan a retained SBOM directly without pulling the image:
 
 ```sh
 trivy sbom \
@@ -1636,6 +1736,9 @@ trivy sbom \
 An SBOM rescan matches vulnerabilities against the retained package inventory.
 It does not repeat the image filesystem's secret and configuration scans; see
 [Rescans and remediation](#rescans-and-remediation) for the scope rules.
+The direct Trivy command above is a diagnostic. ConClear's authoritative rescan
+also verifies registry evidence and currently retrieves the released image
+graph even for SBOM-only vulnerability matching; it is not an offline command.
 
 
 ### Rescans and remediation<a id="rescans-and-remediation"></a>
@@ -1667,6 +1770,14 @@ section defines the required project output and evidence.
 - The project owner SHOULD publish an advisory when consumers are affected,
   identifying the affected digest and the remediating digest or exception.
   `IG0319`<a id="ig0319"></a>
+
+Control: ConClear records the first authoritative observation, preserves the
+linked history and rejects findings that exceed the effective deadline. The
+project owner performs triage, publishes advisories and delivers remediation.
+Those are manual and external controls: no ConClear invocation means no new
+observation, and a rejecting result does not itself rebuild or withdraw an
+image. Scheduling and alert delivery follow
+[Operating supported releases](#operating-supported-releases).
 
 
 **Rescan scope.**
@@ -1820,6 +1931,11 @@ hosted platform's trusted control plane, generates and signs the provenance.
 Any higher-level claim requires separately implemented and audited platform
 controls and provenance.
 
+Control: ConClear emits the Build L1 claim. Manual review establishes the
+documented builder trust domain; external platform controls would have to
+establish any higher level. CI environment variables and execution of the same
+commands do not supply those controls.
+
 **You MUST:**
 
 - Attach provenance to the registry as a signed Cosign attestation.
@@ -1909,6 +2025,11 @@ by construction.
   `IG0369`<a id="ig0369"></a>
 - Use the same long-lived signing key across unrelated trust domains.
   `IG0370`<a id="ig0370"></a>
+
+Control: external (key custodian and deployment owner), with manual review of
+their procedures. ConClear checks configured key files and verifies signatures
+against the approved public key. It does not establish who can read every copy
+of the private key, operate backups or enforce consumer admission policies.
 
 
 Signing and attestation:
@@ -2006,6 +2127,9 @@ required identity model. Keep the registry namespace narrow and use
 Signed registry attestations are the authoritative release evidence: each
 platform SBOM, SLSA provenance for the index and platforms, and the
 release-verification result. Workspace and CI artifacts are convenience copies.
+The signature authenticates the statement and its digest references; it does
+not retain the bytes behind every reference. Registry retention is an external
+control, and a local SHA-256 value is not an archive.
 
 - After final verification, ConClear MUST generate a release-verification
   predicate for the signed release-verification attestation; it is not a source
@@ -2082,6 +2206,10 @@ exact envelope and fields, and the release-specific facts live in `payload`:
   ],
   "verdict": "accepted",
   "payload": {
+    "qualificationWindow": {
+      "startedAt": "2026-09-06T10:00:00Z",
+      "expiresAt": "2026-09-07T09:00:00Z"
+    },
     "subject": {
       "repository": "quay.io/foundata/example",
       "digest": "sha256:<release-digest>"
@@ -2141,6 +2269,41 @@ released digest as a signed attestation.
   `IG0397`<a id="ig0397"></a>
 - An informal local rescan is a useful diagnostic but is not release evidence
   and does not start or satisfy remediation duties.
+
+#### Retaining the referenced bytes<a id="retaining-the-referenced-bytes"></a>
+
+- The release owner MUST retain the exact non-secret qualification records,
+  scan reports, SBOMs, test evidence, candidate record and provenance and
+  verification predicates for the supported release lifetime. Retain the exact
+  `conclear.toml` and the source checkout needed to load it. Check their digests
+  against the signed evidence and test retrieval from the retention location
+  before discarding the working copies. `IG0427`<a id="ig0427"></a>
+- The release owner MUST keep protected command logs, credentials, release
+  profiles, secret test inputs and raw diagnostic output outside the shareable
+  evidence bundle. Review the selected files for disclosure before making a
+  bundle accessible to consumers. `IG0428`<a id="ig0428"></a>
+
+Control: external (release owner), with manual disclosure review. ConClear's
+qualification transport exports the recorded payload bytes and their digests;
+it does not archive the complete release, publish a bundle or operate backups.
+
+The
+[ConClear evidence-retention recipe](https://github.com/foundata/conclear/blob/main/docs/evidence-retention.md)
+uses one `transport export` per platform, copies an explicit set of release
+records and preserves the reviewed source checkout. It keeps command logs out of
+the bundle and records checksums for the retained files. These files support
+inspection; the local verification predicate alone is not a signed attestation
+or a complete registry backup. Backup of registry signatures and attestations
+follows `IG0395` and includes every platform and the released index.
+
+ConClear rescans load repository configuration and require its byte digest to
+match the original signed release verification. A current `conclear.toml` that
+has changed cannot stand in for the release's copy, even when it still names
+the same image. A retained checkout supplies any Containerfiles, contexts and
+test files that configuration loading also needs. The rescan uses current
+scanner data and verifies registry evidence; it does not rebuild or run the
+historical source. A fresh rescan remains possible after the original
+qualification window expires.
 
 
 ## Linting and testing<a id="linting-and-testing"></a>
@@ -2360,9 +2523,10 @@ The example is a structural reference, not a universal base-image choice.
   create license obligations even when their licenses do not cover generated
   images.
 - **Release environments.** CI automates releases but is not the trust boundary.
-  A maintainer workstation is safe when ConClear builds an isolated reviewed
-  revision, runs the same gates, obtains external signing authority and records
-  the environment. Provider-neutral release behavior avoids dependence on one CI
+  A maintainer workstation can run the same gates: ConClear builds an isolated
+  reviewed revision, obtains external signing authority and records the
+  environment. Host administration and key custody remain trusted external
+  controls. Provider-neutral release behavior avoids dependence on one CI
   service. Optional observed CI context helps correlate public evidence with
   provider records, but ordinary provider environment variables do not
   authenticate that context.
