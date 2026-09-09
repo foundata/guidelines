@@ -314,10 +314,14 @@ The initial setup is:
 3. Commit and review the image's Containerfile, build inputs and
    `conclear.toml`, including the required platforms, runtime tests and release
    tags. A moving tag such as `latest` belongs in `release.moving_tags`.
-4. Create a protected local release profile outside the image repository, with
+4. Reuse the organization's protected release profile for this build trust
+   domain, or create it once outside the image repository, with
    `ci_context = "omit"`, the documented builder identity, an encrypted local
    Cosign key and its approved public key. Keep the passphrase and Quay
    credentials in protected files outside the repository as well.
+   Scope writer permissions to the intended repositories where the registry
+   supports it. A new image repository does not need a new builder identity or
+   another copy of the signing keys.
 5. Prepare the destination Quay repository and its selective version-tag
    immutability policy, leaving candidates and moving tags mutable. Give the
    release token the policy-read and candidate-retention permissions described
@@ -333,6 +337,16 @@ conclear doctor --config conclear.toml --profile foundata
 conclear release --source . --revision v1.2.3 --image app \
   --version 1.2.3 --profile foundata
 ```
+
+When exactly one release image is configured, `--image app` may be omitted;
+test-only dependencies do not count as release images. Platforms remain
+explicit. `conclear config show --version 1.2.3` reports effective defaults,
+runtime-profile mounts, pin limits and decision reasons without building or
+contacting registries. It also checks the rendered tags. An unused tag class or
+optional table need not be declared, but every release needs at least one final
+tag. Keep resource measurements and reviewed privilege requirements explicit.
+`adopt` leaves these owner decisions unresolved and validation reports them
+together; a generated draft is not evidence that the decisions were made.
 
 `doctor` diagnoses prerequisites without publishing or signing; the `release`
 command performs qualification through verified promotion. The
@@ -861,6 +875,15 @@ printf '%s@%s\n' "${image}" "${digest}"
 
 **Pin intent and freshness.** Every pin declares what its tag is expected to do
 so that divergence between tag and digest becomes measurable.
+
+The Containerfile is ConClear's authoritative source of each pinned digest.
+Its `conclear.toml` pin entry names the readable tag, for example
+`reference = "quay.io/fedora/fedora-minimal:43"`, and the tag intent below.
+ConClear derives the full digest-bearing reference from the matching external
+inputs. It requires exact coverage, rejects a tag with more than one digest in
+the same Containerfile, and does not ask maintainers to repeat the digest in
+TOML. `pins propose/apply` updates the verified Containerfile occurrences while
+binding the unchanged intent declarations through the configuration digest.
 
 - Every pinned reference declared in `conclear.toml` MUST declare
   `tag_intent = "immutable-version"` or `tag_intent = "moving-release-line"`;
