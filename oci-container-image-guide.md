@@ -328,15 +328,17 @@ The initial setup is:
    Native expiration or auto-pruning is recommended; manual cleanup is an
    accepted fallback. Grant the permissions needed by the selected controls,
    following the
-   [ConClear quick start](https://github.com/foundata/conclear/blob/main/docs/quickstart.md#5-prepare-release-access).
+   [ConClear release setup](https://github.com/foundata/conclear#usage-access).
 
 With the profile named `foundata` and the release image named `app`, run from
 the image repository:
 
 ```sh
 conclear doctor --config conclear.toml --profile foundata
+archives=/srv/archives/conclear
+mkdir -p "$archives"
 conclear release --source . --revision v1.2.3 --image app \
-  --version 1.2.3 --profile foundata
+  --version 1.2.3 --profile foundata --archive-dir "$archives"
 ```
 
 When exactly one release image is configured, `--image app` may be omitted;
@@ -2317,18 +2319,20 @@ released digest as a signed attestation.
   evidence bundle. Review the selected files for disclosure before making a
   bundle accessible to consumers. `IG0428`<a id="ig0428"></a>
 
-Control: external (release owner), with manual disclosure review. ConClear's
-qualification transport exports the recorded payload bytes and their digests;
-it does not archive the complete release, publish a bundle or operate backups.
+Control: ConClear creates a compressed archive for each completed release,
+promotion and rescan through the required `--archive-dir`. The release owner
+provides durable storage, backup, retention and disclosure review.
 
-The
-[ConClear evidence-retention recipe](https://github.com/foundata/conclear/blob/main/docs/evidence-retention.md)
-uses one `transport export` per platform, copies an explicit set of release
-records and preserves the reviewed source checkout. It keeps command logs out of
-the bundle and records checksums for the retained files. These files support
-inspection; the local verification predicate alone is not a signed attestation
-or a complete registry backup. Backup of registry signatures and attestations
-follows `IG0395` and includes every platform and the released index.
+The archive contains exact source/configuration, per-platform qualification
+and test evidence, OCI metadata and signed attestation bundles. Image layers
+are optional. Protected profiles, signing keys, credentials and raw logs are
+excluded; source and reports still need review before sharing. `archive verify`
+checks retained signatures against the trusted profile key. The archive's
+checksum manifest is unsigned and does not authenticate supplemental files.
+See [ConClear archive usage](https://github.com/foundata/conclear/blob/main/docs/evidence-retention.md).
+Archive creation does not operate backups or restore a registry. Registry
+backup follows `IG0395` and includes every platform, the released index,
+signatures and attestations.
 
 ConClear rescans load repository configuration and require its byte digest to
 match the original signed release verification. A current `conclear.toml` that
