@@ -328,7 +328,7 @@ The initial setup is:
    Native expiration or auto-pruning is recommended; manual cleanup is an
    accepted fallback. Grant the permissions needed by the selected controls,
    following the
-   [ConClear release setup](https://github.com/foundata/conclear#usage-access).
+   [ConClear host setup](https://github.com/foundata/conclear#usage-host-config).
 
 With the profile named `foundata` and the release image named `app`, run from
 the image repository:
@@ -2323,16 +2323,16 @@ Control: ConClear creates a compressed archive for each completed release,
 promotion and rescan through the required `--archive-dir`. The release owner
 provides durable storage, backup, retention and disclosure review.
 
-The archive contains exact source/configuration, per-platform qualification
-and test evidence, OCI metadata and signed attestation bundles. Image layers
-are optional. Protected profiles, signing keys, credentials and raw logs are
+The archive contains exact source/configuration, per-platform qualification and
+test evidence, OCI metadata and signed attestation bundles. Image layers are
+optional. Protected profiles, signing keys, credentials and raw logs are
 excluded; source and reports still need review before sharing. `archive verify`
 checks retained signatures against the trusted profile key. The archive's
-checksum manifest is unsigned and does not authenticate supplemental files.
-See [ConClear archive usage](https://github.com/foundata/conclear/blob/main/docs/evidence-retention.md).
-Archive creation does not operate backups or restore a registry. Registry
-backup follows `IG0395` and includes every platform, the released index,
-signatures and attestations.
+checksum manifest is unsigned and does not authenticate supplemental files. See
+[ConClear archive usage](https://github.com/foundata/conclear#usage-archives).
+Archive creation does not operate backups or restore a registry. Registry backup
+follows `IG0395` and includes every platform, the released index, signatures and
+attestations.
 
 ConClear rescans load repository configuration and require its byte digest to
 match the original signed release verification. A current `conclear.toml` that
