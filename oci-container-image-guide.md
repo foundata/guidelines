@@ -172,6 +172,12 @@ provider-neutral variants are not a goal.
   workstation or protected CI job. It runs ConClear on a reviewed commit and
   obtains trust configuration and signing authority outside the repository and
   arbitrary command-line input.
+- The **public source URL** is the stable, credential-free HTTPS URL declared as
+  `project.source` in the repository configuration. It is the only source
+  location that labels, records and attestations name. It need not be a Git
+  repository and need not match the Git origin of the build checkout; a project
+  page section that lists every repository mirror is valid. Repository names and
+  hosts change, the public source URL does not.
 
 
 ## Requirement identifiers<a id="requirement-identifiers"></a>
@@ -232,6 +238,16 @@ No identifiers are retired.
   Containerfile, `conclear.toml`, build scripts and dependency declarations. The
   ordinary worktree may be dirty, but uncommitted or untracked files MUST NOT
   enter the release. `IG0004`<a id="ig0004"></a>
+- The protected release profile MUST list the allowed Git origins of release
+  checkouts as credential-free HTTPS URL prefixes. ConClear MUST normalize the
+  observed origin of the selected checkout to its HTTPS identity and MUST reject
+  a run whose origin matches no listed prefix. Repository configuration and
+  command-line input MUST NOT supply or extend this list.
+  `IG0429`<a id="ig0429"></a>
+- The observed Git origin MUST NOT appear in image labels, records,
+  attestations, command results or release archives. Public evidence identifies
+  the source only by the declared public source URL and the complete source
+  revision. `IG0430`<a id="ig0430"></a>
 
 Control: manual review establishes that the selected commit is approved.
 ConClear checks the checkout's identity and bytes; a matching Git revision does
@@ -316,8 +332,9 @@ The initial setup is:
    tags. A moving tag such as `latest` belongs in `release.moving_tags`.
 4. Reuse the organization's protected release profile for this build trust
    domain, or create it once outside the image repository, with
-   `ci_context = "omit"`, the documented builder identity, an encrypted local
-   Cosign key and its approved public key. Keep the passphrase and Quay
+   `ci_context = "omit"`, the documented builder identity, the allowed Git
+   origins of your release checkouts (`allowed_source_origins`), an encrypted
+   local Cosign key and its approved public key. Keep the passphrase and Quay
    credentials in protected files outside the repository as well.
    Scope writer permissions to the intended repositories where the registry
    supports it. A new image repository does not need a new builder identity or
@@ -1404,8 +1421,8 @@ information; they do not replace provenance.
 
 **A published image MUST include:**
 
-- `org.opencontainers.image.source` with the canonical source repository URL.
-  `IG0232`<a id="ig0232"></a>
+- `org.opencontainers.image.source` with the public source URL declared as
+  `project.source`, byte for byte. `IG0232`<a id="ig0232"></a>
 - `org.opencontainers.image.revision` with the complete source revision used for
   the build. `IG0233`<a id="ig0233"></a>
 - `org.opencontainers.image.licenses` with an SPDX license expression for the
@@ -1920,8 +1937,8 @@ candidates expire.
 
 - Every platform-specific subject digest and, where supported by the generator,
   the image-index digest. `IG0339`<a id="ig0339"></a>
-- The canonical source repository and complete source revision.
-  `IG0340`<a id="ig0340"></a>
+- The declared public source URL and the complete source revision. The Git
+  origin of the build checkout is not identified. `IG0340`<a id="ig0340"></a>
 - The Containerfile and relevant build configuration.
   `IG0341`<a id="ig0341"></a>
 - External image materials by digest. `IG0342`<a id="ig0342"></a>
@@ -1950,7 +1967,7 @@ never be conflated or accepted from untrusted input:
   changing the builder identity's documented trust domain.
 - The Cosign signing-key identity identifies the signing authority and comes
   from the approved public key or KMS/HSM key identity.
-- The source repository, revision and release event identify the input and
+- The public source URL, revision and release event identify the input and
   invocation that caused the build.
 - Builder, signer and source or release-event identities MUST remain distinct
   and come from their authoritative sources; ConClear refuses to conflate them.
@@ -2511,7 +2528,7 @@ LABEL org.opencontainers.image.created="${IMAGE_CREATED}" \
       org.opencontainers.image.documentation="https://example.invalid/docs" \
       org.opencontainers.image.licenses="Apache-2.0" \
       org.opencontainers.image.revision="${IMAGE_REVISION}" \
-      org.opencontainers.image.source="https://example.invalid/source" \
+      org.opencontainers.image.source="https://example.invalid/projects/example/#source" \
       org.opencontainers.image.title="Example service" \
       org.opencontainers.image.url="https://example.invalid/" \
       org.opencontainers.image.vendor="foundata GmbH" \
