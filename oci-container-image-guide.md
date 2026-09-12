@@ -1219,6 +1219,30 @@ Example:
 COPY --from=build --chown=0:0 --chmod=0555 /workspace/bin/example /usr/local/bin/example
 ```
 
+Most set-ID bits come from the base image. Debian and Fedora bases ship `su`,
+`mount`, `passwd`, `chsh` and similar helpers with setuid root, and
+dependencies such as `openssh-client` add more. ConClear rejects set-ID modes
+in `chmod` instructions but cannot judge inherited files, so the image build
+has to take an explicit position. When no executable is declared, strip every
+bit in the same layer that installs packages, after user and package setup and
+before the final `USER`:
+
+```dockerfile
+RUN apt-get install -y --no-install-recommends example \
+  && find / -xdev -type f -perm /6000 -exec chmod a-s {} +
+```
+
+With declared set-ID paths, exclude them by name and keep the rest of the
+command unchanged. Add a runtime test that fails on any undeclared set-ID file
+so a base-image or dependency update cannot reintroduce one:
+
+```sh
+podman run --rm --user 0:0 --entrypoint find "$image" \
+  / -xdev -type f -perm /6000
+```
+
+The command must print nothing beyond the declared paths.
+
 
 ## Build arguments, configuration and secrets<a id="build-arguments-configuration-and-secrets"></a>
 
@@ -2660,6 +2684,11 @@ The example is a structural reference, not a universal base-image choice.
 - **File ownership.** Mode `0555` does not protect a file owned by its executor,
   who can change the mode and rewrite it. Root ownership prevents this; a
   read-only root filesystem adds a second control.
+- **Inherited set-ID executables.** Dropped capabilities and
+  `no-new-privileges` make setuid helpers inert in the intended deployment, but
+  operators also run the image without those flags. Removing the bits costs
+  nothing for a non-root service and turns an inherited, unreviewed privilege
+  into a declared exception when a service needs one.
 - **Build arguments and environment.** `ARG` and `ENV` values appear in image
   configuration, logs, caches and provenance. Treat them as public unless the
   documented secret channel protects them end to end.
