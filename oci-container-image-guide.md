@@ -1441,7 +1441,10 @@ ENTRYPOINT /usr/local/bin/example serve
 Use the standard
 [`org.opencontainers.image.*` annotations](https://github.com/opencontainers/image-spec/blob/main/annotations.md)
 as image labels. Labels describe the exact build and provide discovery
-information; they do not replace provenance.
+information; they do not replace provenance. `base.name` and `base.digest` are
+the exception: they are manifest annotations, not labels, because they
+describe the manifest rather than the configuration and because the build tool
+fills them from the pinned base.
 
 **A published image MUST include:**
 
@@ -1449,12 +1452,15 @@ information; they do not replace provenance.
   `project.source`, byte for byte. `IG0232`<a id="ig0232"></a>
 - `org.opencontainers.image.revision` with the complete source revision used for
   the build. `IG0233`<a id="ig0233"></a>
-- `org.opencontainers.image.licenses` with an SPDX license expression for the
-  packaged project. `IG0234`<a id="ig0234"></a>
 - `org.opencontainers.image.title` with a concise human-readable name.
   `IG0235`<a id="ig0235"></a>
 - `org.opencontainers.image.version` when the project has a release version.
   `IG0236`<a id="ig0236"></a>
+- The `org.opencontainers.image.base.name` and
+  `org.opencontainers.image.base.digest` annotations on every platform
+  manifest, naming the pinned base image exactly: `base.name` is the pinned
+  reference by digest and `base.digest` is the platform manifest of that base
+  which the build consumed. `IG0432`<a id="ig0432"></a>
 
 **A published image SHOULD include:**
 
@@ -1464,6 +1470,9 @@ information; they do not replace provenance.
 - `org.opencontainers.image.vendor`. `IG0240`<a id="ig0240"></a>
 - `org.opencontainers.image.created` as an RFC 3339 timestamp when the build
   system supplies a controlled value. `IG0241`<a id="ig0241"></a>
+- License information for the contained software through an attached SPDX
+  SBOM, and for the build definition through REUSE metadata.
+  `IG0434`<a id="ig0434"></a>
 
 **You MUST NOT:**
 
@@ -1475,6 +1484,29 @@ information; they do not replace provenance.
   it from controlled source metadata instead. `IG0244`<a id="ig0244"></a>
 - Invent project-specific labels when a standard OCI annotation has the required
   meaning. `IG0245`<a id="ig0245"></a>
+- Carry `org.opencontainers.image.licenses`, or the legacy `license` key, in a
+  published image. `IG0234`<a id="ig0234"></a>
+- Inherit labels from the base image; every label a published image carries is
+  written by its own build (`--inherit-labels=false`).
+  `IG0431`<a id="ig0431"></a>
+- Write the base annotations by hand or derive them from anything but the
+  pinned `FROM` reference. `IG0433`<a id="ig0433"></a>
+
+**Reasoning:**
+
+- The
+  [OCI specification](https://specs.opencontainers.org/image-spec/annotations/)
+  defines `org.opencontainers.image.licenses` as "License(s) under which
+  contained software is distributed as an SPDX License Expression", which is
+  practically impossible to state truthfully for an image built on a
+  distribution base. The label is widely
+  [misused](https://github.com/opencontainers/image-spec/issues/1257) and
+  therefore unreliable. A per-package inventory says what a single expression
+  cannot.
+- The base annotations are the only metadata that identify the layer an image
+  was built on. Buildah derives the base annotations from `FROM`, avoiding a
+  duplicate pinned digest that could drift. Verifying them against the declared
+  pin preserves a single source of truth.
 
 
 Pass revision, version and creation time from the authorized release process:
@@ -2550,7 +2582,6 @@ ARG IMAGE_VERSION
 LABEL org.opencontainers.image.created="${IMAGE_CREATED}" \
       org.opencontainers.image.description="Example service" \
       org.opencontainers.image.documentation="https://example.invalid/docs" \
-      org.opencontainers.image.licenses="Apache-2.0" \
       org.opencontainers.image.revision="${IMAGE_REVISION}" \
       org.opencontainers.image.source="https://example.invalid/projects/example/#source" \
       org.opencontainers.image.title="Example service" \
