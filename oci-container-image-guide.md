@@ -1805,21 +1805,27 @@ also says nothing about advisories published since that scan.
 
 - Run two scanners as parallel release gates. `IG0308`<a id="ig0308"></a>
 
-**A vulnerability exception MUST:**
+**A scanner exception MUST:**
 
 - Be stored in `conclear.toml` on the protected, reviewed source revision and
   receive the required security-owner review before merge.
   `IG0309`<a id="ig0309"></a>
-- Identify the image, component and advisory; explain the lack of remediation;
-  assess reachability and exposure; list compensating controls; and name the
-  accountable owner, expiry and review trigger. `IG0310`<a id="ig0310"></a>
+- For a vulnerability finding: identify the image, component and advisory;
+  explain the lack of remediation; assess reachability and exposure; and list
+  compensating controls. For a configuration finding: identify the image, the
+  file path or path pattern inside the image and the check identifiers it
+  covers, and explain why the flagged content is acceptable, for example a
+  template shipped inside an installed package that is not the image's own build
+  definition. In both cases name the accountable owner, expiry and review
+  trigger. `IG0310`<a id="ig0310"></a>
 - Be rejected by ConClear when it is malformed, expired or does not match the
   finding; ConClear records every applied exception in evidence.
   `IG0311`<a id="ig0311"></a>
 
-Control: manual review (security owner) establishes the exception's rationale,
-reachability and compensating controls. ConClear validates its fields, match
-and expiry; it does not determine whether the human assessment is correct.
+Control: manual review (security owner) establishes the exception's rationale
+and, for vulnerabilities, reachability and compensating controls. ConClear
+validates its fields, match and expiry; it does not determine whether the human
+assessment is correct.
 
 
 Example local vulnerability gate:
