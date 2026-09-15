@@ -324,7 +324,7 @@ The initial setup is:
    maintainer has approved. Check its installed source and guide identity with
    `conclear version --format json`. Before a published wheel is available,
    ConClear's
-   [distribution release gate](https://github.com/foundata/conclear/blob/main/DEVELOPMENT.md#release-procedure)
+   [distribution release gate](https://github.com/foundata/conclear/blob/main/DEVELOPMENT.md#releases)
    builds and retains an identified wheel from a clean, reviewed ConClear
    checkout. That gate runs locally and does not need a container release.
 3. Commit and review the image's Containerfile, build inputs and
@@ -369,11 +369,12 @@ tag. Keep resource measurements and reviewed privilege requirements explicit.
 together; a generated draft is not evidence that the decisions were made.
 
 `doctor` diagnoses prerequisites without publishing or signing; the `release`
-command performs qualification through verified promotion. The
-[quick start](https://github.com/foundata/conclear/blob/main/docs/quickstart.md)
-contains the installation and configuration details. CI can later call the
-same command with its own protected release profile and documented builder
-identity. It does not need a second implementation of the release steps.
+command performs qualification through verified promotion. Its
+[installation](https://github.com/foundata/conclear#installation) and
+[usage](https://github.com/foundata/conclear#usage) sections cover the setup and
+the configuration. CI can later call the same command with its own protected
+release profile and documented builder identity. It does not need a second
+implementation of the release steps.
 
 
 ### Operating supported releases<a id="operating-supported-releases"></a>
