@@ -807,6 +807,7 @@ rumdl fmt \
   --config 'MD060.style="aligned"' \
   --config 'MD060.column-align-header="center"' \
   --config 'MD060.loose-last-column=true' \
+  --config 'MD072.key-order=["title", "name", "draft", "date", "description", "categories", "category", "tags", "author"]' \
   --config 'MD082.allow-parent-headings=true' \
   .
 
@@ -832,6 +833,7 @@ rumdl check \
   --config 'MD060.style="aligned"' \
   --config 'MD060.column-align-header="center"' \
   --config 'MD060.loose-last-column=true' \
+  --config 'MD072.key-order=["title", "name", "draft", "date", "description", "categories", "category", "tags", "author"]' \
   --config 'MD082.allow-parent-headings=true' \
   .
 ```
@@ -852,6 +854,11 @@ quick look, but it does not implement this guide.
 - `--no-config` makes the result reproducible.
 - `--deny-config-warnings` turns an unrecognized configuration option into an
   error.
+- `MD072` sorts front matter alphabetically by default, which would bury the key
+  naming the document below its description. The `key-order` list leads with the
+  identity, publication and summary keys that renderers and tools read first,
+  then the taxonomy keys. Any key the list does not name follows them
+  alphabetically, so every file keeps one predictable order.
 - `git diff --check` remains necessary alongside `rumdl`. `MD009` cannot flag
   the exact two-trailing-space hard break this guide bans, because `rumdl`
   rejects any `br-spaces` setting below 2, the CommonMark-mandated minimum for
