@@ -1187,13 +1187,22 @@ before `Invoke-ScriptAnalyzer` and `Invoke-Formatter` are available.
   indent_size = 4
   ```
 
-- Add a matching `.gitattributes` entry to normalize PowerShell files in Git:
+- Add a matching `.gitattributes` entry so that Git writes CRLF into every
+  working tree and every `git archive` export, whatever a contributor's
+  `core.autocrlf` is set to:
 
   ```gitattributes
-  *.ps1  text working-tree-encoding=UTF-8-BOM eol=crlf
-  *.psm1 text working-tree-encoding=UTF-8-BOM eol=crlf
-  *.psd1 text working-tree-encoding=UTF-8-BOM eol=crlf
+  *.ps1  text eol=crlf
+  *.psm1 text eol=crlf
+  *.psd1 text eol=crlf
   ```
+
+  Git carries an existing BOM through as file content but never adds one, so
+  the BOM stays a job for `.editorconfig`, the editor and a check. Do not use
+  `working-tree-encoding=UTF-8-BOM`: Git does not implement that encoding
+  name, it is passed to `iconv_open()`, and `git add` aborts wherever the
+  platform's iconv does not know it. See the
+  [`gitattributes` configuration guide](./git-gitattributes.md).
 
 **Reasoning:**
 
