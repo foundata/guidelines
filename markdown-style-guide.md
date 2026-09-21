@@ -184,7 +184,8 @@ extended autolinks.
 **You SHOULD:**
 
 - Put the level-one heading on the first line unless required front matter must
-  precede it.
+  precede it. When that front matter declares a `title` the renderer displays,
+  the key is the level-one heading; do not repeat it as `#`.
 - Start with a short paragraph that defines the document's purpose and scope.
 - Use two or three blank lines before a heading when it benefits unrendered
   readability, except a heading on the first line of the document.
@@ -754,7 +755,7 @@ $ git diff --check
   from the invocation. Use `rumdl rule` to list available rules,
   `rumdl explain MDxxx` for a rule's detailed behavior and examples, or browse
   `https://rumdl.dev/mdxxx/` directly.
-- Use a pinned installation >= 0.2.66 of `rumdl` so that all needed features are
+- Use a pinned installation >= 0.2.72 of `rumdl` so that all needed features are
   available and changing the version stays a deliberate and reviewable step.
 - Check links and render the document with the publishing system (if any) when
   changing anchors, renderer-specific syntax or complex nesting.
@@ -772,6 +773,13 @@ They need no `rumdl` configuration file:
 #           An `ignore-words` list per proper noun avoids this, so this rule
 #           is a candidate to enable later if that list gets maintained.
 #   MD074 - MkDocs nav validation: not applicable, this repo does not use MkDocs
+#   MD093 - inline formatting in headings: this guide's own headings use
+#           backticks for file names, which the rule rejects.
+#
+# Front matter: MD025 and MD041 default to `front-matter-title = "title"`, so
+# a `title:` key counts as the level-one heading and `fmt` demotes a repeated
+# `# Heading` to `##`. If the renderer ignores that key, add to both commands:
+#   --config 'MD025.front-matter-title=""' --config 'MD041.front-matter-title=""'
 #
 # For details on any rule below: `rumdl rule MDxxx` (short summary) or
 # `rumdl explain MDxxx` (full explanation with examples and a doc link), or
@@ -781,7 +789,7 @@ They need no `rumdl` configuration file:
 rumdl fmt \
   --no-config \
   --deny-config-warnings \
-  --extend-enable MD060,MD070,MD072,MD073,MD080,MD082,MD083,MD084,MD085,MD087,MD088 \
+  --extend-enable MD060,MD070,MD072,MD073,MD080,MD082,MD083,MD084,MD085,MD087,MD088,MD090 \
   --config 'MD003.style="atx"' \
   --config 'MD004.style="dash"' \
   --config 'MD007.indent=2' \
@@ -806,7 +814,7 @@ rumdl fmt \
 rumdl check \
   --no-config \
   --deny-config-warnings \
-  --extend-enable MD060,MD070,MD072,MD073,MD080,MD082,MD083,MD084,MD085,MD087,MD088 \
+  --extend-enable MD060,MD070,MD072,MD073,MD080,MD082,MD083,MD084,MD085,MD087,MD088,MD090 \
   --config 'MD003.style="atx"' \
   --config 'MD004.style="dash"' \
   --config 'MD007.indent=2' \
