@@ -55,6 +55,7 @@ Resources on how to work with, maintain and host Git repositories.
 
 - [Git commit message guide (`git-commits.md`)](./git-commits.md)
 - [How to name Git repositories (`git-repository-naming.md`)](./git-repository-naming.md)
+- [`gitattributes` configuration (`git-gitattributes.md`)](./git-gitattributes.md)
 - [`gitignore` configuration (`git-gitignore.md`)](./git-gitignore.md)
 
 
