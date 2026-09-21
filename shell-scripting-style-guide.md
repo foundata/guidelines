@@ -644,7 +644,9 @@ local bar="$(mycmd)"
   Bashism).
 - Use parentheses without spaces after the function name:
   `my_function() { ... }`.
-- Separate libraries with `::`: `my_library::my_function() { ... }`.
+- Prefix library functions with the library name and an underscore:
+  `my_library_my_function() { ... }`. Names containing `::` are not supported by
+  all target shells; for example, `dash` rejects them during parsing.
 
 **You SHOULD:**
 
@@ -712,17 +714,25 @@ main() {
 main "$@"
 ```
 
-The `main` pattern keeps execution flow clear, allows functions to be defined in
-logical order, and enables sourcing the script without executing it (for testing
-or library use):
+The `main` pattern keeps execution flow clear and allows functions to be defined
+in logical order. An unconditional `main "$@"` also runs when the file is
+sourced. For portable reuse, put function definitions in a separate library
+without an entry-point call, and source that library from a thin executable
+wrapper. Resolve the library through the project's installation layout, not the
+caller's working directory.
 
-```sh
-# Source without executing (main is not called when sourced)
-(return 0 2>/dev/null) && sourced='1' || sourced='0'
-if [ "${sourced}" -eq 0 ]; then
+Do not use `(return 0 2>/dev/null)` to detect sourcing: some shells, including
+`dash`, accept it even when the script is executed directly. For a **Bash-only**
+file that intentionally supports both execution and sourcing, guard `main` with:
+
+```bash
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
   main "$@"
 fi
 ```
+
+This guard only controls the call to `main`; other top-level commands still run
+when the file is sourced. Test both invocation modes when both are supported.
 
 **Bad examples:**
 
@@ -1100,13 +1110,21 @@ sort temp.txt > output.txt || exit 1
   unset variables.
 - Exit code 2 is the Unix convention for syntax errors (used by shell builtins
   and most utilities).
-- Trap handlers ensure cleanup happens even when the script is interrupted.
-- `set -e` has [numerous gotchas](http://mywiki.wooledge.org/BashFAQ/105):
-  - Does not trigger in command substitutions:
-    `var=$(false); echo "still runs"`.
-  - Does not trigger in pipelines (only checks last command): `false | true`
-    succeeds.
-  - Disabled in `if`, `while`, `until` conditions, and `&&`/`||` lists.
+- Appropriate traps can clean up on normal exit and relevant catchable signals.
+  They cannot run after `SIGKILL` or abrupt power loss.
+- `set -e` depends on the execution context (see the
+  [Bash manual](https://www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html)):
+  - A plain assignment such as `var=$(false)` returns the substitution's failure
+    status and can terminate the outer shell. In Bash's default non-POSIX mode,
+    however, `-e` is cleared *inside* command substitutions unless
+    `inherit_errexit` is enabled: `var=$(false; printf '%s' 'continued')` can
+    succeed because the final command succeeds.
+  - Without `pipefail`, the pipeline status is the last command's status:
+    `false | true` succeeds.
+  - Failures used as conditions, negated with `!`, or in non-final positions of
+    `&&`/`||` lists do not trigger it. A function called in such a context also
+    runs with `-e` ignored inside its body; extracting code into that function
+    can therefore change failure handling.
   - Behavior varies between shells and shell versions.
   - If you still want to use `set -e`, be aware of these limitations and combine
     it with explicit error handling for critical operations. When Bash is
@@ -1117,12 +1135,13 @@ sort temp.txt > output.txt || exit 1
     #!/usr/bin/env bash
     set -e           # Exit on error
     set -u           # Error on unset variables
-    set -o pipefail  # Pipeline fails if any command fails (Bash-specific)
+    set -o pipefail  # Include failing pipeline stages in the exit status
     shopt -s inherit_errexit  # Preserve set -e in command substitutions (Bash 4.4+)
     ```
 
-    Note: `pipefail` and `inherit_errexit` are Bash-specific and not
-    POSIX-compliant.
+    `inherit_errexit` is Bash-specific and requires Bash 4.4 or newer.
+    POSIX.1-2024 specifies `pipefail`, but older target shells may not implement
+    it. These options do not remove the conditional-context exceptions above.
 
     **Exception:** Use `set -e` for simple, linear scripts where any failed
     command should stop the script, such as release checks with many build,
@@ -1259,12 +1278,20 @@ get_config_dir() {
 
 - Test scripts with `dash` during development (it is stricter about POSIX
   compliance).
-- Avoid / disable the `pipefail` option and do not base script logic on it:
+- For the guide's broad shell baseline, avoid relying on `pipefail`; use
+  explicit status handling for important pipeline stages. If an executable
+  deliberately disables an inherited setting, first check whether the shell
+  supports it:
 
   ```sh
-  set -o 2>/dev/null | grep -Fq pipefail && set +o pipefail # disable, non-POSIX
+  if set -o 2>/dev/null | grep -Fq 'pipefail'; then
+    set +o pipefail
+  fi
   ```
 
+  A sourced library should not change its caller's shell options unless that is
+  part of its documented contract. The Bash-only linear-script exception is
+  described under [Error handling](#error-handling).
 - Avoid GNU-specific options (long options like `--verbose` are often not
   portable even if they are improving readability).
 - Document any required non-POSIX features or tools.
@@ -1310,10 +1337,11 @@ get_config_dir() {
 - `C.UTF-8` is commonly available on modern minimal systems and keeps Unicode
   handling predictable. Falling back to plain `C` still gives deterministic
   byte-oriented behavior when no UTF-8 locale exists.
-- The `pipefail` option is a Bash extension not defined by POSIX. Scripts
-  relying on it will fail or behave unexpectedly on POSIX shells like `dash` or
-  `ash`. For portable error handling in pipelines, check exit statuses
-  explicitly or use temporary files.
+- [`pipefail` is specified by POSIX.1-2024](https://pubs.opengroup.org/onlinepubs/9799919799/utilities/V3_chap02.html#tag_19_09_02),
+  but a standard's publication does not upgrade installed shells. Availability
+  depends on the target implementation and version. This guide retains explicit
+  pipeline-status handling for compatibility with older deployments; neither a
+  current Bash run nor a generic `sh` label proves support across the matrix.
 
 
 ### Hints

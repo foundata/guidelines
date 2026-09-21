@@ -21,7 +21,7 @@ fi
 readonly LC_ALL
 unset locale_candidate
 set -u                                                      # no uninitialized variables
-set -o 2>/dev/null | grep -Fq 'pipefail' && set +o pipefail # disable pipefail as it's non-POSIX
+set -o 2>/dev/null | grep -Fq 'pipefail' && set +o pipefail # older-shell compatibility
 
 # Configure msg() messages (override via environment or inline where needed)
 : "${DEBUG:=0}"          # 0: No debug messages. 1: Print debug messages.
