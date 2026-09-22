@@ -26,6 +26,7 @@ MUST, SHOULD and other key words are used as defined in
 - [Optional attributes](#optional-attributes)
   - [Diff drivers](#diff-drivers)
   - [Merge behavior](#merge-behavior)
+  - [Whitespace checks](#whitespace)
 - [Forge-specific attributes](#forge-specific)
 - [Where `.gitattributes` does not apply](#not-applicable)
 - [Verification and migration](#verification-and-migration)
@@ -261,10 +262,13 @@ the content list of the artifact rather than a convenience.
 
 ```gitattributes
 # Not part of a release artifact.
-.gitattributes  export-ignore
-.gitignore      export-ignore
-.github         export-ignore
-DEVELOPMENT.md  export-ignore
+.gitattributes   export-ignore
+.gitignore       export-ignore
+.github          export-ignore
+ARCHITECTURE.md  export-ignore
+CONTRIBUTING.md  export-ignore
+DESIGN.md        export-ignore
+DEVELOPMENT.md   export-ignore
 ```
 
 **You MUST:**
@@ -283,14 +287,17 @@ DEVELOPMENT.md  export-ignore
 
 **You SHOULD:**
 
-- Decide per repository rather than copying a fixed list. Ask for each
-  candidate whether someone rebuilding from the artifact needs it.
 - Exclude repository mechanics that have no meaning outside the repository,
   such as `.gitattributes`, `.gitignore`, continuous integration configuration
   and editor settings.
-- Treat contributor documentation such as `DEVELOPMENT.md`, `DESIGN.md` or
-  `ARCHITECTURE.md` as a judgment call. It is small, and for some projects it
-  is the documentation a downstream maintainer wants.
+- Exclude contributor documentation, including `ARCHITECTURE.md`,
+  `CONTRIBUTING.md`, `DESIGN.md` and `DEVELOPMENT.md`. These documents describe
+  working on the project; the artifact is for using it.
+- Keep a contributor document in the artifact only when its downstream
+  maintainers want it, and give the reason in a comment next to the attribute
+  line.
+- Ask for every candidate this guide does not name whether someone rebuilding
+  from the artifact needs it, instead of copying another repository's list.
 
 **Reasoning:**
 
@@ -299,6 +306,11 @@ DEVELOPMENT.md  export-ignore
 - Excluding tests is the common mistake. Distribution maintainers run the test
   suite of the artifact they package; a test tree excluded from the export
   cannot be run and cannot be restored by packaging configuration.
+- Contributor documentation describes the repository's workflow: how to set up
+  a development environment, how a change is reviewed, how a release is made.
+  Shipped in an artifact it sends its reader to tooling, paths and history that
+  the artifact does not contain, and the people it is written for have the
+  repository anyway.
 - For `export-ignore`, a directory pattern such as `.github` is enough, because
   the archive skips the whole tree. Other attributes do not work that way:
   Git's manual states that a directory pattern does not recursively apply to
@@ -422,6 +434,53 @@ uv.lock -merge
   only fits content where order does not matter and a wrong result is visible.
 
 
+### Whitespace checks<a id="whitespace"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+`git diff --check` reports whitespace errors and runs as a step in the release
+procedure of several foundata projects. The `whitespace` attribute defines per
+path what counts as an error there and in `git apply`. The `core.whitespace`
+configuration defines the same thing for the whole repository, and its default
+already reports trailing whitespace, a space before a tab in the indent and a
+new blank line at the end of a file.
+
+**You SHOULD NOT:**
+
+- Set a repository-wide `whitespace` attribute such as
+  `* whitespace=blank-at-eol,-blank-at-eof,tab-in-indent`.
+
+**You MAY:**
+
+- Unset the attribute for paths whose whitespace is part of the recorded
+  content:
+
+  ```gitattributes
+  tests/fixtures/** -whitespace
+  ```
+
+**Reasoning:**
+
+- The default costs nothing and already reports what those release procedures
+  look for. In a repository with no whitespace configuration at all,
+  `git diff --check` reported an added trailing space and an added blank line
+  at the end of a file.
+- A written-out value usually weakens that default instead of strengthening
+  it. The `-blank-at-eof` in the example above switches off the
+  blank-line-at-EOF report that Git gives for free.
+- `tab-in-indent` cannot hold repository-wide. It flagged every added line of a
+  Makefile recipe and every indented line of a Go file, both of which require
+  tabs. Keeping it would mean a per-language exception list, which is the
+  maintenance problem this guide rejects for line endings.
+- Indentation is already decided by the formatter and by `.editorconfig` for
+  every language foundata uses. A second definition in `.gitattributes` adds a
+  place for them to disagree.
+- Unsetting the attribute is the useful direction. It silences a path whose
+  bytes are the point without changing what Git reports elsewhere. Unsetting
+  it for a source tree would also switch off the trailing-whitespace report,
+  which is worth keeping.
+
+
 ## Forge-specific attributes<a id="forge-specific"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
@@ -541,6 +600,10 @@ line endings until they are rewritten.
   `-text` or `binary` are then out of reach of the rewrite.
 - Regenerate every recorded digest that the rewrite invalidates, and say so in
   the commit message.
+- Treat artifacts published before the adoption as untouched by it. A
+  procedure that rebuilds an older tag and compares the result against a
+  stored digest has to expect that tag's own bytes, not the ones the policy
+  produces today.
 
 **You SHOULD:**
 
@@ -566,6 +629,17 @@ line endings until they are rewritten.
 - Ordering the declarations before the rewrite means the working tree never
   passes through a state in which a fixture is converted, so no test result has
   to be explained away.
+- `git archive` reads the attributes of the tree it archives, so adopting the
+  policy fixes future exports and changes nothing about published ones. In a
+  test repository, the export of a tag created before the adoption still
+  carried the file a later `export-ignore` removes and the line endings a
+  later `eol=crlf` changes. An artifact released before the policy therefore
+  stays as reproducible, or as platform-dependent, as it was on the day it was
+  built.
+- The exception is the untracked attributes file. With `.git/info/attributes`
+  in place, the same old tag exported with the new line endings and without
+  the excluded file, so a verification run has to confirm that no such file is
+  active. See [attribute precedence](#precedence).
 
 
 ## Attribute precedence<a id="precedence"></a>
