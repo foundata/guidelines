@@ -1093,9 +1093,11 @@ def load_document(path):
   module for diagnostic messages in applications and reusable modules.
 - Create module loggers with `logging.getLogger(__name__)`.
 - Configure logging once at the application entry point, not during module
-  import.
+  import, and make that configuration reversible: install handlers for the
+  duration of one command and remove them afterwards.
 - Send machine-readable or requested result data to standard output and
-  diagnostics to standard error.
+  diagnostics to standard error. For a check, communicate the result through
+  the exit status, not by requiring the caller to parse output.
 - Return a non-zero process exit status when a command fails.
 
 **You SHOULD:**
@@ -1104,7 +1106,14 @@ def load_document(path):
 - Choose levels consistently: `DEBUG` for diagnostic detail, `INFO` for normal
   progress, `WARNING` for recoverable problems, and `ERROR` for failed
   operations.
-- Keep library code quiet by default.
+- Keep library code quiet by default: emit `INFO` records freely, but install
+  no handler and never `print()`. Without a handler those records are silent,
+  so a library caller sees nothing.
+- Narrate progress verb first, so a reader scans the first word of each line.
+- Keep a quiet switch (`-q`/`--quiet`) from suppressing warnings and errors.
+- Decide colour in this order: `NO_COLOR` set disables it, then `FORCE_COLOR`
+  set enables it, then `TERM=dumb` disables it, then the stream's `isatty()`.
+  Redirected output stays plain. Never colour stdout.
 - Return an integer from `main()` and pass it to `SystemExit`.
 
 **You MUST NOT:**
@@ -1113,6 +1122,9 @@ def load_document(path):
 - Log the same exception at several layers.
 - Log secrets, passwords, access tokens or sensitive document contents.
 - Use an f-string in a logging call when lazy arguments work.
+- Rely on `logging.basicConfig()` in code that may run more than once per
+  process, such as a `main()` a test suite calls repeatedly: it is a no-op
+  after the first call, so later output goes to the first caller's stream.
 
 **Good examples:**
 
@@ -1159,6 +1171,8 @@ def process_page(page_number):
   diagnostics.
 - Separating result output from diagnostics allows commands to participate in
   pipelines and gives callers reliable exit-status behavior.
+- A handler left installed writes into a stream that may no longer exist; the
+  failure then surfaces far from its cause.
 
 
 ## Paths, files and external commands<a id="paths-files-external-commands"></a>
