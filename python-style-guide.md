@@ -1305,6 +1305,11 @@ def read_config(path):
 - Use pytest's `importlib` import mode for new projects with a `src` layout.
   Existing projects SHOULD run the complete suite with `--import-mode=importlib`
   and enable it unless the suite intentionally depends on another import mode.
+- Make the test tree importable as a package, with an `__init__.py` in the test
+  root and in every directory of shared helpers, and import those helpers by
+  their full path, for example `from tests.support import scanner`. Prefer this
+  to putting the test directory on `sys.path` through pytest's `pythonpath`
+  setting.
 - Enable pytest's global `strict = true` mode when using pytest 9 or newer with
   a committed lock file.
 
@@ -1332,6 +1337,13 @@ def read_config(path):
   `sys.path`. This complements the `src` layout by exposing accidental
   dependencies on the repository layout, although an existing suite may first
   need test-to-test imports or informal helper modules refactored.
+- An importable test package needs no `sys.path` entry at all under that mode,
+  and it keeps helper names such as `support` out of the top level, where an
+  installed distribution can shadow them or be shadowed by them. Doing both at
+  once is worse than either: with the directory on `sys.path` and an
+  `__init__.py` in place, `support` and `tests.support` are two module objects
+  for one file, each with its own state, so a value written through one is
+  invisible through the other.
 - Pytest 9 strict mode combines strict configuration, markers, parametrization
   IDs and expected failures. A committed lock file makes newly added strictness
   in a future pytest release an explicit dependency update rather than an
