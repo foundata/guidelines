@@ -206,7 +206,6 @@ Special thanks to:
 ```
 
 
-<!-- rumdl-disable-next-line MD080 -->
 ### Multiple licenses<a id="human-info-multiple-licenses"></a>
 
 <!--REUSE-IgnoreStart-->

@@ -781,6 +781,9 @@ They need no `rumdl` configuration file:
 # `# Heading` to `##`. If the renderer ignores that key, add to both commands:
 #   --config 'MD025.front-matter-title=""' --config 'MD041.front-matter-title=""'
 #
+# MD080 is limited to `levels=[1,2]`: repeats below that are normal, for
+# example the `### Added` blocks of every `CHANGELOG.md` release.
+#
 # For details on any rule below: `rumdl rule MDxxx` (short summary) or
 # `rumdl explain MDxxx` (full explanation with examples and a doc link), or
 # browse https://rumdl.dev/mdxxx/ directly. `rumdl rule` alone lists all rules.
@@ -808,6 +811,7 @@ rumdl fmt \
   --config 'MD060.column-align-header="center"' \
   --config 'MD060.loose-last-column=true' \
   --config 'MD072.key-order=["title", "name", "draft", "date", "description", "categories", "category", "tags", "author"]' \
+  --config 'MD080.levels=[1,2]' \
   --config 'MD082.allow-parent-headings=true' \
   .
 
@@ -834,6 +838,7 @@ rumdl check \
   --config 'MD060.column-align-header="center"' \
   --config 'MD060.loose-last-column=true' \
   --config 'MD072.key-order=["title", "name", "draft", "date", "description", "categories", "category", "tags", "author"]' \
+  --config 'MD080.levels=[1,2]' \
   --config 'MD082.allow-parent-headings=true' \
   .
 ```

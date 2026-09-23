@@ -74,7 +74,6 @@ might include:
      purposes.
 
 
-<!-- rumdl-disable-next-line MD080 -->
 ### Further reading, examples<a id="external-contributors-further-reading"></a>
 
 - [DokuWiki content relicensing](https://www.dokuwiki.org/devel:ideas:relicensing)
