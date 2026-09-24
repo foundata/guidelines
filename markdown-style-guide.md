@@ -761,8 +761,80 @@ $ git diff --check
   changing anchors, renderer-specific syntax or complex nesting.
 
 
-The following commands implement this guide through command-line options alone.
-They need no `rumdl` configuration file:
+A repository implements this guide by committing the following `.rumdl.toml` at
+its root and naming it on every run. An explicit `--config` makes `rumdl` ignore
+any other configuration it would discover, so the committed file is the whole
+policy:
+
+```sh
+# Format: rewrites files, fixing everything that has a safe automatic fix.
+rumdl fmt --config .rumdl.toml --deny-config-warnings .
+
+# Check: validates without modifying files, non-zero exit on any violation.
+rumdl check --config .rumdl.toml --deny-config-warnings .
+```
+
+```toml
+# rumdl config implementing foundata's Markdown style guide. Details, reasoning:
+# https://github.com/foundata/guidelines/blob/main/markdown-style-guide.md
+
+[global]
+extend-enable = [
+  "MD060", "MD070", "MD072", "MD073", "MD080", "MD082", "MD083", "MD084",
+  "MD085", "MD087", "MD088", "MD090",
+]
+
+[MD003]
+style = "atx"
+
+[MD004]
+style = "dash"
+
+[MD007]
+indent = 2
+
+[MD012]
+maximum = 3
+
+[MD013]
+line-length = 80
+reflow = true
+reflow-mode = "default"
+code-blocks = false
+code-spans = false
+tables = false
+
+[MD024]
+siblings-only = true
+
+[MD029]
+style = "ordered"
+
+[MD033]
+allowed-elements = ["a", "br"]
+
+[MD046]
+style = "fenced"
+
+[MD060]
+style = "aligned"
+column-align-header = "center"
+loose-last-column = true
+
+[MD072]
+key-order = [
+  "title", "name", "draft", "date", "description", "categories", "category",
+  "tags", "author",
+]
+
+[MD080]
+levels = [1, 2]
+
+[MD082]
+allow-parent-headings = true
+```
+
+The same settings as command-line options, for a run without the file:
 
 ```sh
 # Extended (opt-in) rumdl rules deliberately not enabled here:
@@ -853,9 +925,10 @@ quick look, but it does not implement this guide.
   issue by hand. `fmt` never touches a violation it cannot fix safely, such as a
   duplicate heading or an empty section; those stay as diagnostics for
   deliberate review.
-- Command-line options keep the policy visible where the check runs and avoid a
-  second file to review, because `rumdl` accepts every setting this guide needs
-  as an inline `--config` override.
+- A committed `.rumdl.toml` is one reviewable file per repository, and a test
+  can compare it byte for byte with the block above. The command-line form stays
+  for a run without the file; `rumdl` accepts every setting as an inline
+  `--config` override, so both forms are the same policy.
 - `--no-config` makes the result reproducible.
 - `--deny-config-warnings` turns an unrecognized configuration option into an
   error.
