@@ -29,6 +29,7 @@ The terms MUST, SHOULD, and other key words are used as defined in
   - [Loop variables in role task files](#role-loop-variables)
 - [Tasks and play declaration](#tasks-plays)
   - [Handlers](#handlers)
+  - [Templates](#templates)
   - [Roles](#roles)
 - [External commands](#external-commands)
   - [Scripts](#scripts)
@@ -1634,6 +1635,69 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
   maintains consistency with other list-based attributes.
 - Lowercase values prevent case-sensitivity issues and ensure consistent
   matching across the codebase.
+
+
+### Templates<a id="templates"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+**You MUST:**
+
+- Pass the data a template needs through `tpl_*` variables defined in the
+  task's `vars:`.
+- Refactor existing templates to `tpl_*` inputs when you touch them.
+
+**You MUST NOT:**
+
+- Read loop variables, registered results, or other role variables directly
+  inside a template.
+
+**Good examples:**
+
+```yaml
+- name: "Config | Default | Create or update vhost config files"
+  ansible.builtin.template:
+    src: "vhost.conf.j2"
+    dest: "{{ __run_example_vhosts_dir_path }}/{{ __run_example_vhost_item['name'] }}.conf"
+    owner: "root"
+    group: "root"
+    mode: "u=rw,g=r,o=r" # 0644
+  vars:
+    # Pass (and/or adjust) variables needed for the template
+    tpl_marker: "{{ __run_example_config_file_marker }}"
+    tpl_content: "{{ __run_example_vhost_item['content'] }}"
+  loop: "{{ run_example_vhosts_config }}"
+  loop_control:
+    loop_var: "__run_example_vhost_item"
+```
+
+```jinja
+{# templates/vhost.conf.j2 #}
+{{ tpl_marker }}
+# {{ ansible_managed }}
+
+{{ tpl_content }}
+```
+
+**Bad examples:**
+
+```jinja
+{# BAD: Template reads the loop variable and role internals directly #}
+{{ __run_example_config_file_marker }}
+# {{ ansible_managed }}
+
+{{ __run_example_vhost_item['content'] }}
+```
+
+**Reasoning:**
+
+- The `vars:` block lists everything the template consumes, so a reader sees
+  the inputs in the task without opening the template.
+- A template that reads only `tpl_*` variables can be rendered from another
+  task, loop, or role without editing the file. The example above works for a
+  second task that builds the same file from a different source.
+- Defaults, filters, and merges stay in the task where they are visible. The
+  template remains a plain rendering of its inputs.
 
 
 ### Roles<a id="roles"></a>
