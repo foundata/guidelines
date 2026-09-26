@@ -989,7 +989,7 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
     - (ansible_facts['os_family'] | ansible.builtin.lower) in ['redhat', 'suse']
 
 
-# Using success/failed tests for return code checks
+# Using success/failed tests to handle a command's task status
 - name: "Run a command and check result"
   ansible.builtin.command:
     argv:
@@ -997,8 +997,7 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
       - "--check"
   changed_when:
     - false
-  failed_when:
-    - false
+  ignore_errors: true # Preserve the failed status for the handling task below.
   register: __myapp_check_result
 
 
@@ -1092,10 +1091,12 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
 - YAML interprets unquoted strings containing `:` as mappings. Since non-empty
   mappings are truthy, this silently breaks comparisons. Quoting the entire
   expression prevents this.
-- The `success` and `failed` tests are semantic, self-documenting, and work
-  consistently across modules. They abstract the implementation detail of return
-  codes, making conditionals more readable and resilient to future changes in
-  how modules report status.
+- The `success` and `failed` tests inspect the task's failure status and work
+  across modules, including those without return codes. `failed_when: false`
+  overrides this status, so a nonzero return code can still test as successful.
+  When a later task handles a registered failure, `ignore_errors: true`
+  continues execution without clearing that status. Otherwise, let the task
+  fail normally.
 - Facts are external inputs. Normalizing categorical values only at the
   comparison boundary gives conditional logic a canonical interface and prevents
   capitalization differences from changing control flow, while preserving the
