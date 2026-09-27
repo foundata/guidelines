@@ -776,7 +776,7 @@ rumdl check --config .rumdl.toml --deny-config-warnings .
 
 ```toml
 # rumdl config implementing foundata's Markdown style guide. Details, reasoning:
-# https://github.com/foundata/guidelines/blob/main/markdown-style-guide.md
+# https://foundata.com/en/guidelines/markdown-style-guide/
 
 [global]
 extend-enable = [
