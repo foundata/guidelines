@@ -165,8 +165,9 @@ template to do so:
 ## Licensing, copyright
 
 <!--REUSE-IgnoreStart-->
-<!-- rumdl-disable-next-line MD034 --><!-- should match SPDX-PackageSupplier -->
-Copyright (c) YYYY, foundata GmbH (https://foundata.com)
+<!-- rumdl-disable MD034 --><!-- should match SPDX-PackageSupplier -->
+Copyright (c) YYYY, [foundata GmbH](https://foundata.com/) (https://foundata.com)
+<!-- rumdl-enable MD034 -->
 
 This project is licensed under the GNU General Public License v3.0 or later
 (SPDX-License-Identifier: `GPL-3.0-or-later`), see
