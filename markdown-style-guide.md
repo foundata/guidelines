@@ -523,7 +523,10 @@ Run git diff --check before committing. The command reports `whitespace errors`.
   authoritative source for a technical claim.
 - Link to the most specific stable page that supports the surrounding text.
 - Write repository paths with a leading `./`, for example
-  `[configuration](./config/example.yml)`.
+  `[configuration](./config/example.yml)`. A destination that already starts
+  with `../` is unambiguous and needs no prefix.
+- Add a missing `./` prefix while editing the document that contains the link.
+  [Generated Markdown](#generated-markdown) keeps whatever its generator emits.
 
 **You MUST NOT:**
 
@@ -559,6 +562,12 @@ See https://spec.commonmark.org/ for more information.
   screen-reader users navigate by links.
 - Relative repository links continue to work in forks and on non-default
   branches.
+- A first path segment that contains a colon parses as a URI scheme, so a
+  leading `./` keeps a repository path relative. It also makes every in-repo
+  link findable with one pattern when verifying links before publishing.
+- Existing links without the prefix render correctly, so converting them is
+  worth a diff only where a document is being edited anyway. A repository-wide
+  sweep touches generated output and buries the substantive change.
 - Primary sources give reviewers evidence they can check without reconstructing
   the author's assumptions.
 
