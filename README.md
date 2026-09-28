@@ -124,7 +124,7 @@ approach.
 ## Licensing, copyright<a id="licensing-copyright"></a>
 
 <!--REUSE-IgnoreStart-->
-Copyright (c) 2020, 2024 [foundata GmbH](https://foundata.com/)
+Copyright (c) 2020, 2023-2026 [foundata GmbH](https://foundata.com/)
 
 This project is licensed under the
 [Creative Commons Attribution Share Alike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/deed)
