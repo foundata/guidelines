@@ -5,7 +5,7 @@ scripts. It aims to produce code that is readable, maintainable, testable and
 compatible with the supported Python versions.
 
 Ansible modules and plugins follow the
-[Ansible module development guide](./ansible-module-development-guide.md), which
+[Ansible module development guide](./ansible-modules.md), which
 states which rules of this guide apply to them.
 
 The terms MUST, SHOULD, and other key words are used as defined in

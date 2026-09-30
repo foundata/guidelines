@@ -7,7 +7,7 @@ and the
 [Ansible documentation](https://docs.ansible.com/ansible/latest/user_guide/playbooks_best_practices.html).
 
 Ansible modules and plugins written in Python follow the
-[Ansible module development guide](./ansible-module-development-guide.md).
+[Ansible module development guide](./ansible-modules.md).
 
 The terms MUST, SHOULD, and other key words are used as defined in
 [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119) and
@@ -1910,7 +1910,7 @@ embedded in `ansible.builtin.shell` tasks and standalone scripts executed via
 - Use block scalar style (`|`) for multi-line scripts and the chomping indicator
   (`|-`) when trailing newlines matter.
 - Follow applicable parts of the
-  [Shell scripting style guide](./shell-scripting-style-guide.md)
+  [Shell scripting style guide](./shell-scripting.md)
 - Use `changed_when` and/or `failed_when` to properly reflect script outcomes.
 - Start *inline* scripts with:
 
@@ -1929,7 +1929,7 @@ embedded in `ansible.builtin.shell` tasks and standalone scripts executed via
   ```
 
   This deviates from the usual
-  [Shell scripting style guide](./shell-scripting-style-guide.md) for
+  [Shell scripting style guide](./shell-scripting.md) for
   *stand alone* script recommendations (where `set -e` is prohibited) but
   simplifies inline scripts by providing automatic error handling without
   complex failure logic.

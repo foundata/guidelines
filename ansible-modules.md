@@ -6,9 +6,9 @@ filter plugins and test plugins. Its goal is the best possible modules:
 correct, safe, clean, current and fast. It follows established Ansible practice
 first and applies general Python rules where they make sense for plugin code.
 
-It complements the [Ansible style guide](./ansible-style-guide.md), which covers
+It complements the [Ansible style guide](./ansible-playbooks.md), which covers
 YAML, playbooks and collection boundaries, and the
-[Python style guide](./python-style-guide.md), which covers general Python.
+[Python style guide](./python.md), which covers general Python.
 This guide does not restate the
 [Ansible developer guide](https://docs.ansible.com/ansible/latest/dev_guide/);
 read that documentation for the framework's own mechanics.
@@ -25,7 +25,7 @@ The terms MUST, SHOULD, and other key words are used as defined in
 - [When to write a module](#when-to-write-a-module)
 - [Terms](#terms)
 - [Scope and precedence](#scope-precedence)
-  - [Python style guide rules in plugin code](#python-style-guide-rules)
+  - [Python style guide rules in plugin code](#python-rules)
 - [Supported runtimes](#supported-runtimes)
   - [Choosing the minimum ansible-core version](#minimum-core-version)
 - [Naming and layout](#naming-layout)
@@ -85,7 +85,7 @@ file, an existing module or a template already does the job.
 
 - Build a role whose only content is a loop that forwards a list variable into
   one module. The Ansible style guide's
-  [scoping rules](./ansible-style-guide.md#scoping) forbid such one-to-one
+  [scoping rules](./ansible-playbooks.md#scoping) forbid such one-to-one
   facades: they duplicate the module's interface without adding anything and
   drift from it over time. A role earns its place by sequencing, validating or
   recovering, not by relaying parameters.
@@ -171,9 +171,9 @@ so a conflict always has one answer.
      and the tooling maintained collections use, described in
      [Checks and tooling](#checks-tooling).
   3. This guide.
-  4. The [Python style guide](./python-style-guide.md), where a rule makes sense
+  4. The [Python style guide](./python.md), where a rule makes sense
      for plugin code. The table in
-     [Python style guide rules in plugin code](#python-style-guide-rules) states
+     [Python style guide rules in plugin code](#python-rules) states
      which rules apply.
 - Apply each document to its own subject:
 
@@ -182,7 +182,7 @@ so a conflict always has one answer.
   | Decisions on product ownership, resource semantics, locator profiles and compatibility windows, with their evidence | The collection's design record |
   | The resulting collection contract, and each module's contract                                                       | README and module documentation |
   | Module and plugin implementation, checks and review                                                                 | This guide |
-  | YAML, tasks, roles, variables, collection scoping                                                                   | [Ansible style guide](./ansible-style-guide.md) |
+  | YAML, tasks, roles, variables, collection scoping                                                                   | [Ansible style guide](./ansible-playbooks.md) |
 
 - Raise a design amendment when a required operation cannot satisfy both the
   product contract and the framework. Do not invent an implicit override.
@@ -204,7 +204,7 @@ so a conflict always has one answer.
 - The Python style guide is written for applications, libraries and scripts
   that own their interpreter, packaging and output. A module owns none of these.
 
-### Python style guide rules in plugin code<a id="python-style-guide-rules"></a>
+### Python style guide rules in plugin code<a id="python-rules"></a>
 
 |                Python style guide rule                | Applies to plugin code | Replacement |
 | ----------------------------------------------------- | ---------------------- | ----------- |
@@ -1620,7 +1620,7 @@ For a module-first collection the module documentation, not a role's
 **You MUST:**
 
 - Start every module with exactly `#!/usr/bin/python`, followed by the license
-  lines of the [licensing guide](./licensing-how-to-apply.md), and keep the file
+  lines of the [licensing guide](./licensing-apply.md), and keep the file
   non-executable. Other plugin and module utility files have no shebang.
 - Order the rest as the upstream
   [module format](https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html)
@@ -1641,7 +1641,7 @@ For a module-first collection the module documentation, not a role's
   environment variables, `M()` for module names and `P()` for other plugins.
   Reserve `C()` for literal code and `L()` or `U()` for links.
 - Write runnable YAML tasks in `EXAMPLES`, following the
-  [Ansible style guide](./ansible-style-guide.md).
+  [Ansible style guide](./ansible-playbooks.md).
 - State the collection contract where consumers read: in the README or in a
   page linked from it. Existing documentation that covers those subjects
   satisfies this rule; do not create a new top-level document merely to hold

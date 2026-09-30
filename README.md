@@ -30,24 +30,24 @@ Misc:
 
 [Ansible](https://www.ansible.com/) is a simple, agentless IT automation tool.
 
-- [Ansible style guide (playbooks) (`ansible-style-guide.md`)](./ansible-style-guide.md)
-- [Ansible module development guide (`ansible-module-development-guide.md`)](./ansible-module-development-guide.md)
+- [Ansible style guide (playbooks) (`ansible-playbooks.md`)](./ansible-playbooks.md)
+- [Ansible module development guide (`ansible-modules.md`)](./ansible-modules.md)
 
 
 ## Container images<a id="container-images"></a>
 
 Resources on how to build and publish OCI container images from Containerfiles:
 
-- [OCI container image build and release guide (`oci-container-image-guide.md`)](./oci-container-image-guide.md)
+- [OCI container image build and release guide (`oci-images.md`)](./oci-images.md)
 
 
 ## Licensing<a id="licensing"></a>
 
 Resources on how to choose, apply or change a license.
 
-- [How to choose a license (`licensing-how-to-choose-a-license.md`)](./licensing-how-to-choose-a-license.md)
-- [How to apply licenses (`licensing-how-to-apply.md`)](./licensing-how-to-apply.md)
-- [How to change a license, re-licensing projects (`licensing-how-to-change-a-license.md`)](./licensing-how-to-change-a-license.md)
+- [How to choose a license (`licensing-choose.md`)](./licensing-choose.md)
+- [How to apply licenses (`licensing-apply.md`)](./licensing-apply.md)
+- [How to change a license, re-licensing projects (`licensing-change.md`)](./licensing-change.md)
 
 
 ## Git<a id="git"></a>
@@ -56,8 +56,8 @@ Resources on how to work with, maintain and host Git repositories.
 
 - [Git commit message guide (`git-commits.md`)](./git-commits.md)
 - [How to name Git repositories (`git-repository-naming.md`)](./git-repository-naming.md)
-- [`gitattributes` configuration (`git-gitattributes.md`)](./git-gitattributes.md)
-- [`gitignore` configuration (`git-gitignore.md`)](./git-gitignore.md)
+- [`gitattributes` configuration (`git-attributes.md`)](./git-attributes.md)
+- [`gitignore` configuration (`git-ignore.md`)](./git-ignore.md)
 
 
 ## Go<a id="go"></a>
@@ -65,21 +65,21 @@ Resources on how to work with, maintain and host Git repositories.
 Resources on how to develop and maintain Go applications, commands and
 libraries:
 
-- [Go style guide (`golang-style-guide.md`)](./golang-style-guide.md)
+- [Go style guide (`go.md`)](./go.md)
 
 
 ## Markdown<a id="markdown"></a>
 
 Resources on how to write and maintain technical Markdown documents:
 
-- [Markdown style guide (`markdown-style-guide.md`)](./markdown-style-guide.md)
+- [Markdown style guide (`markdown.md`)](./markdown.md)
 
 
 ## PowerShell scripting<a id="powershell-scripting"></a>
 
 Resources on how to develop and maintain PowerShell scripts:
 
-- [PowerShell style guide (`powershell-style-guide.md`)](./powershell-style-guide.md)
+- [PowerShell style guide (`powershell.md`)](./powershell.md)
 
 
 ## Python<a id="python"></a>
@@ -87,14 +87,14 @@ Resources on how to develop and maintain PowerShell scripts:
 Resources on how to develop and maintain Python applications, libraries and
 scripts:
 
-- [Python style guide (`python-style-guide.md`)](./python-style-guide.md)
+- [Python style guide (`python.md`)](./python.md)
 
 
 ## Shell scripting<a id="shell-scripting"></a>
 
 Resources on how to develop and maintain shell scripts:
 
-- [Shell scripting style guide (`shell-scripting-style-guide.md`)](./shell-scripting-style-guide.md)
+- [Shell scripting style guide (`shell-scripting.md`)](./shell-scripting.md)
 
 
 ## Continuous release of guidelines and related documents<a id="continuous-release"></a>
@@ -108,7 +108,7 @@ Our **guides are updated continuously**, meaning:
   "versions" are still easy and possible if needed.
 
 The
-[OCI container image build and release guide](./oci-container-image-guide.md) is
+[OCI container image build and release guide](./oci-images.md) is
 an exception to this continuous-release model. It is a versioned ruleset
 implemented by [ConClear](https://foundata.com/en/projects/conclear), so a
 revised guide becomes effective only when its coordinated, compatible ConClear

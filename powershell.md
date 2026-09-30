@@ -1202,7 +1202,7 @@ before `Invoke-ScriptAnalyzer` and `Invoke-Formatter` are available.
   `working-tree-encoding=UTF-8-BOM`: Git does not implement that encoding
   name, it is passed to `iconv_open()`, and `git add` aborts wherever the
   platform's iconv does not know it. See the
-  [`gitattributes` configuration guide](./git-gitattributes.md).
+  [`gitattributes` configuration guide](./git-attributes.md).
 
 **Reasoning:**
 

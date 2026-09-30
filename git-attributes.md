@@ -168,7 +168,7 @@ Some consumers require specific bytes. Chocolatey's
 [character encoding rules](https://docs.chocolatey.org/en-us/create/create-packages/#character-encoding)
 require UTF-8 with a byte-order mark (BOM) for PowerShell scripts, because
 PowerShell needs the BOM to recognize a script as UTF-8; for `*.nuspec` the BOM
-is optional. The [PowerShell style guide](./powershell-style-guide.md) requires
+is optional. The [PowerShell style guide](./powershell.md) requires
 UTF-8 with BOM and CRLF for PowerShell sources, for compatibility with Windows
 PowerShell 5.1 and Windows tooling.
 
@@ -535,16 +535,16 @@ repository.
 **You MUST NOT:**
 
 - Use attributes to keep a file out of the repository. That is
-  [`.gitignore`](./git-gitignore.md); attributes apply to tracked paths.
+  [`.gitignore`](./git-ignore.md); attributes apply to tracked paths.
 
 The mechanisms currently in use at foundata:
 
-|          Artifact          |                                      Produced by                                       | Exclusions declared in |
-| -------------------------- | -------------------------------------------------------------------------------------- | ---------------------- |
-| Source export              | `git archive`                                                                          | `export-ignore` in `.gitattributes` |
-| Python source distribution | build backend, run on the export                                                       | the export, plus the backend's own include list |
-| Ansible collection         | `ansible-galaxy collection build`                                                      | `build_ignore` in `galaxy.yml` |
-| Container image            | Buildah or Podman, see the [OCI container image guide](./oci-container-image-guide.md) | `.containerignore` in the build context |
+|          Artifact          |                               Produced by                               | Exclusions declared in |
+| -------------------------- | ----------------------------------------------------------------------- | ---------------------- |
+| Source export              | `git archive`                                                           | `export-ignore` in `.gitattributes` |
+| Python source distribution | build backend, run on the export                                        | the export, plus the backend's own include list |
+| Ansible collection         | `ansible-galaxy collection build`                                       | `build_ignore` in `galaxy.yml` |
+| Container image            | Buildah or Podman, see the [OCI container image guide](./oci-images.md) | `.containerignore` in the build context |
 
 **Reasoning:**
 

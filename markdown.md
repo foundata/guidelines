@@ -541,7 +541,7 @@ Run git diff --check before committing. The command reports `whitespace errors`.
 ```markdown
 See the [CommonMark specification](https://spec.commonmark.org/) for the parsing rules.
 
-Review the [shell scripting style guide](./shell-scripting-style-guide.md).
+Review the [shell scripting style guide](./shell-scripting.md).
 
 ![Output showing two failed link checks](./images/link-check-failures.png)
 ```
@@ -785,7 +785,7 @@ rumdl check --config .rumdl.toml --deny-config-warnings .
 
 ```toml
 # rumdl config implementing foundata's Markdown style guide. Details, reasoning:
-# https://foundata.com/en/guidelines/markdown-style-guide/
+# https://foundata.com/en/guidelines/markdown/
 
 [global]
 extend-enable = [

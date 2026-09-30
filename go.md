@@ -68,10 +68,10 @@ dependency installation on the target host.
 
 - Tiny wrappers that only invoke one or two commands; a POSIX shell script is
   simpler (see the
-  [shell scripting style guide](./shell-scripting-style-guide.md)).
+  [shell scripting style guide](./shell-scripting.md)).
 - Exploratory data processing, scientific computing or tasks that depend on a
   mature ecosystem that lives elsewhere (often Python, see the
-  [Python style guide](./python-style-guide.md)).
+  [Python style guide](./python.md)).
 - Desktop GUI applications; Go's GUI ecosystem is comparatively immature.
 - Projects whose team cannot maintain a compiled language and its release
   pipeline; a build-and-release step is a real, recurring cost compared to
@@ -276,7 +276,7 @@ requirement. If you do:
 - Treating old-version support as a documented, tested exception (instead of a
   silent habit) keeps the default modern while making the constraint visible
   where it really exists. This mirrors the Debian exception in the
-  [Python style guide](./python-style-guide.md#supported-python-versions).
+  [Python style guide](./python.md#supported-python-versions).
 - Holding back dependencies for an undocumented compatibility goal accumulates
   security and maintenance debt invisibly.
 
@@ -1775,8 +1775,8 @@ exec.Command("sh", "-c", "tesseract "+imagePath).Run() // shell injection
   error that error handling can deal with.
 - `os/exec` without a shell removes command injection by construction — the same
   reasoning as the argument-list rules in our
-  [Python](./python-style-guide.md#paths-files-external-commands) and
-  [PowerShell](./powershell-style-guide.md) guides.
+  [Python](./python.md#paths-files-external-commands) and
+  [PowerShell](./powershell.md) guides.
 - `os.Root` moves path-traversal protection from fragile string checks into the
   kernel-supported file-opening primitive; see the
   [Go blog on traversal-resistant file APIs](https://go.dev/blog/osroot).
@@ -2058,7 +2058,7 @@ formatters:
 Install it as a binary release pinned to an exact version (the maintainers do
 not support `go install` builds of it); in CI, pin the same version. Enable
 additional linters deliberately, one by one, with the same discipline as
-[Ruff rule categories in the Python guide](./python-style-guide.md#additional-ruff-rule-categories):
+[Ruff rule categories in the Python guide](./python.md#additional-ruff-rule-categories):
 only when the project intends to keep their findings at zero.
 
 **Reasoning:**

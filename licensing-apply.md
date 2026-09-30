@@ -1,7 +1,7 @@
 # Licensing guide: how to apply licenses
 
 This document explains how to apply one or more licenses to your project after
-[choosing](./licensing-how-to-choose-a-license.md) them.
+[choosing](./licensing-choose.md) them.
 [foundata](https://foundata.com/)'s projects typically follow the most recent
 version of the [REUSE specification](https://reuse.software/spec/)
 ([v3.3](https://reuse.software/spec-3.3/) at the time of writing).
@@ -43,23 +43,23 @@ version of the [REUSE specification](https://reuse.software/spec/)
 
 <!--REUSE-IgnoreStart-->
 Read our
-[guideline on how to choose a license](./licensing-how-to-choose-a-license.md)
+[guideline on how to choose a license](./licensing-choose.md)
 if you are new to the topic. It provides reasoning and summarizes the
 characteristics of each of the relevant licenses. TL;DR:
 
 **Our defaults for software projects are:**
 
-- [`GPL-3.0-or-later`](./licensing-how-to-choose-a-license.md#gpl-30-or-later)
+- [`GPL-3.0-or-later`](./licensing-choose.md#gpl-30-or-later)
   as [copyleft](https://en.wikipedia.org/wiki/Copyleft) license
-- [`Apache-2.0`](./licensing-how-to-choose-a-license.md#apache-20) as premissive
+- [`Apache-2.0`](./licensing-choose.md#apache-20) as premissive
   license
 
 **Our defaults for projects with focus on media, design, 3D-printing plans or
 physical objects are:**
 
-- [`CC-BY-SA-4.0`](./licensing-how-to-choose-a-license.md#cc-by-sa-40) as
+- [`CC-BY-SA-4.0`](./licensing-choose.md#cc-by-sa-40) as
   [copyleft](https://en.wikipedia.org/wiki/Copyleft) license
-- [`CC-BY-4.0`](./licensing-how-to-choose-a-license.md#cc-by-40) as premissive
+- [`CC-BY-4.0`](./licensing-choose.md#cc-by-40) as premissive
   license
 <!--REUSE-IgnoreEnd-->
 

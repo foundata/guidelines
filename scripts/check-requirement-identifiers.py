@@ -30,7 +30,7 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-DEFAULT_GUIDE = Path(__file__).resolve().parent.parent / "oci-container-image-guide.md"
+DEFAULT_GUIDE = Path(__file__).resolve().parent.parent / "oci-images.md"
 DEFAULT_PREFIX = "IG"
 RETIRED_HEADING = "Retired requirement identifiers"
 

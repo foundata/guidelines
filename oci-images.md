@@ -537,7 +537,7 @@ The human-readable output looks like this:
 ```text
 $ conclear version
 ConClear <version> (commit <conclear-source-revision>)
-Implements the automatable rules of foundata "OCI container image build and release guide", oci-container-image-guide.md at commit <guide-revision>
+Implements the automatable rules of foundata "OCI container image build and release guide", oci-images.md at commit <guide-revision>
 ```
 
 `conclear version --format json` exposes the same identity; ConClear's schemas
@@ -551,7 +551,7 @@ define the exact fields:
   "guide": {
     "title": "OCI container image build and release guide",
     "repository": "https://github.com/foundata/guidelines",
-    "path": "oci-container-image-guide.md",
+    "path": "oci-images.md",
     "revision": "<guide-revision>"
   }
 }
@@ -609,7 +609,7 @@ define the exact fields:
   beside the Containerfile and `COPY` them instead of embedding large shell
   programs in `RUN`. Another documented location is permitted when the
   repository layout requires it. `IG0053`<a id="ig0053"></a>
-- Follow the [shell scripting style guide](./shell-scripting-style-guide.md) for
+- Follow the [shell scripting style guide](./shell-scripting.md) for
   non-trivial shell code executed during a build or used as an entrypoint.
   `IG0054`<a id="ig0054"></a>
 
@@ -2306,7 +2306,7 @@ exact envelope and fields, and the release-specific facts live in `payload`:
     "conclearRevision": "<conclear-source-revision>",
     "guideTitle": "OCI container image build and release guide",
     "guideRepository": "https://github.com/foundata/guidelines",
-    "guidePath": "oci-container-image-guide.md",
+    "guidePath": "oci-images.md",
     "guideRevision": "<guide-revision>"
   },
   "source": {
@@ -2787,7 +2787,7 @@ The example is a structural reference, not a universal base-image choice.
   exports or backups should match the release support lifetime.
 - **Formatting and test harness.** No Containerfile formatter has ecosystem
   authority, and Hadolint does not format. Lint rules and review enforce layout.
-  Testinfra reuses the [Python style guide's](./python-style-guide.md) pytest
+  Testinfra reuses the [Python style guide's](./python.md) pytest
   stack; Goss offers one Go binary with YAML assertions.
 
 
