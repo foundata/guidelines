@@ -30,7 +30,8 @@ Misc:
 
 [Ansible](https://www.ansible.com/) is a simple, agentless IT automation tool.
 
-- [Ansible style guide (playbooks) (`ansible-playbooks.md`)](./ansible-playbooks.md)
+- [Ansible playbook guidelines (`ansible-playbooks.md`)](./ansible-playbooks.md)
+- [Ansible roles and collections (`ansible-roles-collections.md`)](./ansible-roles-collections.md)
 - [Ansible module development guide (`ansible-modules.md`)](./ansible-modules.md)
 
 

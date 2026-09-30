@@ -6,8 +6,8 @@ filter plugins and test plugins. Its goal is the best possible modules:
 correct, safe, clean, current and fast. It follows established Ansible practice
 first and applies general Python rules where they make sense for plugin code.
 
-It complements the [Ansible style guide](./ansible-playbooks.md), which covers
-YAML, playbooks and collection boundaries, and the
+It complements the [Ansible playbook guidelines](./ansible-playbooks.md), the
+[Ansible roles and collections guide](./ansible-roles-collections.md), and the
 [Python style guide](./python.md), which covers general Python.
 This guide does not restate the
 [Ansible developer guide](https://docs.ansible.com/ansible/latest/dev_guide/);
@@ -85,7 +85,7 @@ file, an existing module or a template already does the job.
 
 - Build a role whose only content is a loop that forwards a list variable into
   one module. The Ansible style guide's
-  [scoping rules](./ansible-playbooks.md#scoping) forbid such one-to-one
+  [scoping rules](./ansible-roles-collections.md#scoping) forbid such one-to-one
   facades: they duplicate the module's interface without adding anything and
   drift from it over time. A role earns its place by sequencing, validating or
   recovering, not by relaying parameters.
@@ -182,7 +182,8 @@ so a conflict always has one answer.
   | Decisions on product ownership, resource semantics, locator profiles and compatibility windows, with their evidence | The collection's design record |
   | The resulting collection contract, and each module's contract                                                       | README and module documentation |
   | Module and plugin implementation, checks and review                                                                 | This guide |
-  | YAML, tasks, roles, variables, collection scoping                                                                   | [Ansible style guide](./ansible-playbooks.md) |
+  | YAML, tasks, templates and variables                                                                                | [Ansible playbook guidelines](./ansible-playbooks.md) |
+  | Collection boundaries and role argument specifications                                                              | [Ansible roles and collections guide](./ansible-roles-collections.md) |
 
 - Raise a design amendment when a required operation cannot satisfy both the
   product contract and the framework. Do not invent an implicit override.
@@ -1641,7 +1642,7 @@ For a module-first collection the module documentation, not a role's
   environment variables, `M()` for module names and `P()` for other plugins.
   Reserve `C()` for literal code and `L()` or `U()` for links.
 - Write runnable YAML tasks in `EXAMPLES`, following the
-  [Ansible style guide](./ansible-playbooks.md).
+  [Ansible playbook guidelines](./ansible-playbooks.md).
 - State the collection contract where consumers read: in the README or in a
   page linked from it. Existing documentation that covers those subjects
   satisfies this rule; do not create a new top-level document merely to hold
