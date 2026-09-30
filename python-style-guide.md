@@ -4,6 +4,10 @@ This document defines the style for writing Python applications, libraries and
 scripts. It aims to produce code that is readable, maintainable, testable and
 compatible with the supported Python versions.
 
+Ansible modules and plugins follow the
+[Ansible module development guide](./ansible-module-development-guide.md), which
+states which rules of this guide apply to them.
+
 The terms MUST, SHOULD, and other key words are used as defined in
 [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119) and
 [RFC 8174](https://datatracker.ietf.org/doc/html/rfc8174).

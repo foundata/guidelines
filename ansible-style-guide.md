@@ -6,6 +6,9 @@ lack of a consistent and comprehensive code style and usage in both
 and the
 [Ansible documentation](https://docs.ansible.com/ansible/latest/user_guide/playbooks_best_practices.html).
 
+Ansible modules and plugins written in Python follow the
+[Ansible module development guide](./ansible-module-development-guide.md).
+
 The terms MUST, SHOULD, and other key words are used as defined in
 [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119) and
 [RFC 8174](https://datatracker.ietf.org/doc/html/rfc8174).
