@@ -318,7 +318,7 @@ Control-node defaults as of September 2026:
 | ------------ | -------------------------------------- |
 | 2.12         | Ubuntu 22.04 LTS                       |
 | 2.14         | RHEL 9, Debian 12                      |
-| 2.16         | RHEL 10, Ansible Automation Platform 2.5 to 2.7 default execution environment, Ubuntu 24.04 LTS, SLES 15 through Package Hub |
+| 2.16         | RHEL 10, Ansible Automation Platform 2.5 to 2.7 default execution environment, Ubuntu 24.04 LTS |
 | 2.18         | SLES 16                                |
 | 2.19         | Debian 13                              |
 | 2.20         | Ubuntu 26.04 LTS, Fedora 44            |
