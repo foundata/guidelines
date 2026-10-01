@@ -162,37 +162,40 @@ Three different version questions are often conflated. Keep them apart:
 
 The [Go release policy](https://go.dev/doc/devel/release#policy) supports each
 major release until two newer major releases exist, so exactly two major
-versions receive security fixes at any time. As of 2026-Q3 these are Go 1.26
-(current) and Go 1.25.
+versions receive security fixes at any time. As of 2026-10-01 these are Go 1.27
+(current) and Go 1.26.
 
 **You MUST:**
 
 - Use the oldest Go major release still supported upstream as the minimum
-  version for new projects. As of 2026-Q3:
+  version for new projects. As of 2026-10-01:
 
   ```go
-  go 1.25.0
+  go 1.26.0
   ```
 
-- Build and test releases with the latest patch version of the current stable Go
-  release (Go 1.26.x as of 2026-Q3). Patch releases contain security fixes; see
-  the [release history](https://go.dev/doc/devel/release).
+- Build and test releases with the current stable Go toolchain's latest patch
+  release (Go 1.27.x as of 2026-10-01). Patches include security fixes; see the
+  [release history](https://go.dev/doc/devel/release).
 - Also test with the declared minimum version before a release, in CI or an
   equivalent repeatable environment. The `GOTOOLCHAIN` environment variable
   makes this easy without a second installation:
 
   ```sh
-  GOTOOLCHAIN=go1.25.12 go test ./...
+  GOTOOLCHAIN=go1.26.8 go test ./...
   ```
 
   Use the latest patch release of the minimum major version.
 - Keep the source compatible with the declared minimum version: use language and
   standard-library features of newer versions only after raising the `go`
   directive.
-- Raise the `go` directive in a library only when a feature genuinely requires
-  it, and treat the raise as a compatibility-relevant change worth a minor
-  version bump. The `go` directive of a library is consumed by every downstream
-  module.
+- For applications, raise the minimum when it leaves upstream support, unless
+  the [Debian 13 compatibility exception](#debian-13-exception) applies.
+- For libraries, document and test the supported Go versions. Raise the minimum
+  when required by language features, standard-library APIs or dependencies, or
+  when deliberately retiring an older version during maintenance. Announce the
+  compatibility change in a minor release; a `/v2` is not required solely for
+  this. The library's `go` directive affects every downstream module.
 
 **You SHOULD:**
 
@@ -205,20 +208,23 @@ versions receive security fixes at any time. As of 2026-Q3 these are Go 1.26
   toolchain when needed, so a committed `toolchain` line forces switches onto
   contributors without adding compatibility information; the `go` directive
   alone states the actual requirement.
-- Update the minimum version when a new Go major release ships and the
-  previously required one leaves upstream support, as part of ordinary
-  maintenance.
-- Use a full `major.minor.patch` version in the `go` directive (`go 1.25.0`, not
-  `go 1.25`). This is the format written by current toolchains and avoids
+- For libraries, retain an older minimum while it is maintained and useful to
+  consumers. Supporting a version after upstream support ends requires a
+  documented downstream need, continued compatibility tests, and clarity about
+  who provides security maintenance. Source compatibility is not a promise of
+  upstream security support; release binaries still use the current toolchain.
+- Use a full `major.minor.patch` version in the `go` directive (`go 1.26.0`, not
+  `go 1.26`). This is the format written by current toolchains and avoids
   ambiguity in toolchain selection.
 
 **You MUST NOT:**
 
 - Claim support for a Go version that is not exercised by repeatable tests.
-- Declare a `go` version newer than the features actually require in a library.
-  It forces upgrades on all consumers.
-- Use `GOEXPERIMENT` features (for example the `encoding/json/v2` experiment) in
-  released code. Experiments can change or disappear between releases.
+- Raise a library's minimum merely to match a contributor's installed compiler.
+  It forces upgrades on all consumers without establishing a support policy.
+- Use `GOEXPERIMENT` features in released code. Experiments can change or
+  disappear between releases. `encoding/json/v2` became stable in Go 1.27, but
+  remains unavailable to projects whose minimum is Go 1.26 or older.
 
 **Reasoning:**
 
@@ -227,9 +233,9 @@ versions receive security fixes at any time. As of 2026-Q3 these are Go 1.26
   dependency requires it; see [Go toolchains](https://go.dev/doc/toolchain).
   This makes the directive a reliable, machine-enforced compatibility contract,
   which older Go versions treated only as a hint.
-- Choosing the oldest *upstream-supported* release as the minimum gives
-  consumers and contributors roughly a year of adoption headroom while never
-  claiming support for a release that no longer receives security fixes.
+- Choosing the oldest *upstream-supported* release as the default minimum gives
+  consumers and contributors adoption headroom. Documented compatibility
+  exceptions distinguish older source support from upstream security support.
 - The [Go 1 compatibility promise](https://go.dev/doc/go1compat) makes building
   with the newest toolchain low-risk while providing the current compiler,
   runtime and security fixes to released binaries. The binary carries the
@@ -261,11 +267,16 @@ when compilation with Debian 13's packaged Go compiler is a concrete
 requirement. If you do:
 
 - Document the exception and its reason in the project README.
-- Add the minimum version to the CI test matrix like any other supported version
-  (for example `GOTOOLCHAIN=go1.24.4`, matching Debian 13's packaged compiler),
-  and verify that all dependencies actually build with it: a dependency's newer
+- Test with Debian 13's security-updated packaged compiler and
+  `GOTOOLCHAIN=local`, alongside the current release toolchain. An upstream
+  compiler with the same version number does not include Debian's patches.
+  Verify that all dependencies actually build with it: a dependency's newer
   `go` directive requirement is a build failure on a toolchain that cannot
   auto-download newer toolchains from the network.
+- Use alternatives to newer APIs in this guide: `wg.Add` before starting a
+  goroutine and `defer wg.Done()` inside it instead of `wg.Go`, and `errors.As`
+  instead of `errors.AsType`. `testing/synctest` is not stable in Go 1.24;
+  synchronize tests explicitly or use an injected clock there.
 - Do not pin old dependency versions merely to preserve Go 1.24 compatibility.
   When current versions of a needed dependency require a newer Go version and
   there is no concrete deployment or consumer requirement for Debian's compiler,
@@ -302,7 +313,7 @@ projects simply use their repository host's path. We deliberately do not.
   ```go
   module golang.foundata.com/example
 
-  go 1.25.0
+  go 1.26.0
   ```
 
 - Use the resulting paths in every first-party import:
@@ -401,12 +412,18 @@ projects simply use their repository host's path. We deliberately do not.
   tagging complexity (per-directory tag prefixes) without benefit for
   single-project repositories.
 - Use [`internal/`](https://go.dev/doc/modules/layout) for every package that is
-  not part of the module's public API. The compiler enforces that `internal/...`
-  packages cannot be imported from outside the module.
+  not part of the module's public API. Go tooling restricts imports to the tree
+  rooted at the parent of `internal`; the boundary is not the module itself.
 - Put each binary's `main` package in `cmd/<binary-name>/` when a module
   provides commands. The directory name determines the installed binary name.
 - Keep `package main` thin: parse flags, wire dependencies, and call testable
   functions in ordinary packages.
+- Parse the arguments supplied to `run`, without reading `os.Args` or exiting
+  inside it. With the standard `flag` package, use a fresh
+  `flag.NewFlagSet` with `flag.ContinueOnError` and call `fs.Parse(args)`.
+  Inject output writers as needed. Treat `flag.ErrHelp` as a request to print
+  help and succeed; report usage errors with exit code 2 and other failures
+  with exit code 1 at the process boundary.
 
 **You SHOULD:**
 
@@ -459,33 +476,54 @@ projects simply use their repository host's path. We deliberately do not.
 package main
 
 import (
+	"bytes"
 	"context"
+	"errors"
+	"flag"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
-
-	"golang.foundata.com/example/internal/config"
 )
+
+type usageError struct{ err error }
+
+func (e *usageError) Error() string { return e.err.Error() }
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer stop()
+	err := run(ctx, os.Args[1:], os.Stdout)
+	stop() // os.Exit below does not run deferred functions.
 
-	if err := run(ctx, os.Args[1:]); err != nil {
-		fmt.Fprintln(os.Stderr, "example:", err)
+	if err != nil {
+		_, _ = fmt.Fprintln(os.Stderr, "example:", err) // Best effort before exit.
+		if _, ok := errors.AsType[*usageError](err); ok {
+			os.Exit(2)
+		}
 		os.Exit(1)
 	}
 }
 
-func run(ctx context.Context, args []string) error {
-	cfg, err := config.Load(args)
-	if err != nil {
-		return fmt.Errorf("loading configuration: %w", err)
+func run(ctx context.Context, args []string, stdout io.Writer) error {
+	fs := flag.NewFlagSet("example", flag.ContinueOnError)
+	var diagnostics bytes.Buffer
+	fs.SetOutput(&diagnostics) // Route help separately from failures.
+	device := fs.String("device", "", "scanner device (required)")
+	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			if _, err := io.Copy(stdout, &diagnostics); err != nil {
+				return fmt.Errorf("writing help: %w", err)
+			}
+			return nil
+		}
+		return &usageError{err: err}
+	}
+	if *device == "" || fs.NArg() != 0 {
+		return &usageError{err: errors.New("specify -device and no positional arguments")}
 	}
 	// Wire dependencies and do the actual work here, using ctx for
-	// cancellation and cfg for configuration.
+	// cancellation and *device for configuration.
 	_ = ctx
-	_ = cfg
 	return nil
 }
 ```
@@ -505,8 +543,9 @@ func run(ctx context.Context, args []string) error {
 - Name a package `util`, `common`, `misc`, `helpers` or similar. Such names
   carry no information and become dumping grounds; see
   [Package names](https://go.dev/blog/package-names).
-- Import `internal/` packages of another module (the compiler rejects it; do not
-  work around it by copying code without attribution or a documented decision).
+- Depend on another project's `internal/` packages, even if the import-tree
+  restriction happens to permit it. They are not a public compatibility
+  contract; do not copy them without attribution or a documented decision.
 
 **Reasoning:**
 
@@ -643,7 +682,8 @@ brace placement, alignment and spacing are all owned by the formatter).
   grouping required below (plain `gofmt -l` cannot check the grouping):
 
   ```sh
-  test -z "$(go tool goimports -local golang.foundata.com -l .)"
+  unformatted=$(go tool goimports -local golang.foundata.com -l .) || exit 1
+  test -z "$unformatted" || exit 1
   ```
 
 - Use UTF-8 without a byte-order mark and Unix line endings (LF, `\n`); this is
@@ -667,7 +707,7 @@ brace placement, alignment and spacing are all owned by the formatter).
   [`gopls`](https://pkg.go.dev/golang.org/x/tools/gopls), the official Go
   language server (set its `local` formatting option to `golang.foundata.com`).
 - Keep lines readable. Go has no line-length limit and `gofmt` does not wrap
-  lines; break long expressions at sensible points (after commas, before
+  lines; break long expressions at sensible points (after commas and binary
   operators in long conditions) and prefer intermediate variables over deeply
   nested call chains. Do not contort code to satisfy an arbitrary column number.
 - Import packages by their real name. Use an import alias only to resolve a
@@ -926,10 +966,11 @@ func Load(args []string) (*Config, error) {
   and document when a type requires a constructor instead. The standard library
   sets the model: `var buf bytes.Buffer` and `var mu sync.Mutex` are ready to
   use.
-- Never copy a value containing a lock or other synchronization state after
-  first use (`sync.Mutex`, `sync.WaitGroup`, `sync.Once`, `bytes.Buffer`,
-  `strings.Builder`); pass pointers instead. `go vet`'s `copylocks` check
-  catches most cases.
+- Never copy a value containing synchronization state after first use
+  (`sync.Mutex`, `sync.WaitGroup`, `sync.Once`, typed atomics); pass pointers
+  instead. `go vet`'s `copylocks` check catches many cases. Also obey types'
+  other copy restrictions, such as those on non-zero `bytes.Buffer` and
+  `strings.Builder` values; these are not synchronization primitives.
 - Use `time.Duration` for durations and `time.Time` for instants — never bare
   integers with unit-suffixed names crossing API boundaries.
 - Use octal literals in `0o` notation for file modes (`0o600`), as required by
@@ -1047,10 +1088,29 @@ func (c Counter) Add(key string) {
 - Be deliberate about slice aliasing: a subslice shares the backing array, and
   `append` may or may not allocate a new one. Copy (`slices.Clone`) when
   retaining a slice beyond the caller's control or handing out internal state.
+  A small subslice or substring can also retain a large backing allocation;
+  use `slices.Clone` or `strings.Clone` when the retained size and lifetime
+  justify copying. Cloning slices is shallow, and `slices.Clip` does not copy
+  their elements into a separate allocation.
 - Use the [`slices`](https://pkg.go.dev/slices) and
   [`maps`](https://pkg.go.dev/maps) standard-library packages
   (`slices.Contains`, `slices.SortFunc`, `maps.Keys`) instead of hand-written
-  loops for common operations.
+  loops for common operations. Since Go 1.23, `maps.Keys` and `maps.Values`
+  return `iter.Seq` iterators, not slices: use `slices.Collect` to materialize
+  them or `slices.Sorted(maps.Keys(m))` for sorted keys. `maps.All` and
+  `slices.All` return `iter.Seq2` pairs; `maps.Collect` collects key/value
+  pairs into a map. Direct `range` over an existing map or slice remains fine.
+- Return [`iter.Seq` or `iter.Seq2`](https://pkg.go.dev/iter) when lazy
+  iteration or early termination benefits the API. For resource-backed or
+  fallible iteration, document error delivery, cancellation, cleanup and
+  whether the sequence can be traversed more than once. Custom iterators MUST
+  stop calling `yield` as soon as it returns false and release resources on
+  early termination; a `break` in the caller depends on this contract.
+- Use `json:",omitzero"` (Go 1.24+) when a field's zero value should be
+  omitted, including struct values such as `time.Time{}` that `omitempty`
+  does not omit. It honors `IsZero() bool` when defined. Choose tags to match
+  the wire contract; pointers remain appropriate when absence differs from a
+  present zero value. See [`encoding/json`](https://pkg.go.dev/encoding/json).
 - Remember that map iteration order is deliberately randomized; sort keys when
   output must be deterministic.
 - Prefer struct embedding only for genuine "is-a with method promotion" cases; a
@@ -1069,6 +1129,9 @@ func (c Counter) Add(key string) {
 
 ```go
 func pageTitles(pages []Page) []string {
+	if len(pages) == 0 {
+		return nil
+	}
 	titles := make([]string, 0, len(pages))
 	for _, p := range pages {
 		titles = append(titles, p.Title)
@@ -1322,7 +1385,8 @@ func (s *Scanner) Close() error { /* ... */ }
 
 Errors are values, and error handling is regular control flow — explicit at
 every call site. The tools: [`errors.New`](https://pkg.go.dev/errors),
-`fmt.Errorf` with `%w`, `errors.Is`, `errors.As`, and custom error types. See
+`fmt.Errorf` with `%w`, `errors.Is`, `errors.AsType` (Go 1.26+), `errors.As`,
+and custom error types. See
 [Working with errors in Go 1.13+](https://go.dev/blog/go1.13-errors).
 
 **You MUST:**
@@ -1335,10 +1399,12 @@ every call site. The tools: [`errors.New`](https://pkg.go.dev/errors),
   The context states what *this* layer was doing; do not repeat what the callee
   already says.
 - Wrap with `%w` when callers may need to inspect the underlying error with
-  `errors.Is`/`errors.As`; use `%v` deliberately when the underlying error is an
-  implementation detail that must not become API.
-- Test error identity with `errors.Is` (sentinel values) and `errors.As` (typed
-  errors), never with string matching or `==` on wrapped errors.
+  `errors.Is`/`errors.AsType`/`errors.As`; use `%v` deliberately when the
+  underlying error is an implementation detail that must not become API.
+  `%v` still exposes the message; it does not redact secrets.
+- Test error identity with `errors.Is` (sentinel values) and
+  `errors.AsType`/`errors.As` (typed errors), never with string matching or `==`
+  on wrapped errors.
 - Export sentinel errors as `var ErrXxx = errors.New("pkg: description")` and
   error types as `type XxxError struct{ ... }` when callers need to distinguish
   failure modes; keep them few, each one is API.
@@ -1351,6 +1417,11 @@ every call site. The tools: [`errors.New`](https://pkg.go.dev/errors),
 
 **You SHOULD:**
 
+- Prefer [`errors.AsType`](https://pkg.go.dev/errors#AsType) on Go 1.26+:
+  `if target, ok := errors.AsType[*MyError](err); ok { ... }`. When supporting
+  an older minimum, use `errors.As` with a pointer to the target variable:
+  `var target *MyError; if errors.As(err, &target) { ... }`. The extra pointer
+  is needed here because the error's concrete type is itself a pointer.
 - Use `errors.Join` or an accumulated error when an operation legitimately
   produces multiple independent failures (validating all fields, closing several
   resources).
@@ -1364,9 +1435,12 @@ every call site. The tools: [`errors.New`](https://pkg.go.dev/errors),
 - Use `panic` for expected failures (missing files, bad input, network errors).
   Panics are for programmer errors and unrecoverable invariant violations.
 - Use `recover` as general exception handling. Recover only at deliberate
-  boundaries — the top of a worker goroutine or a request handler — where it
-  converts a bug into a logged failure of one unit of work instead of a process
-  crash, and re-panic anything you cannot explain.
+  boundaries where the failed unit can be abandoned without leaving shared
+  state inconsistent, and re-panic anything you cannot explain. Recovery must
+  happen in the panicking goroutine; a handler cannot recover a panic in a
+  goroutine it launched. Recovering at the top of a worker ends that worker,
+  so account for failure reporting and worker capacity explicitly. Do not add
+  blanket recovery merely to keep a process alive.
 - Let `MustXxx` helpers (like `regexp.MustCompile`, `template.Must`) escape
   their intended use: package-level initialization from constant inputs, and
   tests. Runtime input never goes through `Must`.
@@ -1382,9 +1456,14 @@ func (s *Store) Document(id string) (*Document, error) {
 		return nil, fmt.Errorf("document %q: %w", id, ErrNotFound)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("reading document %q: %w", id, err)
+		// Driver error types are not part of this library's public contract.
+		return nil, fmt.Errorf("reading document %q: %v", id, err)
 	}
-	return decode(raw)
+	doc, err := decode(raw)
+	if err != nil {
+		return nil, fmt.Errorf("decoding document %q: %v", id, err)
+	}
+	return doc, nil
 }
 
 // Caller: match on the sentinel, not the message.
@@ -1471,8 +1550,8 @@ if strings.Contains(err.Error(), "not found") { // string matching
 - Use `fmt.Println` and friends for diagnostics in anything beyond a throwaway
   script.
 - Log an error and also return it (see [Error handling](#error-handling)).
-- Call `log.Fatal`/`os.Exit` outside `main`/`run`-level code: it skips deferred
-  cleanup everywhere below and makes code untestable.
+- Call `log.Fatal`/`os.Exit` outside `main`: it skips deferred cleanup and makes
+  code untestable. `run` returns errors after its own cleanup has completed.
 
 **Good examples:**
 
@@ -1528,7 +1607,8 @@ through [`context.Context`](https://pkg.go.dev/context).
 - Wait for goroutines you start
   ([`sync.WaitGroup`](https://pkg.go.dev/sync#WaitGroup); since Go 1.25,
   `wg.Go(func(){...})` replaces the manual `Add`/`Done` pair) — "fire and
-  forget" goroutines outliving their work item are almost always bugs.
+  forget" goroutines outliving their work item are almost always bugs. A
+  function passed to `wg.Go` must not let a panic escape.
 - Synchronize all access to shared mutable state: a mutex, a channel, or
   confinement to one goroutine. The race detector (`go test -race`) MUST be part
   of the standard test run; a reported race is a bug, never a "benign race"
@@ -1541,6 +1621,16 @@ through [`context.Context`](https://pkg.go.dev/context).
   senders), never from a receiver; and never close a channel twice. Closing is a
   signal that no more values will be sent — receivers that need it detect it via
   `v, ok := <-ch` or `range`.
+- Ensure a producer can finish when its consumer returns early. Use a
+  cancellation-aware send (`select` on the send and `ctx.Done()`) or a buffer
+  large enough for every abandoned result. Capacity one suffices for exactly
+  one send, not for an arbitrary number of workers. The work producing the
+  result must also have a defined completion or cancellation path.
+- Release per-iteration resources before the next iteration when required.
+  `defer` runs at the enclosing function's return, not at the end of a loop
+  iteration. Put the iteration in a helper or closure to defer an unlock or
+  close there, or release explicitly on every path. A defer inside the
+  goroutine function in the example below is scoped to that function.
 
 **You SHOULD:**
 
@@ -1558,14 +1648,37 @@ through [`context.Context`](https://pkg.go.dev/context).
   never for passing ordinary parameters or dependencies.
 - Bound concurrency with a worker pool or semaphore when fanning out (a
   `chan struct{}` used as a semaphore is fine); unbounded goroutine fan-out
-  turns load spikes into memory spikes.
+  turns load spikes into memory spikes. Acquire a token before launching the
+  goroutine, not inside it. A cancellation case does not have priority over
+  other ready cases in a `select`; check `ctx.Err()` when avoiding further
+  dispatch after cancellation matters, and still pass `ctx` to the work.
+- Use
+  [`golang.org/x/sync/errgroup`](https://pkg.go.dev/golang.org/x/sync/errgroup)
+  with `WithContext` when subtasks should cancel on the first error.
+  `SetLimit(n)` bounds active tasks, but a blocked `Go` call does not select
+  on context cancellation. Tasks must cooperate with cancellation, and shared
+  results still need synchronization. Keep explicit error aggregation when
+  all independent failures and partial results are required, as below.
+- Prefer `sync.OnceValue` or `sync.OnceValues` (Go 1.21+) for concurrent lazy
+  initialization of values. They cache returned values, including errors;
+  use a different design when failed initialization must be retried.
+- Prefer typed atomics (`atomic.Bool`, `atomic.Int64`, `atomic.Pointer[T]`)
+  over raw pointer-based atomic functions when atomics are appropriate. All
+  concurrent access to that state must use the atomic API; use a mutex for
+  invariants involving several fields. Do not copy atomics after first use.
+- Use [`context.WithoutCancel`](https://pkg.go.dev/context#WithoutCancel)
+  only when work deliberately outlives the originating request and has another
+  owner. It removes the parent's deadline and cancellation. Supply a separate
+  time budget and shutdown/cancellation mechanism, and arrange to wait for
+  completion; detaching a context does not establish a goroutine lifetime.
 - Use [`testing/synctest`](https://pkg.go.dev/testing/synctest) (stable since Go
   1.25) to test concurrent code that involves time, instead of real sleeps.
 
 **You MUST NOT:**
 
-- Use `time.Sleep` for synchronization — not in production code to "wait until
-  it's probably ready", and not in tests to mask races.
+- Use wall-clock sleeps for synchronization or to mask races. In a
+  `testing/synctest` bubble, `time.Sleep` can advance fake time for timer tests;
+  use `synctest.Wait` when assertions require other goroutines to settle.
 - Start a goroutine in a library without giving the caller control over its
   lifetime (explicit `Close`/`Shutdown`, or scoped to a call that returns only
   when the goroutine is done).
@@ -1587,12 +1700,19 @@ func scanAll(ctx context.Context, s *Scanner, ids []string) (map[string][]Page, 
 	sem := make(chan struct{}, 4) // at most 4 concurrent scans
 
 	var wg sync.WaitGroup
+dispatch:
 	for _, id := range ids {
+		if ctx.Err() != nil {
+			break dispatch
+		}
+		select {
+		case sem <- struct{}{}:
+		case <-ctx.Done():
+			break dispatch
+		}
 		wg.Go(func() {
-			select {
-			case sem <- struct{}{}:
-				defer func() { <-sem }()
-			case <-ctx.Done():
+			defer func() { <-sem }()
+			if ctx.Err() != nil {
 				return // cancellation is recorded once, after wg.Wait
 			}
 			pages, err := s.Scan(ctx, id)
@@ -1640,8 +1760,9 @@ func scanAll(s *Scanner, ids []string) map[string][]Page {
 - The race detector finds real memory-model violations at runtime with modest
   overhead — but only on exercised code paths, which is why racy tests must
   actually run under `-race` in CI.
-- Cooperative cancellation through `ctx` is the only cancellation there is; any
-  blocking call that doesn't take a context is a place where shutdown hangs.
+- Cancellation cannot kill a goroutine. For calls without context support,
+  arrange another way to unblock them, such as a deadline or closing an owned
+  connection; otherwise shutdown may hang.
 
 
 ## Files, HTTP and external commands<a id="files-http-external-commands"></a>
@@ -1662,18 +1783,30 @@ func scanAll(s *Scanner, ids []string) map[string][]Page {
   check. For *written* files, check the error of `Close` (and `Sync` where
   durability matters) — it can report the write failure (see the good examples
   below).
-- Set timeouts on all network activity; the standard library defaults to none:
-  - HTTP clients: set `http.Client.Timeout` or use per-request contexts
-    (`http.NewRequestWithContext`). Never use `http.DefaultClient`/`http.Get`
-    for production traffic — they have no timeout.
+- Flush a `bufio.Writer` and check its error before syncing or closing the
+  underlying file. Closing the file does not flush that separate buffer, and
+  flushing alone does not provide disk durability.
+- Set time budgets for network activity; HTTP defaults do not provide an
+  overall request timeout:
+  - HTTP clients: set `http.Client.Timeout` or pass a context with an explicit
+    deadline or timeout to `http.NewRequestWithContext`. Merely attaching a
+    context does not add a deadline. Use a configured client for production
+    traffic; `http.Get` offers neither a caller-supplied context nor a timeout.
   - HTTP servers: set `ReadHeaderTimeout` at minimum (Slowloris protection), and
     `ReadTimeout`/`WriteTimeout`/`IdleTimeout` as appropriate for the service.
-- Close HTTP response bodies (`defer resp.Body.Close()`) on every path, and
-  check `resp.StatusCode` — a non-2xx response is not an `err` from `Do`.
+- Close HTTP response bodies on every path after a successful `Do`, and check
+  `resp.StatusCode` — a non-2xx response is not an `err` from `Do`.
+- Set an explicit `Handler` on public production HTTP servers. Use an owned
+  `http.NewServeMux()` or another deliberately selected handler; do not expose
+  `http.DefaultServeMux` through a nil handler. Imported packages can register
+  endpoints there, including `net/http/pprof`. Expose diagnostics only through
+  a deliberate access policy and listener configuration.
 - Run external commands with [`os/exec`](https://pkg.go.dev/os/exec) argument
-  slices; there is no shell involved unless you invoke one. Use
-  `exec.CommandContext` so a hung command dies with the operation's context or
-  timeout.
+  slices; there is no shell involved unless you invoke one. Validate untrusted
+  positional arguments, or use `--` before them where the command supports it,
+  so they cannot become options. Use `exec.CommandContext` with a cancellation
+  or timeout policy. By default it kills the direct child when canceled, not
+  all descendants; define process-tree handling when the command spawns them.
 - Use `os.CreateTemp`/`os.MkdirTemp` for temporary files, never predictable
   names in shared directories.
 - Use [`crypto/rand`](https://pkg.go.dev/crypto/rand) for tokens, keys and
@@ -1684,18 +1817,63 @@ func scanAll(s *Scanner, ids []string) map[string][]Page {
 
 - Stream with `io.Reader`/`io.Writer`/`io.Copy` instead of slurping whole files
   with `os.ReadFile` when inputs can be large; use the convenience functions for
-  small config-sized files.
+  small config-sized files. Use `os.WriteFile(path, data, 0o600)` for a complete
+  byte slice when truncation and partial output on failure are acceptable;
+  it checks the write and close errors but does not replace the file atomically.
 - Write important files atomically: write to a temporary file in the same
-  directory, `Sync`, `Close`, then `os.Rename` over the destination.
+  directory, `Sync`, `Close`, then `os.Rename` over the destination. Clean up
+  the temporary file on failure and choose its final permissions deliberately.
+  This provides atomic replacement on Unix;
+  [`os.Rename`](https://pkg.go.dev/os#Rename)
+  does not guarantee atomicity on non-Unix platforms. For crash durability on
+  Linux, also sync the parent directory after renaming; syncing the file alone
+  does not persist the directory entry (see
+  [`fsync`](https://man7.org/linux/man-pages/man2/fsync.2.html)). Report a
+  post-rename sync failure as a durability failure after replacement, not as
+  evidence that the old file is still present.
 - Set explicit, restrictive permissions when creating files with sensitive
   content (`os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)`).
+  The mode argument does not tighten permissions on an existing file.
 - Use [`embed`](https://pkg.go.dev/embed) for static assets that ship with the
   binary (templates, default configs) instead of locating files relative to the
   executable at runtime.
 - Limit request body sizes on servers (`http.MaxBytesReader`) and set sensible
   `http.Server` limits before exposing a service.
+- For a small response that must contain exactly one JSON document, read at
+  most `limit+1` bytes, reject an oversized body, then call `json.Unmarshal`.
+  `io.LimitReader` returns EOF at its limit rather than an oversize error, and
+  one `Decoder.Decode` call consumes only one value, not necessarily all input.
+  For streaming single-document decoding, enforce the size limit separately
+  and require a second decode to return `io.EOF`.
+- Use `Decoder.DisallowUnknownFields()` for API requests with a closed schema;
+  retain unknown-field tolerance where the compatibility contract requires it.
+  Still validate required fields and values, enforce size limits and reject
+  trailing documents. In `encoding/json`, this option does not reject duplicate
+  keys or make field matching case-sensitive.
+- Reuse configured `http.Client` and `http.Transport` instances; they support
+  concurrent use and the transport owns the connection pool. For HTTP/1 reuse,
+  read accepted responses to EOF within the operation's size and time budgets.
+  A bounded drain of an unwanted body is optional, not a guarantee of reuse;
+  stop when the budget is exhausted and close it. Go 1.27's transport performs
+  bounded automatic draining on close, unlike Go 1.26 (see the
+  [release notes](https://go.dev/doc/go1.27#nethttp)). Do not require unbounded
+  draining or assume HTTP/2 stream closure discards the entire connection.
+- Prefer Go 1.22+ `http.ServeMux` routing when sufficient: patterns such as
+  `"GET /v1/items/{id}"` and `r.PathValue("id")` cover methods and path
+  parameters without a third-party router. Validate path values like other
+  input; routing does not establish authorization.
 - Use `http.Server.Shutdown(ctx)` wired to `signal.NotifyContext` for graceful
-  termination of services.
+  termination of services. Derive the shutdown deadline from a fresh context,
+  not the already-canceled signal context, and wait for shutdown to finish
+  before returning from `main`. On Unix services, handle `SIGTERM` as well as
+  `os.Interrupt`.
+- Set a finite [`Cmd.WaitDelay`](https://pkg.go.dev/os/exec#Cmd) when command
+  completion must be bounded after cancellation or child exit: descendants
+  can retain output pipes even after the direct child exits. It bounds waiting
+  for process exit and managed I/O pipes; it does not kill a process tree or
+  replace the command's overall timeout. Stream command output to controlled
+  destinations; use `CombinedOutput` only for known, small outputs, and do not
+  copy potentially sensitive diagnostics wholesale into returned errors.
 - Bound and review retries: bounded attempts with backoff, and only for
   operations that are safe to repeat or idempotent.
 
@@ -1713,25 +1891,47 @@ func scanAll(s *Scanner, ids []string) map[string][]Page {
 **Good examples:**
 
 ```go
-// Written file: deferred Close as fallback, explicit Close checked for errors.
-func writeReport(path string, data []byte) error {
-	f, err := os.Create(path)
+// Atomic replacement on Unix with mode 0o600. This does not sync the parent
+// directory for crash durability or preserve an existing file's metadata.
+func writeReportAtomic(path string, data []byte) error {
+	tmp, err := os.CreateTemp(filepath.Dir(path), "report-*.tmp")
 	if err != nil {
-		return err
+		return fmt.Errorf("creating temporary report for %q: %w", path, err)
 	}
-	defer f.Close() // fallback cleanup on early return
-	if _, err := f.Write(data); err != nil {
+	tmpName := tmp.Name()
+	closed, renamed := false, false
+	defer func() {
+		// Best-effort cleanup; preserve the operation's error.
+		if !closed {
+			_ = tmp.Close()
+		}
+		if !renamed {
+			_ = os.Remove(tmpName)
+		}
+	}()
+	if _, err := tmp.Write(data); err != nil {
 		return fmt.Errorf("writing %q: %w", path, err)
 	}
-	if err := f.Close(); err != nil { // the Close whose error we act on
+	if err := tmp.Sync(); err != nil {
+		return fmt.Errorf("syncing report for %q: %w", path, err)
+	}
+	closed = true // Do not retry Close, including when it returns an error.
+	if err := tmp.Close(); err != nil {
 		return fmt.Errorf("closing %q: %w", path, err)
 	}
+	if err := os.Rename(tmpName, path); err != nil {
+		return fmt.Errorf("replacing %q: %w", path, err)
+	}
+	renamed = true
 	return nil
 }
 ```
 
 ```go
 func fetchStatus(ctx context.Context, client *http.Client, url string) (*Status, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
@@ -1740,13 +1940,23 @@ func fetchStatus(ctx context.Context, client *http.Client, url string) (*Status,
 	if err != nil {
 		return nil, fmt.Errorf("querying %s: %w", url, err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close() // No writes to commit; always release the body.
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("querying %s: unexpected status %s", url, resp.Status)
 	}
+	const maxBodyBytes = 1 << 20 // 1 MiB
+	data, err := io.ReadAll(io.LimitReader(resp.Body, maxBodyBytes+1))
+	if err != nil {
+		return nil, fmt.Errorf("reading status: %w", err)
+	}
+	if len(data) > maxBodyBytes {
+		return nil, fmt.Errorf("status body exceeds %d bytes", maxBodyBytes)
+	}
 	var st Status
-	if err := json.NewDecoder(io.LimitReader(resp.Body, 1<<20)).Decode(&st); err != nil {
+	if err := json.Unmarshal(data, &st); err != nil {
 		return nil, fmt.Errorf("decoding status: %w", err)
 	}
 	return &st, nil
@@ -1754,9 +1964,13 @@ func fetchStatus(ctx context.Context, client *http.Client, url string) (*Status,
 ```
 
 ```go
+// Paths have been validated; output writers are supplied by the caller.
 cmd := exec.CommandContext(ctx, "tesseract", imagePath, outputBase)
-if out, err := cmd.CombinedOutput(); err != nil {
-	return fmt.Errorf("running tesseract on %q: %w (output: %s)", imagePath, err, out)
+cmd.Stdout = stdout
+cmd.Stderr = stderr
+cmd.WaitDelay = 2 * time.Second
+if err := cmd.Run(); err != nil {
+	return fmt.Errorf("running tesseract on %q: %w", imagePath, err)
 }
 ```
 
@@ -1773,8 +1987,9 @@ exec.Command("sh", "-c", "tesseract "+imagePath).Run() // shell injection
 - The zero timeout defaults in `net/http` are the single most common cause of Go
   services hanging under network failure; timeouts convert an outage into an
   error that error handling can deal with.
-- `os/exec` without a shell removes command injection by construction — the same
-  reasoning as the argument-list rules in our
+- `os/exec` argument slices prevent shell interpretation. The invoked program
+  still interprets its arguments, so option injection needs separate care;
+  see the argument-list rules in our
   [Python](./python.md#paths-files-external-commands) and
   [PowerShell](./powershell.md) guides.
 - `os.Root` moves path-traversal protection from fragile string checks into the
@@ -1810,9 +2025,11 @@ frameworks. The conventions below follow the
 
   and run them explicitly with `go test -tags=integration ./...`.
 - Use `t.TempDir()` for scratch directories and `t.Setenv` for environment
-  changes; both clean up automatically. Test fixtures belong in the package's
-  `testdata/` directory (ignored by the go tool) and MUST NOT be modified by
-  tests.
+  changes; use `t.Chdir` (Go 1.24+) when a test must change directory. These
+  helpers clean up automatically. `t.Setenv` and `t.Chdir` MUST NOT be used in
+  parallel tests or in subtests with a parallel ancestor; they panic because
+  the state is process-wide. Test fixtures belong in the package's `testdata/`
+  directory (ignored by the go tool) and MUST NOT be modified by tests.
 - Report failures with `t.Errorf`/`t.Fatalf` including what was checked, got,
   and want. Use `t.Fatalf` only when the test cannot continue, and never from
   goroutines other than the test's own.
@@ -1826,16 +2043,29 @@ frameworks. The conventions below follow the
   line; pass `*testing.T` as the helper's first parameter. Register cleanup with
   `t.Cleanup` inside helpers rather than returning teardown functions.
 - Use `t.Context()` (Go 1.24+) for a context canceled automatically when the
-  test ends.
+  test finishes, just before `t.Cleanup` callbacks run. Register a cleanup to
+  wait for workers that stop on this context; deferring that wait in the test
+  body would run before cancellation and can deadlock.
 - Compare structured values with
   [`github.com/google/go-cmp/cmp`](https://pkg.go.dev/github.com/google/go-cmp/cmp)
   (`cmp.Diff`) and print the diff; prefer the standard library plus `go-cmp`
   over assertion frameworks — keeping test failures as ordinary `t.Errorf`
   output with explicit got/want is the ecosystem's mainstream and keeps the
   dependency surface minimal.
+  `cmp` uses suitable `Equal` methods, including `time.Time.Equal`. Otherwise,
+  encountering unexported struct fields can panic: prefer a semantic
+  `cmp.Comparer`, or deliberately use `cmp.AllowUnexported` for types you own.
+  Use `cmpopts.IgnoreUnexported` only when those fields are irrelevant to the
+  assertion; ignoring them merely to stop a panic can hide a broken result.
 - Run tests in parallel (`t.Parallel()` in the test and in subtests) when they
   are independent; this also surfaces isolation bugs. Use `-shuffle=on` in CI to
   catch order dependence.
+- Test goroutine shutdown as well as successful work. `testing/synctest`
+  waits for goroutines within its bubble and detects deadlock there, but it
+  is not a general leak detector for arbitrary external I/O. Use explicit
+  completion signals and cleanup; consider
+  [`go.uber.org/goleak`](https://pkg.go.dev/go.uber.org/goleak) for a separate
+  leak check when appropriate, with deliberate handling of background workers.
 - Write `Example` functions with `// Output:` comments for exported APIs; they
   are documentation *and* compiled, executed tests (see the good examples
   below).
@@ -1906,8 +2136,10 @@ func FuzzParseSize(f *testing.F) {
 
 **You MUST NOT:**
 
-- Use `time.Sleep` to wait for concurrent behavior in tests; synchronize with
-  channels, or use `testing/synctest` for time-dependent logic.
+- Use wall-clock sleeps to wait for concurrent behavior in tests; synchronize
+  with channels, or use `testing/synctest` for time-dependent logic. Sleeps
+  inside its bubble advance fake time; use `synctest.Wait` to settle work
+  before assertions rather than guessing at a sufficient delay.
 - Skip or weaken assertions to make a test pass, or assert only "no error" when
   the result value is the point.
 - Depend on map iteration order, goroutine scheduling or precise wall-clock
@@ -2003,7 +2235,9 @@ aggregator for projects that want more.
 [Staticcheck](https://staticcheck.dev/docs/) detects bugs, performance issues,
 deprecated API usage and style inconsistencies with a low false-positive rate;
 each check is documented with rationale (checks `SA*`, `S*`, `ST*`, `QF*`).
-Releases track Go releases (Staticcheck 2026.1 supports Go 1.25 and 1.26).
+Choose and pin a release that supports the Go versions exercised by the project;
+check the [release notes](https://staticcheck.dev/changes/) when updating the
+toolchain or the analyzer.
 
 ```sh
 # Track the version in go.mod like other tools (Go 1.24+):
@@ -2098,7 +2332,9 @@ only when the project intends to keep their findings at zero.
   [Linting, static analysis and vulnerability scanning](#linting-static-analysis)):
 
   ```sh
-  test -z "$(go tool goimports -local golang.foundata.com -l .)"  # formatting and import grouping
+  set -eu                         # stop the check script on any failure
+  unformatted=$(go tool goimports -local golang.foundata.com -l .) || exit 1
+  test -z "$unformatted" || exit 1 # formatting and import grouping
   go vet ./...                     # toolchain static analysis
   go tool staticcheck ./...        # additional static analysis
   go build ./...                   # everything compiles, including cmd/
@@ -2119,10 +2355,13 @@ only when the project intends to keep their findings at zero.
 
   ```yaml
   go-version:
-    - "1.25.x"   # declared minimum (go directive)
-    - "1.26.x"   # current stable; used for release builds
+    - "1.26.x"   # default minimum (go directive)
+    - "1.27.x"   # current stable; used for release builds
   ```
 
+- Include an older declared minimum when a documented library or Debian
+  compatibility exception applies; do not silently replace it with the default
+  minimum in this example matrix.
 - Automate the checks with CI when the project's size, release frequency or
   number of contributors justifies the infrastructure, and prefer a
   self-hostable CI system or one that is independent of a particular repository
