@@ -1,10 +1,8 @@
 # Ansible module development guide
 
-This document defines how to develop and review Ansible modules and the plugin
-code around them: module utilities, documentation fragments, action plugins,
-filter plugins and test plugins. Its goal is the best possible modules:
-correct, safe, clean, current and fast. It follows established Ansible practice
-first and applies general Python rules where they make sense for plugin code.
+This guide covers developing and reviewing Ansible modules, module utilities,
+documentation fragments, action plugins, filter plugins and test plugins.
+It follows Ansible practice, with general Python rules where applicable.
 
 It complements the [Ansible playbook guidelines](./ansible-playbooks.md), the
 [Ansible roles and collections guide](./ansible-roles-collections.md), and the
@@ -37,7 +35,7 @@ The terms MUST, SHOULD, and other key words are used as defined in
 - [Secrets and errors](#secrets-errors)
 - [HTTP transport](#http-transport)
 - [Command-line execution](#cli-execution)
-- [Activation, actions and bootstrap](#activation-bootstrap)
+- [Activation, operations and bootstrap](#activation-bootstrap)
 - [Info and facts modules](#info-facts-modules)
 - [Action plugins](#action-plugins)
 - [Filter and test plugins](#filter-test-plugins)
@@ -54,11 +52,6 @@ The terms MUST, SHOULD, and other key words are used as defined in
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-A module is the right tool when a product's durable state is changed through an
-API, a command-line interface or a documented console, and that change needs an
-identity, a comparison and a verified result. It is the wrong tool when a task
-file, an existing module or a template already does the job.
-
 **A module is RECOMMENDED for:**
 
 - A coherent product resource with a stable identity: a firewall rule, a user,
@@ -73,7 +66,7 @@ file, an existing module or a template already does the job.
 **A module is NOT RECOMMENDED for:**
 
 - A one-to-one wrapper around a single HTTP endpoint or command invocation.
-  Wrapping the vendor's interface is not the same as offering a resource.
+- Work already covered by a task file, an existing module or a template.
 - A handful of straightforward calls that
   [`ansible.builtin.uri`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/uri_module.html)
   or a documented command already expresses, where no identity resolution,
@@ -83,19 +76,15 @@ file, an existing module or a template already does the job.
 
 **You MUST NOT:**
 
-- Build a role whose only content is a loop that forwards a list variable into
-  one module. The Ansible style guide's
-  [scoping rules](./ansible-roles-collections.md#scoping) forbid such one-to-one
-  facades: they duplicate the module's interface without adding anything and
-  drift from it over time. A role earns its place by sequencing, validating or
-  recovering, not by relaying parameters.
+- Build a role that only forwards a list variable to a module in a loop. See
+  the [scoping rules](./ansible-roles-collections.md#scoping).
 - Generate a module per upstream endpoint because a specification lists them.
 
 **You SHOULD:**
 
-- Plan the intended catalogue of resources before implementing the first one,
-  and record the agreed release scope, so deferred areas stay explicit instead
-  of turning into an arbitrary pilot.
+- Plan the intended catalogue of resources before implementing the first one.
+  Track planned features and release scope in issues or milestones; link them
+  from the catalogue without maintaining a second backlog.
 - Keep a product collection module-only: modules, module utilities and
   documentation fragments. Add action, filter or test plugins only for work a
   module cannot do (see
@@ -110,6 +99,8 @@ file, an existing module or a template already does the job.
   verifiable result and safe failure.
 - Every public module is a long-lived interface. The cost is not writing it, it
   is keeping its promise across product releases.
+- A forwarding role duplicates the module's interface and can drift from it.
+  Sequencing, validation or recovery gives a role a separate purpose.
 
 
 ## Terms<a id="terms"></a>
@@ -118,9 +109,11 @@ file, an existing module or a template already does the job.
 
 - **Resource module:** converges the state of one kind of product object, such
   as a firewall rule or a user, to a declared state.
-- **Action module:** performs an operation, such as activating saved changes,
-  updating firmware or rebooting, instead of converging a value.
+- **Operational module:** performs an operation, such as activating saved
+  changes, updating firmware or rebooting, instead of converging a value.
 - **Info module:** reads state and never changes it.
+- **Action plugin:** runs on the controller from `plugins/action/` and handles
+  controller-side work around module execution.
 - **Payload:** the module together with the module utilities Ansible assembles
   and runs on the execution host.
 - **Execution host:** the host that runs the module process. It is the control
@@ -147,18 +140,18 @@ file, an existing module or a template already does the job.
   the supported product series and ansible-core versions, and the locator
   profiles. It lives in the README or in a page linked from it; the contract
   of a single module lives in that module's documentation.
-- **Design record:** the developer-facing record of the decisions behind the
-  contract, their evidence, dated test results and open work. By house
-  convention `docs/design.md`, or the repository's existing design location.
-  It explains the contract; it is not the contract.
+- **Architecture and rationale:** the developer-facing description of the
+  collection's current structure, execution boundaries and significant
+  technical decisions, with their rationale and links to supporting evidence.
+  By house convention `docs/architecture.md`, or the repository's existing
+  architecture documentation. Planned work belongs in issues, execution logs
+  in test artifacts and change history in Git. Public contracts remain in the
+  README and module documentation.
 
 
 ## Scope and precedence<a id="scope-precedence"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
-
-Plugin code is governed by several sources. They are applied in a fixed order,
-so a conflict always has one answer.
 
 **You MUST:**
 
@@ -177,16 +170,17 @@ so a conflict always has one answer.
      which rules apply.
 - Apply each document to its own subject:
 
-  |                                                       Subject                                                       | Document |
-  | ------------------------------------------------------------------------------------------------------------------- | -------- |
-  | Decisions on product ownership, resource semantics, locator profiles and compatibility windows, with their evidence | The collection's design record |
-  | The resulting collection contract, and each module's contract                                                       | README and module documentation |
-  | Module and plugin implementation, checks and review                                                                 | This guide |
-  | YAML, tasks, templates and variables                                                                                | [Ansible playbook guidelines](./ansible-playbooks.md) |
-  | Collection boundaries and role argument specifications                                                              | [Ansible roles and collections guide](./ansible-roles-collections.md) |
+  |                                                          Subject                                                           | Document |
+  | -------------------------------------------------------------------------------------------------------------------------- | -------- |
+  | Current structure and decisions on ownership, resource semantics, locator profiles and compatibility, with their rationale | The collection's architecture documentation |
+  | The resulting collection contract, and each module's contract                                                              | README and module documentation |
+  | Module and plugin implementation, checks and review                                                                        | This guide |
+  | YAML, tasks, templates and variables                                                                                       | [Ansible playbook guidelines](./ansible-playbooks.md) |
+  | Collection boundaries and role argument specifications                                                                     | [Ansible roles and collections guide](./ansible-roles-collections.md) |
 
-- Raise a design amendment when a required operation cannot satisfy both the
-  product contract and the framework. Do not invent an implicit override.
+- Propose a contract or architecture change for review when a required operation
+  cannot satisfy both the product contract and the framework. Do not invent an
+  implicit override.
 
 **You MUST NOT:**
 
@@ -196,7 +190,7 @@ so a conflict always has one answer.
 **You SHOULD:**
 
 - Link upstream references rather than copying their instructions into
-  collection documentation, which then ages separately.
+  collection documentation.
 
 **Reasoning:**
 
@@ -204,6 +198,7 @@ so a conflict always has one answer.
   it does not run.
 - The Python style guide is written for applications, libraries and scripts
   that own their interpreter, packaging and output. A module owns none of these.
+- Copied upstream instructions can drift from their source.
 
 ### Python style guide rules in plugin code<a id="python-rules"></a>
 
@@ -218,7 +213,7 @@ so a conflict always has one answer.
 | `subprocess.run(timeout=...)`                         | No                     | `run_command` with a deadline, see [Command-line execution](#cli-execution) |
 | pytest 9 strict configuration                         | No                     | `ansible-test units` provides pytest per ansible-core version |
 | mypy `strict` and `explicit-override`                 | No                     | The mypy settings in [Checks and tooling](#checks-tooling); `typing.override` needs Python 3.12 |
-| Type annotations                                      | Yes                    | Checked with mypy against the newest ansible-core |
+| Type annotations                                      | Yes                    | Checked with mypy against the newest ansible-core; postpone payload annotations with `from __future__ import annotations`, see [Supported runtimes](#supported-runtimes) |
 | Ruff lint families and `ruff format`                  | Yes                    | Run through `antsibull-nox` |
 | UTF-8, LF, no encoding declaration                    | Yes                    |             |
 | Domain exceptions inside, translation at the boundary | Yes                    | The boundary is `fail_json` |
@@ -229,18 +224,15 @@ so a conflict always has one answer.
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-A module runs on whichever host the task selects. For an API collection that is
-normally the control node, so the control node's ansible-core gates
-installation directly. Three interpreters are involved and they are not the
-same: the development interpreter, the controller interpreter and the payload
-interpreter on the execution host.
+Distinguish the development interpreter, the controller interpreter and the
+payload interpreter on the execution host selected by the task.
 
 **You MUST:**
 
 - Declare the minimum ansible-core version as `requires_ansible` in
   `meta/runtime.yml`.
 - Declare the payload Python floor in `tests/config.yml`, `>=3.9` unless the
-  design record states otherwise:
+  architecture documentation justifies another floor:
 
   ```yaml
   modules:
@@ -251,34 +243,40 @@ interpreter on the execution host.
   floor, wherever the module usually runs.
 - Document execution host requirements for Python, Python packages and
   command-line tools in the README and in the affected plugin documentation.
-- Run sanity, unit tests and the collection's file-only integration targets
-  on every ansible-core series `requires_ansible` admits, plus the development
-  branch, and the payload unit tests on the lowest declared Python. Run live
-  product integration tests at least on the lowest and the highest admitted
-  series.
-- Document delegation for modules that talk to a remote endpoint, and document
-  both the module's user and the application identity for modules that call a
-  command-line interface.
+- Run sanity, unit and file-only integration tests on every ansible-core series
+  `requires_ansible` admits, plus the development branch.
+- Run payload unit tests on the lowest declared Python. Run live product tests
+  at least on the lowest and highest admitted ansible-core series.
+- Document delegation for remote API modules. For command-line modules,
+  document both the module's user and the application identity.
 
 **You MUST NOT:**
 
-- Omit `tests/config.yml`. Without it, ansible-test assumes every Python version
-  the core supports; for ansible-core 2.16 that includes Python 2.7 and 3.6.
+- Omit `tests/config.yml`.
 - Assume a task delegated to `localhost` uses the controller's own interpreter.
 - Claim support for an ansible-core series that no repeatable test run covers.
+- Evaluate type unions such as `int | str` at runtime on Python 3.9.
+  Use `isinstance(value, (int, str))` for runtime checks and
+  `typing.Union[int, str]` for runtime type aliases. Keep annotation consumers
+  compatible with the payload floor.
 
 **Reasoning:**
 
 - Where a module executes is a task decision. Using HTTP does not make a module
   run on the controller, and delegating to `localhost` does not make it run in
   the controller's interpreter.
-- `tests/config.yml` is what makes ansible-test skip the Python 2 checks and the
-  legacy boilerplate tests. Code without the old `__future__` and
-  `__metaclass__` lines passes every supported ansible-core version.
-- Module code is identical across ansible-core versions, so product behavior
-  proven on the lowest and the highest version holds for the ones in between.
-  Framework behavior around a module does change between versions, which is
-  why sanity, unit and file-only integration tests cover every one of them.
+- `modules.python_requires` covers `plugins/modules/` and
+  `plugins/module_utils/`. Controller-only utilities use the controller's
+  supported Python versions; separate `module_utils` and `plugin_utils`
+  sections do not configure them.
+- Without `tests/config.yml`, ansible-test assumes every Python version the
+  core supports, including Python 2.7 and 3.6 on ansible-core 2.16. Declaring a
+  Python 3 floor excludes Python 2 and its legacy boilerplate checks.
+- Framework behavior changes between core versions, which is why sanity, unit
+  and file-only integration tests cover every admitted series.
+- `from __future__ import annotations` postpones annotations only. On Python
+  3.9, neither union spelling works in `isinstance`, and
+  `typing.get_type_hints()` fails when it evaluates `int | str`.
 
 **Enforcement:** the sanity and unit sessions of
 [Checks and tooling](#checks-tooling), which derive the version list from
@@ -286,9 +284,35 @@ interpreter on the execution host.
 
 ### Choosing the minimum ansible-core version<a id="minimum-core-version"></a>
 
-Set the minimum to the ansible-core shipped by the control nodes the collection
-serves, not to the newest maintained series. The default is `>=2.16`. The
-notable control-node anchors, as of September 2026:
+**You MUST:**
+
+- Choose the minimum for the control nodes the collection serves, not the
+  newest maintained series. Use `>=2.16` by default.
+- Link the architecture documentation's reason for the minimum next to
+  `requires_ansible`, and review it when a listed platform rebases.
+- Test a plugin that creates template strings or handles templated values on
+  both sides of ansible-core 2.19, or raise the collection's minimum to 2.19.
+
+**You SHOULD:**
+
+- Keep product collections module-only.
+
+**Reasoning:**
+
+- Raising the minimum removes supported control-node platforms and requires a
+  breaking release. The payload Python floor still depends on execution hosts;
+  ansible-core 2.20 supports Python 3.9 on managed hosts.
+- Framework changes can affect modules even when their code stays the same.
+  In 2.19, exception capture changed; see [Secrets and errors](#secrets-errors).
+- Controller plugins also face 2.19's new template trust model,
+  `trust_as_template` and undefined-value handling
+  ([porting guide](https://docs.ansible.com/ansible/latest/porting_guides/porting_guide_core_2.19.html)).
+  These templating changes do not affect module code.
+- Type checking uses the newest ansible-core regardless of the minimum.
+  Supporting older versions adds test runs without changing a consumer's
+  chosen engine.
+
+Control-node defaults as of September 2026:
 
 | ansible-core | Shipped as the control-node default by |
 | ------------ | -------------------------------------- |
@@ -299,62 +323,23 @@ notable control-node anchors, as of September 2026:
 | 2.19         | Debian 13                              |
 | 2.20         | Ubuntu 26.04 LTS, Fedora 44            |
 
-Raising the minimum removes platforms as control nodes and is therefore a
-breaking release. It also buys less than it seems:
-
-- Module code does not change. The signatures of `AnsibleModule`, `open_url`
-  and `run_command` are the same from 2.16 to 2.21. Framework behavior around
-  a module does change, for example how 2.19 captures exceptions and
-  tracebacks, which is why the framework tests run on every version.
-- The payload Python floor does not change. It is set by where modules run;
-  ansible-core 2.20 still supports Python 3.9 on managed hosts.
-- Type checking runs against the newest ansible-core regardless of the minimum.
-- More ansible-core versions cost test time, not configuration.
-- Supporting an older version slows nobody down: a consumer on 2.21 still gets
-  2.21's engine.
-
-The real difference concerns controller plugins. ansible-core 2.19 replaced the
-templating engine: it inverted the template trust model, added
-`trust_as_template` for plugins that create template strings, and changed how
-undefined values reach filters and tests
-([porting guide](https://docs.ansible.com/ansible/latest/porting_guides/porting_guide_core_2.19.html)).
-Modules are not touched by the templating change. The error handling change
-of the same release does reach them, see [Secrets and errors](#secrets-errors).
-
-**You MUST:**
-
-- Keep the design record's reason for the minimum next to `requires_ansible`,
-  and review it when a listed platform rebases.
-- Test a plugin that creates template strings or handles templated values on
-  both sides of ansible-core 2.19, or raise the collection's minimum to 2.19.
-
-**You SHOULD:**
-
-- Keep product collections module-only, which keeps the whole 2.19 question
-  away from them.
-
 
 ## Naming and layout<a id="naming-layout"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-Module and option names are part of the public interface and cannot be
-corrected later without a redirect and a deprecation cycle.
-
 **You MUST:**
 
 - Name a resource module after the resource, in `snake_case`, without repeating
   the collection name: `firewall_rule` in `foundata.opnsense`, never
-  `opnsense_firewall_rule`. The fully qualified name already carries the
-  namespace.
+  `opnsense_firewall_rule`.
 - Use the singular for a module that manages one resource per invocation and
   the plural for one that manages a list of resources of one type:
   `firewall_rule` and `firewall_rules`.
 - Name a read-only module `<resource>_info`. Reserve the `_facts` suffix for
   modules that deliberately populate `ansible_facts`.
-- Name an action module after its subsystem and its verb, so it cannot be
-  mistaken for a resource: `firewall_apply`, `firmware_update`,
-  `system_reboot`.
+- Name an operational module after its subsystem and verb: `firewall_apply`,
+  `firmware_update`, `system_reboot`.
 - Place code where the framework expects it: `plugins/modules/`,
   `plugins/module_utils/`, `plugins/doc_fragments/`, `plugins/action/`,
   `plugins/filter/`, `plugins/test/`, and controller-only shared helpers in
@@ -368,10 +353,8 @@ corrected later without a redirect and a deprecation cycle.
   credential options.
 - Declare an
   [action group](https://docs.ansible.com/ansible/latest/dev_guide/developing_collections_structure.html)
-  in `meta/runtime.yml` for the modules that share a connection fragment, so a
-  consumer supplies connection parameters once through `module_defaults`, and
-  document the group in the README. Every member of the group MUST use that
-  fragment.
+  in `meta/runtime.yml` for modules sharing a connection fragment. Document it
+  in the README and require every member to use that fragment.
 
 **You SHOULD:**
 
@@ -405,12 +388,15 @@ plugins/modules/api_call.py                 # a dispatcher, not a resource
 
 **Reasoning:**
 
+- Module and option names are public interfaces; changing them requires a
+  redirect and deprecation cycle. The fully qualified module name already
+  carries the namespace.
 - The `_info` convention lets a reader, a linter and an automated review tell a
   read from a write without opening the file.
 - Ansible merges a group's `module_defaults` into the arguments of every member
   without filtering them. A member that lacks one of the shared options fails
-  with an unsupported parameter, so group membership and fragment use have to
-  match exactly.
+  with an unsupported parameter. Matching fragments let consumers supply
+  connection parameters once for the group.
 - Consistent connection option names let consumers move between collections
   without relearning how to point a module at its endpoint.
 
@@ -422,12 +408,6 @@ membership against the fragment; review covers names.
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-A module is not installed like a Python package. Ansible assembles a payload
-and ships it to the execution host, so only code reachable through the
-supported
-[module utility](https://docs.ansible.com/ansible/latest/dev_guide/developing_module_utilities.html)
-mechanism arrives with it.
-
 **You MUST:**
 
 - Import shared payload code through `ansible.module_utils` or
@@ -435,21 +415,18 @@ mechanism arrives with it.
   imports that are statically discoverable.
 - Use the Python standard library and
   `ansible.module_utils.common.text.converters` for text handling and
-  compatibility. Both work on every supported ansible-core version.
+  compatibility.
 - Keep controller-only helpers in `plugins/plugin_utils/` when actions, filters
   or tests share them, and never import those from a payload.
 - Guard an optional third-party import and report a missing dependency through
-  `missing_required_lib` before performing any operation. State in the
-  documentation where the dependency has to be installed: a Galaxy dependency
-  does not install a Python package.
+  `missing_required_lib` before any operation. Document where the dependency
+  must be installed.
 - Test the built and installed collection, including a module run on an
   execution host, not only an import on the controller.
 
 **You MUST NOT:**
 
-- Import `ansible.module_utils.six` or `ansible.module_utils._text`. `_text`
-  warns about its deprecation from ansible-core 2.21, and both are scheduled
-  for removal in 2.24.
+- Import `ansible.module_utils.six` or `ansible.module_utils._text`.
 - Import `ansible.errors`, `ansible.plugins`, another module's entry point, a
   repository `src/` package or a file under `docs/` from a payload.
 - Instantiate `AnsibleModule` at import time in a helper.
@@ -493,10 +470,13 @@ from ansible_collections.foundata.example.plugins.modules.other import helper
 
 **Reasoning:**
 
-- The assembler follows static imports. Anything it cannot see is missing at
-  runtime, on a host you may not be able to inspect.
-- The compatibility layers existed for Python 2. With a Python 3 payload floor
-  they only add deprecation warnings.
+- Ansible assembles and ships the payload through static
+  [module utility](https://docs.ansible.com/ansible/latest/dev_guide/developing_module_utilities.html)
+  imports. Repository files outside that mechanism do not travel with it.
+- Galaxy dependencies do not install Python packages on the execution host.
+- The standard library and text converters replace Python 2 compatibility
+  layers on the supported runtimes. `_text` warns from ansible-core 2.21;
+  it and `six` are scheduled for removal in 2.24.
 
 **Enforcement:** import and pylint sanity tests, a test of the
 missing-dependency path, and the build and import check of
@@ -507,32 +487,28 @@ missing-dependency path, and the build and import check of
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-The argument specification validates shape. It does not establish who owns a
-field on the target, which is the harder half of the contract.
-
 **You MUST:**
 
-- Define explicit types, choices, list element types and nested options
-  wherever the schema is known. Express conditional requirements with
-  `required_if`, `required_together`, `required_one_of` and
-  `mutually_exclusive`, and test those cases.
+- Define explicit types, choices and nested options wherever the schema is
+  known. For every option or suboption with `type="list"`, declare `elements`
+  in both the argument specification and `DOCUMENTATION`.
+- Express dependencies with `required_by`, `required_if`, `required_together`,
+  `required_one_of` and `mutually_exclusive`, and test those cases.
+  Use `required_by` for presence-based dependencies and `required_if` for
+  value-dependent ones.
 - Distinguish an omitted value, `false`, zero, an empty string and an empty
   collection. Never test a managed field for truthiness.
-- Apply one null contract. For a declared option, Ansible delivers an omitted
-  value and an explicit `null` identically as `None`, so both mean unmanaged.
-  Inside an open dictionary, key membership survives validation: a present
-  key with `null` is a declared null. Send it as the product's null where the
-  product has one, otherwise reject it. Offer an explicit reset operation
-  where the product distinguishes a reset from a null.
-- Leave mutable resource fields without a default, so an omitted field stays
-  unmanaged instead of becoming a silent write. A default such as `{}`
-  satisfies `required_if` and turns an omission into a declaration.
+- Treat omitted declared options and explicit `null` options as unmanaged.
+  Inside an open dictionary, send a present `null` as the product's null if
+  supported; otherwise reject it. Offer explicit reset operations where reset
+  differs from null.
+- Leave mutable resource fields without defaults so omission means unmanaged.
 - Resolve identity before writing: read the complete result, reject an
   ambiguous match, and verify ownership and eligibility.
 - Refuse a field that the deployment owns or that an external overlay manages,
-  naming the conflict, rather than fighting another writer on every run.
-- Validate an open dictionary with a product-owned schema. `type: "raw"` marks
-  input as unvalidated; it is not an excuse to skip validation.
+  and name the ownership conflict.
+- Validate open dictionaries with a product-owned schema, including
+  `type: "raw"` input.
 - Use `present` and `absent` when existence is the question, and put reads in a
   separate `_info` module.
 
@@ -596,10 +572,18 @@ desired = {key: value for key, value in settings.items() if value is not None}
 
 **Reasoning:**
 
+- The argument specification validates shape, not ownership of target fields.
+- `required_by` triggers for any non-`None` parameter, including `false`, empty
+  values and defaults. `required_by={"purge": "target"}` therefore requires
+  `target` for `purge=False`; `required_if=[("purge", True, ["target"])]` does
+  not.
+- Ansible delivers omitted declared options and explicit `null` as `None`.
+  Open dictionaries preserve key membership, so a present null remains
+  distinguishable from an omitted key.
 - Truthiness collapses `false`, `0`, `""` and "not set" into one branch. Those
   are four different instructions in a configuration interface.
-- A default on a mutable field converts the module from "manage what I declare"
-  into "own everything", which silently overwrites values set elsewhere.
+- Defaults make undeclared fields look managed and can overwrite other owners'
+  values. Even `{}` satisfies `required_if` and hides an omission.
 - Two owners for one field produce a flapping resource that looks like an
   idempotency bug and is really a design error.
 
@@ -612,8 +596,7 @@ false values and duplicate identities, plus review of the ownership claim.
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-Convergence is the core promise: after a successful run, the declared state
-holds. A transport success is not that promise.
+After a successful run, the declared state holds.
 
 **You MUST:**
 
@@ -634,15 +617,13 @@ holds. A transport success is not that promise.
   recovery. After an ambiguous outcome such as a timeout, read again by
   identity or operation ID before any retry.
 - Track mutation attempts through command execution, response parsing and
-  read-back. On failure, return `changed: true` for confirmed changes. If a
-  write may have landed, return `changed: true` with `outcome: unknown` until
-  reconciliation establishes the result. Report `changed: false` only when
-  no change is known to have occurred.
+  read-back. Report confirmed changes with `changed: true`. Report possible
+  writes with `changed: true` and `outcome: unknown` until reconciled. Use
+  `changed: false` only when no change occurred.
 
 **You MUST NOT:**
 
 - Write to standard output or install a `logging` handler in payload code.
-  Standard output carries the module's JSON result.
 - Use a key Ansible interprets, such as `failed`, `msg`, `rc`, `invocation`,
   `ansible_facts`, `warnings`, `deprecations`, `results` or `skipped`, with a
   meaning other than its
@@ -652,14 +633,33 @@ holds. A transport success is not that promise.
 - Sort a list whose order is significant, or treat missing data as an empty
   resource.
 
+**You SHOULD:**
+
+- Return a normalized public resource under a documented singular key when it
+  benefits callers. Match the `_info` module's field meanings and types;
+  exclude secret and unstable internals. Document absence or null after
+  deletion. In check mode, distinguish observations from predictions and omit
+  identifiers that do not exist yet.
+
 **Good examples:**
 
 Here the client validates responses and translates transport and decoding
-errors into `ProductApiError`; `TransportTimeout` is a subclass. A read-back
-includes any bounded wait needed for propagation.
+errors into `ProductApiError`; `TransportTimeout` is a subclass. Each exception
+exposes `category`, `code` and `status`: a locally defined category, an
+allowlisted error code or `None`, and an HTTP status or `None`. The constructor
+provides safe defaults; raw exception text and response bodies stay internal.
+A read-back validates identity and includes any bounded propagation wait.
+Recovery shares the operation's original deadline; if no budget remains,
+return an unknown outcome and reconcile on a later invocation.
+
+This excerpt returns reconciliation metadata. `current` and `desired` are
+normalized and schema-validated; the public diff fields contain only
+non-secret scalar values. Argument, ownership and eligibility checks precede
+the excerpt.
 
 ```python
 MISSING = object()
+PUBLIC_DIFF_FIELDS = frozenset({"enabled", "action", "destination_port"})
 
 
 def verify(persisted: dict | None, changed: bool) -> None:
@@ -682,36 +682,77 @@ def verify(persisted: dict | None, changed: bool) -> None:
         )
 
 
+state = module.params["state"]
 write_attempted = False
+operation = "find"
 try:
     current = client.find(name)  # None when the resource does not exist
-    if current is None:
-        if module.check_mode:
-            module.exit_json(changed=True, name=name)
-        write_attempted = True
+    if state == "absent":
+        changed = current is not None
+        delta = {}
+        before, after = current or {}, {}
+    elif current is None:
+        changed = True
+        delta = desired
+        before, after = {}, desired
+    else:
+        delta = {
+            key: value for key, value in desired.items() if current.get(key, MISSING) != value
+        }
+        changed = bool(delta)
+        before = {key: current[key] for key in delta if key in current}
+        after = delta
+
+    result = {"changed": changed, "name": name}
+    if state == "present" and current is not None:
+        result["changed_fields"] = sorted(delta)
+    if module._diff and changed:
+        public_before = {key: before[key] for key in PUBLIC_DIFF_FIELDS if key in before}
+        public_after = {key: after[key] for key in PUBLIC_DIFF_FIELDS if key in after}
+        if public_before or public_after:
+            result["diff"] = {"before": public_before, "after": public_after}
+    if module.check_mode or not changed:
+        module.exit_json(**result)
+
+    write_attempted = True
+    if state == "absent":
+        operation = "delete"
+        client.delete(current["id"])
+        operation = "verify"
+        if client.find(name) is not None:
+            raise ProductApiError(
+                "Resource remains after deletion", category="verification", code="still_present"
+            )
+    elif current is None:
+        operation = "create"
         try:
             client.create(name, desired)
         except TransportTimeout:
             # Reconcile by identity before considering another write.
+            operation = "verify"
             persisted = client.find(name)
             if persisted is None:
-                raise ProductApiError("Creation outcome is unknown") from None
+                raise ProductApiError(
+                    "Creation outcome is unknown", category="verification", code="create_unknown"
+                ) from None
         else:
+            operation = "verify"
             persisted = client.find(name)
         verify(persisted, changed=True)
-        module.exit_json(changed=True, name=name)
-
-    diff = {
-        key: value for key, value in desired.items() if current.get(key, MISSING) != value
-    }
-    if diff and not module.check_mode:
-        write_attempted = True
-        client.update(current["id"], diff)
+    else:
+        operation = "update"
+        client.update(current["id"], delta)
+        operation = "verify"
         verify(client.find(name), changed=True)
-    module.exit_json(changed=bool(diff), name=name, changed_fields=sorted(diff))
-except ProductApiError:
+    module.exit_json(**result)
+except ProductApiError as error:
     module.fail_json(
         msg="Resource reconciliation failed",
+        operation=operation,
+        name=name,
+        error_category=error.category,
+        error_code=error.code,
+        http_status=error.status,
         changed=write_attempted,
         outcome="unknown" if write_attempted else "unchanged",
         exception=None,
@@ -737,6 +778,8 @@ except TransportTimeout:
 
 **Reasoning:**
 
+- Standard output carries the module's JSON result; diagnostics there corrupt
+  it.
 - Persisted state, accepted request and effective behavior are three separate
   facts. Products routinely confirm the first while failing the third.
 - Writing only the difference is what keeps undeclared fields alive, and it
@@ -753,20 +796,12 @@ effective-behavior probe in the integration scenario.
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-Every task invocation starts a Python process on the execution host and unpacks
-the payload; an API module then opens a connection and authenticates. Measured
-on a workstation with ansible-core 2.20 and a local connection, a module that
-does nothing costs about 165 ms per invocation: fifty invocations took 8.3
-seconds, one took 0.2 seconds. A loop over two hundred firewall rules pays that
-two hundred times, plus two hundred reads of the rule list.
-
 **You MUST:**
 
-- Make no redundant reads. A singular module resolves its resource with one
-  direct lookup by identity where the product offers one. A list-capable
-  module reads the collection once, or in batched queries, and resolves
-  identities in memory. Neither issues one search per item, and neither scans
-  a whole collection for a single resource that has an indexed lookup.
+- Avoid redundant reads. Use a direct identity lookup for a singular resource
+  where available. For lists, read once or in batches and resolve identities
+  in memory. Do not search per item or scan a whole collection for a single
+  indexed resource.
 - Read every page of a paginated listing, and treat a truncated listing as an
   error, never as "not found".
 - Write only changed items.
@@ -776,30 +811,26 @@ two hundred times, plus two hundred reads of the rule list.
 **You MUST NOT:**
 
 - Treat a list-capable module as the authoritative set of all resources.
-  Resources it does not list stay unmanaged unless a separately documented,
-  bounded purge option says otherwise.
+  Leave unlisted resources unmanaged unless a documented, bounded purge option
+  says otherwise.
 
 **You SHOULD:**
 
 - Offer a list-capable resource module when realistic configurations have tens
-  of items or more. Each item carries its own identity, state and result, and
-  the singular module stays available for single changes. Both share their
-  module utilities.
+  of items or more. Give each item its own identity, state and result. Retain
+  the singular module and share module utilities between both.
 - Reuse one client, connection and authentication per invocation.
-- Keep module utilities lean. Every imported utility travels in each payload,
-  and a small client on `ansible.module_utils.urls` often replaces a large SDK.
-- Count requests in unit tests, so a regression from one lookup to a scan is
-  caught.
+- Keep module utilities lean.
+- Count requests in unit tests to detect redundant lookups and scans.
 
 **For list-capable modules:**
 
 - Validate every item before the first write: schema, identity, eligibility
   and ownership. Reject duplicate identities and conflicting declarations for
   the same identity instead of applying them in order.
-- State the transaction boundary. Without a product transaction the module
-  applies items one by one; on the first failure it stops and reports which
-  items were applied, which failed and which were not attempted, with
-  `changed: true` when anything was applied. Document whether a rerun is safe.
+- Document the transaction boundary and rerun safety. Without a product
+  transaction, apply items sequentially and stop on the first failure. Report
+  applied, failed and unattempted items, with `changed: true` if any applied.
 - Return a per-item result with identity, state, `changed` and any error, and
   `changed` for the whole invocation.
 - Activate once after the last item, or not at all when an item failed and
@@ -834,9 +865,11 @@ two hundred times, plus two hundred reads of the rule list.
 
 **Reasoning:**
 
-- The fixed cost of an invocation is paid on the control node or managed host
-  for every item and every run. For configuration that changes rarely, almost
-  all of it is overhead.
+- Each invocation pays for Python startup and payload unpacking; API modules
+  also establish connections and authenticate. Batching avoids repeating
+  those costs for each item.
+- Imported utilities travel in each payload. A small client on
+  `ansible.module_utils.urls` can avoid a large SDK dependency.
 - Keeping unlisted resources unmanaged preserves the ownership rule of
   [Arguments and ownership](#arguments-ownership) while removing the loop.
 
@@ -848,22 +881,18 @@ observations from integration tests.
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-Declaring `supports_check_mode=True` is a promise that a run changes nothing.
-It is not a statement about the implementation.
-
 **You MUST:**
 
 - Keep check mode free of any change to managed state, including discovery
   calls, authentication helpers with side effects and cleanup paths.
 - Apply the same ownership and eligibility validation in check mode as in a
-  normal run, so a run that would be refused is refused during planning.
+  normal run.
 - Base a prediction on a real read and a normalized plan. Document an
   incomplete prediction instead of inventing identifiers.
 - Add `diff` only when the caller requested it through `module._diff`, and
   limit it to bounded, sanitized changes to managed state.
 - Allowlist public fields on both sides of a diff using the product schema.
-  Exclude secrets returned by the product, including old credentials that
-  differ from the caller's inputs and therefore are not masked by `no_log`.
+  Exclude product-returned secrets, including old credentials.
 - Describe the actual support level in `attributes.check_mode` and
   `attributes.diff_mode`, including partial support.
 - Test the changed and unchanged paths with check mode and diff mode toggled
@@ -916,9 +945,11 @@ result["diff"] = {"before": current, "after": desired}
 **Reasoning:**
 
 - Check mode is what operators use to inspect a change before a maintenance
-  window. A module that writes during it breaks the one guarantee they rely on.
+  window. `supports_check_mode=True` promises no writes but does not prevent
+  them; validation must also reject changes that normal mode would refuse.
 - A diff is output. The full current state of a resource usually contains more
   than the caller is entitled to see in a log.
+- `no_log` does not mask old credentials that differ from the caller's inputs.
 
 **Enforcement:** assert a write count of zero on every check-mode path. Test
 diffs with different old and new secrets, including nested values, and review
@@ -928,9 +959,6 @@ the declared support attributes.
 ## Secrets and errors<a id="secrets-errors"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
-
-`no_log` is the last line of defense, not a sanitization design. It masks
-values Ansible knows about, in places Ansible controls.
 
 **You MUST:**
 
@@ -943,30 +971,28 @@ values Ansible knows about, in places Ansible controls.
 - Convert an expected operational failure into `fail_json` at the module
   boundary. Let utilities raise narrow domain exceptions, and build the message
   from the operation name, a code and allowlisted fields.
+- Validate diagnostic codes and categories against the collection's public
+  error schema; use fixed fallbacks for unknown errors. Parse output-derived
+  diagnostics with a reviewed product-specific parser. Return known codes and
+  locally defined messages without raw input values.
 - Bound any captured response or output before it can reach a message, and keep
   raw bodies internal.
 - Pass `exception=None` when calling `fail_json` from an exception handler for
-  an expected failure. From ansible-core 2.19, `fail_json` otherwise attaches
-  the active exception whenever the controller enables traceback capture
-  (`ANSIBLE_DISPLAY_TRACEBACK`), and a formatted traceback ends with the
-  exception's own message, which a product exception may have filled with a
-  raw response. Every supported ansible-core version accepts the argument.
-- Catch every product and transport exception before it leaves `main()`. From
-  ansible-core 2.19 the framework turns an unhandled exception into a module
-  result whose message is the exception's text.
-- Test with a synthetic secret that it appears in none of the serialized
-  success result, the failure result, the invocation data, the diff or an
-  action plugin's output, with traceback capture enabled during the test.
+  an expected failure.
+- Catch every product and transport exception before it leaves `main()`.
+- Test that synthetic secrets are absent from serialized success and failure
+  results, invocation data, diffs and action plugin output. Enable traceback
+  capture during these tests.
 - Give an unreadable secret an explicit set-once or rotation contract with an
   acceptance probe, or exclude the operation.
 
 **You MUST NOT:**
 
 - Return an untrusted response body or a traceback because it was truncated.
+- Echo raw `stderr`, `str(error)` or a product exception's message into results,
+  warnings or logs.
 - Pass a secret as a command-line argument.
-- Pass parameter values or product responses to `module.log`. It writes to the
-  execution host's journal or syslog and masks only values registered through
-  `no_log`.
+- Pass parameter values or product responses to `module.log`.
 - Swallow a failure and return success.
 
 **Good examples:**
@@ -1009,10 +1035,17 @@ except ProductApiError:
 
 **Reasoning:**
 
-- Automatic masking cannot protect a process listing, an attribute on a raw
-  exception or a value the product echoes back in an error message.
-- A truncated body is still an untrusted body. Truncation limits size, not
-  disclosure.
+- `no_log` masks known values in framework-controlled output. It cannot protect
+  process listings, raw exception attributes or unknown product-returned
+  secrets. `module.log` writes to the execution host's journal or syslog and
+  masks only values registered through `no_log`.
+- From ansible-core 2.19, `fail_json` can attach the active exception when
+  `ANSIBLE_DISPLAY_TRACEBACK` enables capture. The traceback includes the
+  exception's message, potentially containing a raw response. Every supported
+  core accepts `exception=None` to suppress it.
+- From 2.19, unhandled exceptions also become module results containing their
+  text. Expected failures therefore need translation before leaving `main()`.
+- Truncation limits size, not disclosure; debug logging does not sanitize text.
 - An error message is an interface. Built from allowlisted fields it stays
   useful and safe; built from `str(error)` it is neither reliable nor bounded.
 
@@ -1034,40 +1067,57 @@ logging, which `no_log` does not control.
 - Validate certificates by default and make certificate authority, proxy,
   authentication and endpoint behavior explicit options.
 - Refuse to follow a redirect that would carry credentials to another origin,
-  and disable `netrc`, which `open_url` reads by default.
+  and disable `netrc`.
 - Set a socket inactivity timeout and a monotonic elapsed-time budget. Read
-  the body with `read1` and check the budget between reads. Retries and polling
-  share the original deadline. Bound the data kept and close every response,
-  including the one an `HTTPError` carries. Document the limits: DNS lookup
-  is outside the socket timeout, and slow response headers, chunk metadata
-  or decompression can delay the next budget check.
-- Check the application-level status as well as the HTTP status. A successful
-  status line routinely carries an application validation failure.
+  bodies with `read1`, check the budget between reads, and share the deadline
+  across retries and polling.
+- Bound response data and close every response, including those in `HTTPError`.
+  Document the budget's DNS, header, chunk-framing and decompression limits.
+- Check the application-level status as well as the HTTP status.
 - Classify retry safety per operation, and restrict an automatic retry after an
   ambiguous write to a verified idempotency or reconciliation mechanism.
+- Translate expected failures during both connection setup and body reads
+  into domain exceptions: `URLError`, Ansible connection and TLS errors,
+  socket errors and malformed HTTP responses. Classify socket timeouts and
+  elapsed-budget expiry as `TransportTimeout`; preserve mutation status.
 
 **You MUST NOT:**
 
 - Disable certificate verification automatically when a request fails.
-- Treat the HTTP method as a read-only classification. Check mode has to use
-  operations proven to be read-only, not operations named `GET`.
+- Infer read-only behavior from the HTTP method. Use only proven read-only
+  operations in check mode.
 - Use `read(size)` in a loop and assume each call returns within one socket
-  timeout. It can perform repeated reads while bytes keep arriving. Use
-  `read1` for incremental body reads.
+  timeout.
+
+**You SHOULD:**
+
+- Prefer `ansible.module_utils.urls.open_url` for product API clients.
 
 **Good examples:**
 
 This example requests uncompressed JSON and rejects other content encodings.
 Collections that support compression need tests for their decoded reader's
-size and timing behavior.
+size and timing behavior. The domain exceptions follow the interface in
+[Convergence and results](#convergence-results).
 
 ```python
+import json
+import socket
+import time
+from http.client import HTTPException
+from urllib.error import HTTPError, URLError
+
+from ansible.module_utils.urls import ConnectionError as UrlConnectionError
+from ansible.module_utils.urls import SSLValidationError, open_url
+
 # Create once per operation, outside any retry or polling loop.
 deadline = time.monotonic() + self.deadline_seconds
 remaining = deadline - time.monotonic()
 if remaining <= 0:
-    raise ProductApiError("Request budget exhausted")
+    raise TransportTimeout("Request budget exhausted", category="timeout", code="deadline_exceeded")
 
+chunks: list[bytes] = []
+size = 0
 try:
     response = open_url(
         url,
@@ -1086,42 +1136,81 @@ try:
         decompress=False,
         http_agent=USER_AGENT,
     )
+    with response:
+        if response.headers.get("Content-Encoding", "identity").strip().lower() != "identity":
+            raise ProductApiError(
+                "Unsupported response content encoding", category="response", code="content_encoding"
+            )
+        while True:
+            if time.monotonic() >= deadline:
+                raise TransportTimeout(
+                    "Request budget exhausted", category="timeout", code="deadline_exceeded"
+                )
+            chunk = response.read1(min(65536, MAX_BODY_BYTES + 1 - size))
+            if time.monotonic() >= deadline:
+                raise TransportTimeout(
+                    "Request budget exhausted", category="timeout", code="deadline_exceeded"
+                )
+            if not chunk:
+                break
+            size += len(chunk)
+            if size > MAX_BODY_BYTES:
+                raise ProductApiError(
+                    "Response exceeds the size limit", category="response", code="body_too_large"
+                )
+            chunks.append(chunk)
 except HTTPError as error:
     status = error.code
     error.close()  # the error object carries a response body
-    raise ProductApiError(f"{method} {path} failed", status=status) from None
-
-chunks: list[bytes] = []
-size = 0
-with response:
-    if response.headers.get("Content-Encoding", "identity").strip().lower() != "identity":
-        raise ProductApiError("Unsupported response content encoding")
-    while True:
-        if time.monotonic() >= deadline:
-            raise ProductApiError("Request budget exhausted")
-        chunk = response.read1(min(65536, MAX_BODY_BYTES + 1 - size))
-        if time.monotonic() >= deadline:
-            raise ProductApiError("Request budget exhausted")
-        if not chunk:
-            break
-        size += len(chunk)
-        if size > MAX_BODY_BYTES:
-            raise ProductApiError(f"{method} {path} returned more than {MAX_BODY_BYTES} bytes")
-        chunks.append(chunk)
+    raise ProductApiError(
+        "HTTP request failed", category="http", code="http_error", status=status
+    ) from None
+except (socket.timeout, TimeoutError):
+    raise TransportTimeout(
+        "HTTP request timed out", category="timeout", code="socket_timeout"
+    ) from None
+except URLError as error:
+    if isinstance(error.reason, (socket.timeout, TimeoutError)):
+        raise TransportTimeout(
+            "HTTP connection timed out", category="timeout", code="socket_timeout"
+        ) from None
+    raise ProductApiError(
+        "HTTP connection failed", category="transport", code="connection_failed"
+    ) from None
+except SSLValidationError:
+    raise ProductApiError(
+        "TLS validation failed", category="transport", code="tls_validation"
+    ) from None
+except UrlConnectionError:
+    raise ProductApiError(
+        "HTTP connection failed", category="transport", code="connection_failed"
+    ) from None
+except OSError:
+    raise ProductApiError(
+        "HTTP transport I/O failed", category="transport", code="io_error"
+    ) from None
+except HTTPException:
+    raise ProductApiError(
+        "Invalid or incomplete HTTP response", category="transport", code="http_protocol"
+    ) from None
 raw = b"".join(chunks)
 
 try:
     decoded = raw.decode("utf-8")
 except UnicodeDecodeError:
-    raise ProductApiError("Response is not valid UTF-8") from None
+    raise ProductApiError(
+        "Response is not valid UTF-8", category="response", code="invalid_utf8"
+    ) from None
 try:
     payload = json.loads(decoded)
 except json.JSONDecodeError:
-    raise ProductApiError("Invalid JSON response") from None
+    raise ProductApiError(
+        "Invalid JSON response", category="response", code="invalid_json"
+    ) from None
 if not isinstance(payload, dict):
-    raise ProductApiError("Expected a response object")
+    raise ProductApiError("Expected a response object", category="response", code="response_type")
 if payload.get("result") == "failed":
-    raise ProductApiError("Validation failed", details=payload.get("validations"))
+    raise ProductApiError("Validation failed", category="product", code="validation_failed")
 ```
 
 **Bad examples:**
@@ -1140,80 +1229,70 @@ module.exit_json(changed=True)
 
 **Reasoning:**
 
+- `fetch_url` returns a readable response on success, but its `HTTPError`
+  handler reads the entire error body and some failure paths call `fail_json`
+  directly. With `open_url`, the client controls response reading, size limits
+  and exception translation before the module decides how to report failure.
+  See the upstream
+  [implementation](https://github.com/ansible/ansible/blob/stable-2.16/lib/ansible/module_utils/urls.py).
 - Redirects can disclose credentials, and `netrc` can silently select
-  credentials the caller did not supply.
+  credentials the caller did not supply; `open_url` reads it by default.
+- A successful HTTP status can carry an application validation failure.
 - An unbounded read turns a misbehaving endpoint into an out-of-memory failure
   on the execution host.
 - For an uncompressed, non-chunked body, `read1` returns after at most one
-  underlying read, so budget detection can overrun by one socket timeout.
-  Python's chunked reader also parses framing between data reads; a slow
-  chunk header or trailer can take longer.
-
-The playbook `timeout` keyword can stop the controller waiting on a task,
-but does not guarantee module process cleanup. With the local connection,
-the module may keep running after the task fails. Reconcile an interrupted
-write before retrying it.
+  underlying read; budget detection can overrun by one socket timeout.
+  `read(size)` can keep reading while bytes arrive, delaying the budget check.
+- DNS lookup is outside the socket timeout. Slow response headers, chunk
+  framing and decompression can also delay budget checks.
+- The playbook `timeout` stops the controller waiting but does not guarantee
+  process cleanup. A local-connection module may continue after the task fails,
+  leaving an interrupted write's outcome unknown.
 
 **Enforcement:** unit tests over a fake opener covering certificate handling,
 redirects, authentication, application status, schema, size and time limits,
-plus slow-body tests for the budget, header and chunk-framing tests for its
-documented limits, and integration tests for the real API semantics.
+exceptions during opening and reading, plus slow-body tests for the budget,
+header and chunk-framing tests for its documented limits, and integration
+tests for the real API semantics.
 
 
 ## Command-line execution<a id="cli-execution"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-A module that drives a product's command-line interface runs on a host that has
-that interface. The invocation differs per deployment path, so it belongs in a
-declared locator profile rather than in the module's logic.
-
-ansible-core constrains how a module may run a process.
-`module.run_command` has no timeout parameter and reads output without a limit.
-The sanity tests reject direct use of `subprocess` and of the `os` process
-functions in modules and module utilities alike.
+Command-line modules require the product's CLI on the execution host.
 
 **You MUST:**
 
+- Keep deployment-specific invocations in a declared locator profile.
 - Run subprocesses through `module.run_command` with an argument list,
   `use_unsafe_shell=False`, `expand_user_and_vars=False`, explicit option
-  boundaries, and a validated executable path and object identifiers. Without
-  the expansion switch, `run_command` expands `$NAME`, `${NAME}` and `~` in
-  every argument even though no shell is involved.
+  boundaries, and validated executable paths and object identifiers.
 - Send secrets through stdin or another protected channel supported by the
   product. Use `binary_data=True` when the exact bytes matter.
-- Qualify the deadline mechanism for each locator profile. The example uses
-  GNU coreutils `timeout -k`, which signals its process group. Descendants
-  that detach from that group need separate cleanup. BusyBox signals only
-  the monitored PID and has different exit statuses; other implementations
-  need their own tests. Declare the implementation and executable path as
-  prerequisites. Report interrupted writes as unknown and reconcile before
-  retrying.
-- Bound what is parsed and echoed: request bytes with `encoding=None`, check
-  the size of both streams before decoding or parsing, and never place raw
-  output in a message. This is a size check, not a memory bound;
-  `run_command` buffers both streams completely before it returns.
+- Qualify each locator profile's deadline mechanism and descendant cleanup.
+  Declare the implementation and executable path as prerequisites. Use a
+  supervisor that records expiry separately when command and timeout statuses
+  collide.
+- Report interrupted writes as unknown and reconcile before retrying.
+- Request bytes with `encoding=None` and check both streams' sizes before
+  decoding or parsing. Never put raw output in a message.
 - Use a reviewed supervisor in a module utility where output is untrusted or
-  unbounded. It reads both streams with a byte limit while they are produced,
-  needs a documented sanity ignore entry for `ansible-bad-function`, and is
-  tested against a hanging process, flooding output, a descendant that keeps
-  stdin open, and descendant cleanup.
+  unbounded. Limit both streams while reading and document the
+  `ansible-bad-function` sanity ignore. Test hangs, output floods, descendants
+  holding stdin open and descendant cleanup.
 - Validate the return code and the structure of the output before using a
   returned field.
 - Verify the module's user and the application identity separately before a
-  write, and reject unused or conflicting locator fields. A matching host user
-  does not establish the identity inside a container.
+  write. Reject unused or conflicting locator fields.
 - Keep the inherited and supplied environment within the locator profile's
-  documented policy. `environ_update` adds variables; it does not remove
-  inherited ones.
+  documented policy.
 
 **You MUST NOT:**
 
-- Pass a `timeout` argument to `run_command`. It does not exist.
+- Pass a `timeout` argument to `run_command`.
 - Rely on a timer that calls `process.kill()` from `before_communicate_callback`
-  as the deadline. It kills only the immediate child. A descendant that holds
-  the stdin pipe keeps `run_command` blocked until it exits, and an exit
-  status of `-9` alone does not show that the timer fired.
+  as the deadline.
 - Quote values inside an argument list as if a shell would parse them.
 - Interpolate caller data into interpreter source. Ship fixed helper source and
   pass the declaration as data.
@@ -1223,8 +1302,15 @@ functions in modules and module utilities alike.
 This profile uses a qualified GNU `timeout` and a command with bounded output.
 The command reserves statuses 124 and 137 for the wrapper. The module has
 already handled check mode and validated the declaration before this write.
+Its product utility supplies `parse_product_cli_error`, which accepts any byte
+input and returns a known code and a locally defined summary. Malformed or
+unknown output gets fixed fallbacks. The parser performs no I/O, raises no
+operational exceptions and never echoes raw text or unchecked extracted values.
 
 ```python
+import json
+import signal
+
 DEADLINE_SECONDS = 120
 KILL_AFTER_SECONDS = 10
 MAX_OUTPUT_BYTES = 1024 * 1024
@@ -1242,6 +1328,7 @@ argv = [
 def fail_unknown(message: str, **details: object) -> None:
     module.fail_json(
         msg=message,
+        operation="reconcile",
         changed=True,
         outcome="unknown",
         exception=None,
@@ -1265,7 +1352,13 @@ try:
     if len(stdout) > MAX_OUTPUT_BYTES or len(stderr) > MAX_OUTPUT_BYTES:
         fail_unknown("Reconciliation produced more output than expected", rc=rc)
     if rc != 0:
-        fail_unknown("Reconciliation failed", rc=rc)
+        diagnostic = parse_product_cli_error(stderr)
+        fail_unknown(
+            "Reconciliation failed",
+            rc=rc,
+            error_code=diagnostic.code,
+            error_reason=diagnostic.safe_summary,
+        )
     lines = stdout.decode("utf-8").strip().splitlines()
     if not lines:
         fail_unknown("Reconciliation returned no report")
@@ -1286,12 +1379,6 @@ except (OSError, ValueError):
 Validate the remaining report fields against the product schema and verify
 the postcondition before returning success. These steps retain the same
 mutation status on failure.
-
-GNU `timeout` normally returns 124 on expiry. With `KILL`, the result can be
-137 or a negative signal number when Python observes the wrapper's death.
-Status alone cannot distinguish every external kill or command exit. Where
-codes collide, use a supervisor that records expiry separately; GNU's
-`--preserve-status` does not resolve the ambiguity.
 
 **Bad examples:**
 
@@ -1314,13 +1401,27 @@ subprocess.run(argv, timeout=60, check=True)
 
 **Reasoning:**
 
-- Everything the framework gives you for argument safety is lost the moment a
-  shell interprets the string.
-- A deadline is the only thing standing between a hung product command and a
-  stuck play with no output.
+- `run_command` has no timeout parameter and buffers both streams completely.
+  Checking sizes afterward limits parsing and reporting, not memory use.
+  Sanity tests reject direct `subprocess` and `os` process calls in modules
+  and module utilities.
+- Without `expand_user_and_vars=False`, `run_command` expands `$NAME`,
+  `${NAME}` and `~` even without a shell. Shell parsing adds another
+  interpretation of the arguments.
+- GNU `timeout -k` signals its process group; detached descendants need
+  separate cleanup. BusyBox signals only the monitored PID and uses different
+  exit statuses, so deadline implementations need separate qualification.
+- GNU `timeout` normally returns 124 on expiry; `KILL` can produce 137 or a
+  negative signal number. Command exits and external kills can share those
+  statuses. `--preserve-status` does not resolve the ambiguity.
+- A timer's `process.kill()` stops only the immediate child. A descendant can
+  hold stdin open and block `run_command`; `-9` alone does not prove the timer
+  fired.
+- A matching host user does not establish the identity inside a container.
+  `environ_update` adds variables without removing inherited ones.
 - Stopping the client does not stop work it started elsewhere. `podman exec`
-  leaves the process inside the container running, which is why an expired
-  deadline is an unknown outcome and not a failure to retry.
+  can leave the container process running, so expiry does not prove a write
+  failed.
 
 **Enforcement:** exact argument list and stdin assertions, expansion tests
 with literal `$NAME`, `${NAME}` and `~` arguments, a hanging child, a
@@ -1328,30 +1429,27 @@ flooding child and a descendant that keeps stdin open, the pylint sanity
 test, and qualification against the real command-line interface.
 
 
-## Activation, actions and bootstrap<a id="activation-bootstrap"></a>
+## Activation, operations and bootstrap<a id="activation-bootstrap"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-This section applies to modules for products that persist a change and apply it
-separately, and to modules that initialize a product. Host-local collections
-are usually unaffected.
+These rules apply when persistence and activation are separate, or when a
+module initializes a product.
 
 **You MUST:**
 
 - Separate persistence from activation wherever the product does, and
   distinguish an accepted request, a completed operation and a verified
   effective state.
-- Define what `changed` means for an action, including a deliberately
-  non-idempotent one, and define its check-mode prediction. Do not present an
-  action as resource convergence.
+- Define what `changed` means for an operational module, including a
+  deliberately non-idempotent one. Define its check-mode prediction without
+  presenting a non-idempotent operation as convergence.
 - Wait for a bounded completion where the product exposes job status, and never
   report an accepted request as proof of effect.
-- Handle pending work left by an earlier failed run, even when nothing changed
-  in the current run. Where the product applies global pending state, document
-  and enforce the required exclusive-writer or maintenance policy before
-  making changes.
-- Establish recovery before a connectivity-sensitive change, or exclude it. A
-  client-side rescue cannot repair a severed management path.
+- Handle pending work from earlier failed runs, even if this run changes
+  nothing. For global activation, document and enforce an exclusive-writer or
+  maintenance policy before making changes.
+- Establish recovery before a connectivity-sensitive change, or exclude it.
 - Make bootstrap distinguish fresh, complete, partial and inconsistent
   initialization, verify the completed state, and prevent duplicate
   initialization under a race.
@@ -1430,8 +1528,9 @@ module.exit_json(changed=True, msg="Firewall rules are now active")
   failure: the play is green and the policy is the old one.
 - Activation is usually global. Applying one change can commit an operator's
   unrelated pending work, which needs a stated policy rather than luck.
+- A client-side rescue cannot repair a severed management path.
 
-**Enforcement:** state-machine unit tests for the action and bootstrap paths,
+**Enforcement:** state-machine unit tests for operational modules and bootstrap,
 workflow tests including the pending-state case, and recovery evidence from a
 real target.
 
@@ -1474,19 +1573,15 @@ own side effects.
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-An action plugin runs on the controller and wraps a module. It is not a place
-for product logic.
-
 **You MUST:**
 
 - Add an action plugin only for controller-side work the module cannot do, such
   as reading a file or rendering a template on the controller.
-- Derive from `ActionBase`, invoke the module through `_execute_module`, and
-  preserve the task context, delegation, privilege escalation, check and diff
-  behavior and the module's failure result. State async support honestly.
+- Derive from `ActionBase` and invoke the module through `_execute_module`.
+  Preserve task context, delegation, privilege escalation, check and diff
+  behavior, and module failures. Document actual async support.
 - Validate action-only inputs, clean up temporary files on every failure path,
-  and sanitize data the action itself adds to the result. A module's `no_log`
-  specification does not cover output the action invents.
+  and sanitize data the action adds to the result.
 - Test a plugin that creates template strings or handles templated values on
   both sides of ansible-core 2.19, or raise the collection's minimum version, as
   described in
@@ -1496,6 +1591,7 @@ for product logic.
 
 **You MUST NOT:**
 
+- Put product logic in an action plugin.
 - Change the caller's task arguments in place.
 - Force `localhost` silently, write diagnostics to standard output, or treat an
   arbitrary returned string as a template.
@@ -1503,7 +1599,8 @@ for product logic.
 **Reasoning:**
 
 - Controller preprocessing adds a second validation boundary and a second place
-  where a secret can escape into a result.
+  where secrets can escape. The module's `no_log` specification does not cover
+  output the action plugin adds.
 - An action plugin that drops a task's delegation or check-mode flag turns a
   reviewed playbook into something else at runtime.
 
@@ -1533,8 +1630,7 @@ ansible-core version.
 **You MUST NOT:**
 
 - Call a product from a filter or a test.
-- Catch every exception and return `false`, which makes an undefined variable
-  look like a valid negative result.
+- Catch every exception and return `false`.
 
 **Reasoning:**
 
@@ -1542,6 +1638,7 @@ ansible-core version.
   a side effect produces different results depending on when it is rendered.
 - ansible-core 2.19 changed how undefined values reach filters and tests and
   now reports overly broad exception handling that used to hide them.
+- Catching all exceptions can turn an undefined variable into a false result.
 
 **Enforcement:** purity and input unit tests, real templating tasks,
 documentation lint, and review of the intended semantics.
@@ -1551,22 +1648,17 @@ documentation lint, and review of the intended semantics.
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-Shared code reaches every consumer, and so does a mistake in it. A
-documentation fragment is part of that public surface.
-
 **You MUST:**
 
 - Keep product parsers, adapters, schemas, normalization and fixtures in the
   product's own collection. Share only product-independent mechanics.
-- Share a helper at the stability level its actual consumers have earned. A
-  released collection imports stable helpers only; an unreleased branch may
-  import an experimental one.
+- Import only stable helpers in released collections. Experimental helpers
+  may be used on unreleased branches.
 - Mark an internal utility with a leading underscore and say so in its
   docstring. Treat a public helper's signature, its exceptions and a fragment's
   options as versioned interfaces.
 - Build a fresh argument specification, or deep-copy a nested one, before
-  extending it. A shared specification edited in place corrupts every other
-  consumer in the same process.
+  extending it.
 - Share documentation through fully qualified fragments and test the merged
   documentation against the real specification, including each consumer's
   overrides.
@@ -1603,8 +1695,8 @@ _BASE_SPEC["validate_certs"] = {"type": "bool", "default": False}
 
 - Two consumers are the smallest evidence that an interface is general rather
   than one product's shape with a generic name.
-- Module specifications are dictionaries. Sharing one by reference is an action
-  at a distance across collections that unit tests rarely reproduce.
+- Editing a shared argument specification in place changes it for every
+  consumer in the process. A fresh copy prevents that cross-module state.
 
 **Enforcement:** consumer and build checks, the dependency version tests,
 fragment and specification agreement checks, and review of the extraction
@@ -1615,8 +1707,8 @@ benefit.
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-For a module-first collection the module documentation, not a role's
-`argument_specs.yml`, is the primary public interface description.
+Module documentation is the primary public interface description for a
+module-first collection.
 
 **You MUST:**
 
@@ -1627,12 +1719,18 @@ For a module-first collection the module documentation, not a role's
   [module format](https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html)
   requires: `from __future__ import annotations`, raw-string `DOCUMENTATION`,
   `EXAMPLES` and `RETURN`, then the ordinary imports and the implementation.
-  The `__future__` import lets `X | None` annotations run on Python 3.9.
+  For the limits of postponed annotations on Python 3.9, see
+  [Supported runtimes](#supported-runtimes).
+- Include `author` and document every module-specific option. Validate merged
+  documentation against the argument specification.
 - Keep options, suboptions, defaults, aliases, types, choices and conditional
   requirements consistent with the argument specification. Use collection
   versions for `version_added`, never ansible-core versions.
 - Document every non-standard returned value and the condition under which it
-  appears.
+  appears. Follow the upstream
+  [`RETURN` schema](https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html#return-block):
+  top-level values need `description`, `returned` and `type`; document known
+  nested fields with `contains` and list element types with `elements`.
 - State identity and adoption, omission, deletion and reset semantics, the
   execution host, prerequisites, the activation policy, check and diff limits,
   and what the module actually verifies.
@@ -1643,25 +1741,33 @@ For a module-first collection the module documentation, not a role's
   Reserve `C()` for literal code and `L()` or `U()` for links.
 - Write runnable YAML tasks in `EXAMPLES`, following the
   [Ansible playbook guidelines](./ansible-playbooks.md).
-- State the collection contract where consumers read: in the README or in a
-  page linked from it. Existing documentation that covers those subjects
-  satisfies this rule; do not create a new top-level document merely to hold
-  them.
-- Keep the design record's current decisions apart from its dated evidence
-  and execution logs, so a reader can tell what holds now from how it came
-  about. Rationale that would crowd the record may live in a page linked
-  from it.
+- State the collection contract in the README or a linked page. Reuse existing
+  documentation that covers it; do not create a redundant top-level document.
+- Keep architecture documentation about the current implementation and the
+  reasoning that still explains it. Link supporting evidence when it justifies
+  a decision or support claim. Track planned work in issues, retain execution
+  logs as test artifacts, and leave edit history in Git.
 
 **You MUST NOT:**
 
 - Add an encoding declaration or the legacy `absolute_import` and
-  `__metaclass__` lines. They serve Python 2 only.
+  `__metaclass__` lines.
 - Use Markdown syntax such as backticks inside descriptions.
 - Hand-maintain an option table in the README that duplicates the module
   documentation.
 - Present an untested product path as supported.
 
+**You SHOULD:**
+
+- Link a tested resource module, its utilities and tests from contributor
+  documentation as an end-to-end reference. Keep it in the collection's test
+  suite.
+- Include samples for return values; the validator does not require them.
+
 **Good examples:**
+
+These are documentation excerpts, not a complete module. The first omits
+resource options, attributes, `EXAMPLES`, `RETURN` and the implementation.
 
 ```python
 #!/usr/bin/python
@@ -1677,8 +1783,31 @@ description:
   - "With O(state=absent), removes only the named rule and never the appliance."
   - "Changes are saved but not activated. Use M(foundata.opnsense.firewall_apply) afterwards."
 version_added: "1.0.0"
+author:
+  - foundata Development Team (@foundata)
 extends_documentation_fragment:
   - foundata.opnsense.api
+"""
+```
+
+For a module that exposes a read-back snapshot, document its return separately
+from any check-mode prediction:
+
+```python
+RETURN = r"""
+rule:
+  description: Normalized public state read from the appliance.
+  returned: On success with O(state=present), outside check mode.
+  type: dict
+  contains:
+    name:
+      description: Rule name.
+      type: str
+      sample: allow-https
+    action:
+      description: Configured packet action.
+      type: str
+      sample: pass
 """
 ```
 
@@ -1694,6 +1823,8 @@ description:
 
 - ansible-test requires the exact module shebang and rejects executable module
   files; Ansible replaces the interpreter line when it builds the payload.
+- Connection fragments do not document resource-specific options. A role's
+  `argument_specs.yml` does not describe a module's interface either.
 - Semantic markup lets the documentation renderer link an option to its
   definition and keeps the same text readable in `ansible-doc`.
 - `version_added` means the ansible-core version in a core module and the
@@ -1709,8 +1840,6 @@ tests, the documentation and yamllint sessions of
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-Four layers answer four different questions. None substitutes for another.
-
 |               Layer                | Question it answers |
 | ---------------------------------- | ------------------- |
 | Sanity                             | Does the collection meet the framework's requirements on every supported version? |
@@ -1721,22 +1850,23 @@ Four layers answer four different questions. None substitutes for another.
 **You MUST:**
 
 - Run sanity, unit tests and the file-only integration targets on every
-  ansible-core version the collection admits, plus the development branch,
-  and the payload unit tests on the lowest declared Python. Exercise the real
-  argument specification and the JSON exit and failure paths in some tests
-  rather than replacing `AnsibleModule` everywhere with a permissive fake.
-- Cover creation, update, no-op, deletion, omission and reset, invalid input,
-  ambiguous identity, ineligible targets, check and diff mode, secret masking
-  with traceback capture enabled, partial writes and the `changed` they report,
-  delayed visibility, malformed responses, request counts and retry after a
-  timeout, wherever they apply.
+  admitted ansible-core version, plus the development branch. Run payload unit
+  tests on the lowest declared Python.
+- Exercise the real argument specification and JSON exit and failure paths;
+  do not replace `AnsibleModule` with a fake in every test.
+- Cover applicable lifecycle cases: creation, update, no-op, deletion, omission,
+  reset, invalid input, ambiguous identity, ineligible targets, check and diff
+  mode.
+- Cover applicable failure and transport cases: secret masking with traceback
+  capture enabled, partial writes and their `changed` results, delayed
+  visibility, malformed responses, request counts and retry after a timeout.
 - Make fake transports and clocks controllable, and assert the calls made and
   the resulting state, not merely that a mock returned the value the test
   supplied.
 - Qualify claimed product operations, builds and locator profiles with real
-  integration evidence and cleanup, at least on the lowest and the highest
-  admitted ansible-core version. Keep destructive and network tests opt-in and
-  bounded to test-owned fixtures.
+  integration tests and cleanup on at least the lowest and highest admitted
+  ansible-core versions. Keep destructive and network tests opt-in and limited
+  to test-owned fixtures.
 - Keep Molecule for deployment, bootstrap, activation and effective behavior,
   and share assertion task files with integration targets instead of
   maintaining two convergence suites.
@@ -1780,15 +1910,13 @@ of the tests, and catalogue links from a claimed operation to its evidence.
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
 A collection release supports a bounded set of ansible-core versions and, for a
-product collection, a bounded set of product series. Consumers pick the release
-that matches their fleet, as they do for operating system support.
+product collection, product series.
 
 **You MUST:**
 
 - Preserve public arguments, results, identities, fragments and helper
-  interfaces within the promised compatibility policy, and record every
-  behavioral change, removed support, migration and deprecation in a changelog
-  fragment.
+  interfaces under the compatibility policy. Record behavioral changes, removed
+  support, migrations and deprecations in changelog fragments.
 - Deprecate declaratively where Ansible supports it: `removed_in_version` with
   `removed_from_collection` and `deprecated_aliases` in the argument
   specification, and `plugin_routing` in `meta/runtime.yml` for whole modules,
@@ -1799,28 +1927,24 @@ that matches their fleet, as they do for operating system support.
 **For modules that manage product state:**
 
 - Pass the collection's eligibility check before every change, including
-  command-line and action paths. Keep version and capability discovery
-  read-only and free of side effects.
-- Distinguish eligible ranges from the exact builds actually tested. A tested
-  patch release does not authorize every patch in its series.
+  command-line paths and operational modules. Keep version and capability
+  discovery read-only and free of side effects.
+- Distinguish eligible ranges from the exact builds tested.
 - Fail before any change on an ineligible target, and let read-only modules
   warn instead.
 
 **You MUST NOT:**
 
 - Add a public `api_version` option unless upstream offers selectable, named
-  API versions whose semantic differences require a consumer choice. A product
-  release is not an API version, and such an option must never bypass the
-  eligibility check.
+  API versions whose semantics require a consumer choice. Never let the option
+  bypass eligibility checks.
 - Drop a product series or an ansible-core version, or change the meaning of an
   omitted field, in a patch release.
 - Read the resource catalogue or any other development index at runtime.
 
 **You SHOULD:**
 
-- Keep `module.deprecate()` calls rare. The sanity rules for them differ between
-  ansible-core versions: 2.16 requires `collection_name`, and 2.21 adds rules
-  against passing it.
+- Keep `module.deprecate()` calls rare.
 
 **Reasoning:**
 
@@ -1831,6 +1955,10 @@ that matches their fleet, as they do for operating system support.
   parameter.
 - Declarative deprecations are checked by the sanity tests and read the same on
   every ansible-core version.
+- The sanity rules for `module.deprecate()` differ: 2.16 requires
+  `collection_name`, while 2.21 adds rules against passing it.
+- Testing one patch release does not qualify its whole series. A product
+  release is also distinct from a selectable API version.
 
 **Enforcement:** a policy test comparing the runtime compatibility definition
 with the positive support claims in the documentation and the catalogue,
@@ -1841,30 +1969,20 @@ changelog lint, and the build and import check.
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-Use [`antsibull-nox`](https://docs.ansible.com/projects/antsibull-nox/), the
-check runner maintained Ansible community collections use, instead of a
-hand-assembled toolchain. It runs `ansible-test` sanity, unit and integration
-sessions in containers for every ansible-core version `requires_ansible`
-admits, and adds lint, documentation, license and build checks. Red Hat's
-`tox-ansible` covers the `ansible-test` part; `antsibull-nox` additionally
-covers REUSE, documentation and the Galaxy importer, which foundata
-collections rely on.
-
 **You MUST:**
 
-- Provide a `noxfile.py` and an `antsibull-nox.toml` in the collection root.
+- Use [`antsibull-nox`](https://docs.ansible.com/projects/antsibull-nox/) with
+  `noxfile.py` and `antsibull-nox.toml` in the collection root.
 - Run the full sanity suite on every admitted ansible-core version and the
   development branch. Never reduce it to a single test.
 - Run the unit tests of modules and module utilities on the lowest declared
-  Python as well. ansible-test runs those tests on target-only Python
-  versions, for example `ansible-test units --docker --python 3.9`; in
-  `antsibull-nox` the units session takes `core_python_versions`.
+  Python. Set the units session's `core_python_versions`; a direct run for the
+  default floor is `ansible-test units --docker --python 3.9`.
 - Run the file-only integration targets on every admitted ansible-core
-  version. They execute a real task through the real argument parser, which
-  no unit test does.
-- Format and lint Python with Ruff, including import sorting, lint YAML
-  including the documentation blocks with yamllint, and type-check with mypy
-  against the newest ansible-core.
+  version.
+- Format and lint Python with Ruff, including import sorting. Lint YAML and
+  documentation blocks with yamllint. Type-check with mypy against the newest
+  ansible-core.
 - Explain every sanity ignore entry with the affected ansible-core version, the
   reason and the condition under which it can be removed.
 
@@ -1873,10 +1991,8 @@ collections rely on.
 - Suppress a documentation or specification mismatch to obtain a passing run.
 - Apply a global `ignore_errors` or a blanket `ignore_missing_imports`.
 - Treat a checker's target version, or the compile and import sanity tests,
-  as proof that a standard library feature exists on the payload floor. They
-  are necessary and not sufficient: a call to a newer standard library
-  function compiles and imports on Python 3.9 and fails only when it runs.
-  The payload unit tests on the floor catch it.
+  as proof of standard library availability on the payload floor. Exercise
+  those features in payload unit tests on that floor.
 
 **Good examples:**
 
@@ -1996,16 +2112,22 @@ MOLECULE_GLOB='extensions/molecule/**/molecule.yml' molecule test --all
 CI runs all five. Run the Molecule command in separate environments for the
 lowest and highest admitted ansible-core series, using compatible tool
 versions in each. An explicit matrix of `molecule test -s <scenario>` jobs may
-replace `--all` if it covers every required scenario. A bare `molecule test`
-runs only the default scenario.
+replace `--all` if it covers every required scenario.
 
-A bare `nox` run excludes the `ansible-test` sessions. Check `nox --list` and
-the generated CI matrix against the declared core and Python support.
+Check `nox --list` and the generated CI matrix against the declared core and
+Python support.
 
 **Reasoning:**
 
 - `antsibull-nox` derives the ansible-core versions from `requires_ansible`, so
-  the declared support and the tested support cannot drift apart.
+  the test matrix follows declared support. Alongside containerized
+  `ansible-test` sessions, it provides lint, documentation, license, build and
+  Galaxy importer checks.
+- A bare `nox` excludes the `ansible-test` sessions; a bare `molecule test` runs
+  only the default scenario.
+- Integration targets exercise a real task through Ansible's argument parser.
+  Payload unit tests on the Python floor catch unavailable standard library
+  features that compile and import checks can miss.
 - ansible-core ships no type information. `follow_untyped_imports` analyzes it
   anyway, which is how maintained community collections type-check against it,
   instead of ignoring every Ansible import.
@@ -2020,9 +2142,8 @@ configuration exception and sanity ignore entry.
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-Apply this list to every pull request that changes plugin code. Mark an item as
-not applicable with a reason; a passing linter is not evidence of product
-behavior.
+Apply this list to every pull request that changes plugin code. Explain any
+item marked not applicable.
 
 - [ ] **Scope:** a resource, not an endpoint wrapper; no facade role
   ([When to write a module](#when-to-write-a-module)).
@@ -2053,9 +2174,9 @@ behavior.
 - [ ] **Commands:** argument lists with expansion disabled, secrets on stdin,
   qualified deadline and cleanup, bounded output, both identities verified
   ([Command-line execution](#cli-execution)).
-- [ ] **Actions:** accepted, completed and verified distinguished; pending work
-  handled; bootstrap state-aware
-  ([Activation, actions and bootstrap](#activation-bootstrap)).
+- [ ] **Operations:** accepted, completed and verified distinguished; pending
+      work handled; bootstrap state-aware
+      ([Activation, operations and bootstrap](#activation-bootstrap)).
 - [ ] **Reads:** `_info` naming, check mode, no side effects
   ([Info and facts modules](#info-facts-modules)).
 - [ ] **Controller plugins:** justified; tested across ansible-core 2.19
@@ -2064,8 +2185,8 @@ behavior.
 - [ ] **Sharing:** fresh specifications; fragments tested with each consumer;
   stable helpers only in releases ([Shared code](#shared-code)).
 - [ ] **Documentation:** header, markup, returns and limits accurate; the
-  collection contract stated where consumers read; decisions separated from
-  evidence in the design record
+  collection contract stated where consumers read; architecture and rationale
+  current, with planned work in issues and supporting evidence linked
   ([Module documentation](#module-documentation)).
 - [ ] **Tests:** every layer on every admitted ansible-core version, payload
   units on the floor; product claims backed by integration evidence
