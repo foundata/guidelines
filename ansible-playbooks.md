@@ -49,7 +49,8 @@ The terms MUST, SHOULD, and other key words are used as defined in
 
 **You MUST:**
 
-- Follow the [YAML 1.2.2 specification](https://yaml.org/spec/1.2.2/).
+- Use [YAML 1.2.2](https://yaml.org/spec/1.2.2/)-compatible syntax that the
+  project's supported Ansible versions interpret consistently.
 - Use spaces for
   [indentation](https://yaml.org/spec/1.2.2/#61-indentation-spaces).
 - Use Unix line feed (LF, `\n`) for new lines.
@@ -167,9 +168,12 @@ The terms MUST, SHOULD, and other key words are used as defined in
 
 **Reasoning:**
 
-- YAML 1.2 has been the standard since 2009 and uses only `true` and `false` for
-  booleans, avoiding many potential edge-case issues. Allowing YAML 1.1 is no
-  longer practical.
+- This guide uses YAML 1.2-oriented conventions, but Ansible's runtime parser
+  retains
+  [YAML 1.1 behavior](https://docs.ansible.com/projects/ansible/latest/reference_appendices/YAMLSyntax.html).
+  Linter settings do not replace that parser. Use lowercase `true` and `false`
+  for booleans and quote ambiguous strings, such as `"yes"`, `"no"`, and version
+  numbers, so linting and execution agree on their types.
 - The `.yml` extension must be used for consistency. It is predominant in the
   Ansible ecosystem, even though [yaml.org](https://yaml.org/faq.html)
   recommends `.yaml`.
@@ -556,10 +560,12 @@ separator between tasks.
 
 **Reasoning:**
 
-- Using `true` / `false` prevents
+- Lowercase `true` and `false` are unambiguous across YAML 1.1 and 1.2 parsers.
+  YAML accepts additional spellings; this guide requires lowercase for
+  consistency.
+- Quote strings that a YAML 1.1 parser could interpret as booleans, such as
+  `"no"`, to avoid
   [the Norway problem](https://hitchdev.com/strictyaml/why/implicit-typing-removed/).
-- YAML 1.2 only allows `true` / `false` as boolean literals. YAML 1.1 (which is
-  less strict on this) is old and deprecated.
 
 
 ## Maps (`key: value`)<a id="maps"></a>
@@ -796,12 +802,16 @@ separator between tasks.
 
 - Ensure all conditional expressions (`when`, `changed_when`, `failed_when`,
   `assert.that`) evaluate to actual boolean values, not truthy/falsy values.
-- Use explicit boolean predicates instead of relying on implicit truthiness:
+- Use validated boolean variables directly. For other values, use explicit
+  predicates or supported boolean conversion:
   - `myvar | ansible.builtin.length > 0` instead of just `myvar`
   - `myvar is ansible.builtin.defined` for existence checks
-  - `myvar is ansible.builtin.truthy` or `myvar | ansible.builtin.bool` for
-    explicit truthiness conversion
+  - `myvar | ansible.builtin.bool` for supported boolean representations, such
+    as the strings `"true"` and `"false"`
   - `myvar == 'value'` for string comparisons
+- Use `ansible.builtin.truthy` only when Python truthiness is the intended
+  meaning. It treats a nonempty string such as `"false"` as true. Do not use
+  `ansible.builtin.bool` to test arbitrary strings, lists, or mappings.
 - Quote conditional expressions containing `:` (colon followed by space) to
   prevent YAML from parsing them as mappings.
 - Use parentheses to control Jinja2 order of operations when using operators
@@ -839,6 +849,12 @@ separator between tasks.
   vars:
     foo: true
     bar: false
+
+- name: "Distinguish boolean conversion from string truthiness"
+  ansible.builtin.assert:
+    that:
+      - not ('false' | ansible.builtin.bool)
+      - "'false' is ansible.builtin.truthy"
 
 - name: "Check if hostname is set"
   ansible.builtin.assert:
@@ -970,9 +986,15 @@ separator between tasks.
   instead of being silently evaluated as truthy.
 - Writing explicit boolean predicates makes the intent clear and prevents subtle
   bugs that are hard to diagnose.
-- YAML interprets unquoted strings containing `:` as mappings. Since non-empty
-  mappings are truthy, this silently breaks comparisons. Quoting the entire
-  expression prevents this.
+- The
+  [`bool` filter](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/bool_filter.html)
+  parses a limited set of boolean representations. The
+  [`truthy` test](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/truthy_test.html)
+  checks Python truthiness by default. They answer different questions for
+  strings such as `"false"`; prefer a specific comparison when testing content.
+- YAML can interpret unquoted expressions containing `:` followed by a space
+  as mappings. Quoting the entire expression prevents a type error or, on older
+  Ansible versions, an unintended truthy result.
 - The `success` and `failed` tests inspect the task's failure status and work
   across modules, including those without return codes. `failed_when: false`
   overrides this status, so a nonzero return code can still test as successful.
@@ -1129,8 +1151,10 @@ separator between tasks.
   ansible.builtin.include_tasks:
     file: "{{ loop_item }}"
   when:
-    - item is file
-  loop: "{{ lookup('fileglob', 'foo/*.yml', wantlist=True) | sort }}"
+    - loop_item is ansible.builtin.file
+  loop: "{{ lookup('ansible.builtin.fileglob', 'foo/*.yml', wantlist=true) | ansible.builtin.sort }}"
+  loop_control:
+    loop_var: "loop_item"
 ```
 
 **Bad examples:**
@@ -1253,8 +1277,6 @@ separator between tasks.
      - `notify`
      - `listen`
   6. `tags`
-- Always use a list format for `when`, `changed_when`, and `failed_when`, even
-  if there is only one condition.
 - If it is necessary to make task names dynamic, do so by appending
   `{{ variables }}` at the end of the string.
 - The `include_*` and `import_*` statements are not treated differently from
@@ -1267,6 +1289,9 @@ separator between tasks.
   attribute of a playbook), as they do not expand properly.
 - Use loop variables (e.g., the default `item`) in task names within a loop, as
   they also do not expand properly.
+
+The list requirement for `when`, `changed_when`, and `failed_when` is defined in
+[Conditional formatting](#conditionals-formatting), including single conditions.
 
 **Good examples:**
 
@@ -1521,14 +1546,18 @@ separator between tasks.
 
 **You MUST:**
 
-- Pass the data a template needs through `tpl_*` variables defined in the
-  task's `vars:`.
+- Pass all external data a template needs through `tpl_*` variables defined in
+  the task's `vars:`, including values such as `ansible_managed`.
 - Refactor existing templates to `tpl_*` inputs when you touch them.
 
 **You MUST NOT:**
 
-- Read loop variables, registered results, or other role variables directly
-  inside a template.
+- Read task loop variables, registered results, facts, or other ambient Ansible
+  variables directly inside a template.
+
+Variables defined inside the template, its own loop variables and macro
+parameters are local to the template and do not need the `tpl_*` prefix. Jinja
+built-in facilities such as `loop` and `namespace()` remain available.
 
 **Good examples:**
 
@@ -1543,6 +1572,7 @@ separator between tasks.
   vars:
     # Pass (and/or adjust) variables needed for the template
     tpl_marker: "{{ __run_example_config_file_marker }}"
+    tpl_managed: "{{ ansible_managed }}"
     tpl_content: "{{ __run_example_vhost_item['content'] }}"
   loop: "{{ run_example_vhosts_config }}"
   loop_control:
@@ -1552,7 +1582,7 @@ separator between tasks.
 ```jinja
 {# templates/vhost.conf.j2 #}
 {{ tpl_marker }}
-# {{ ansible_managed }}
+# {{ tpl_managed }}
 
 {{ tpl_content }}
 ```
@@ -1569,11 +1599,12 @@ separator between tasks.
 
 **Reasoning:**
 
-- The `vars:` block lists everything the template consumes, so a reader sees
-  the inputs in the task without opening the template.
-- A template that reads only `tpl_*` variables can be rendered from another
-  task, loop, or role without editing the file. The example above works for a
-  second task that builds the same file from a different source.
+- The `vars:` block lists the template's external inputs, so a reader sees
+  them in the task without opening the template.
+- A template that takes its external data through `tpl_*` variables can be
+  rendered from another task, loop, or role without editing the file. The
+  example above works for a second task that builds the same file from a
+  different source.
 - Defaults, filters, and merges stay in the task where they are visible. The
   template remains a plain rendering of its inputs.
 
@@ -1595,11 +1626,15 @@ modules.
   `ansible.builtin.apt` instead of `apt-get`, `ansible.builtin.file` instead of
   `mkdir`).
 - Prefer `ansible.builtin.command` over `ansible.builtin.shell` unless shell
-  features (pipes, redirects, globbing, environment variable expansion) are
-  required.
-- When using the `cmd` attribute with variables, apply the
+  features such as pipes, redirects, or globbing are required.
+- When interpolating variable arguments into `cmd`, apply the
   [`quote` filter](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/quote_filter.html)
-  to prevent command injection: `{{ myvar | ansible.builtin.quote }}`
+  to each argument: `{{ myvar | ansible.builtin.quote }}`. This preserves
+  argument boundaries and prevents shell interpretation of the value.
+- Pass `argv` elements without shell quoting or the `quote` filter. Set
+  `expand_argument_vars: false` when argument values must reach the command
+  literally, including dollar signs. This option requires ansible-core 2.16 or
+  later.
 - Explain non-obvious reasons why a dedicated module is unsuitable, or why
   particular shell features or execution behavior are required (see
   [Comments](#comments)). A nearby explanation may cover related tasks. Do not
@@ -1609,7 +1644,7 @@ modules.
 
 - Use the `argv` attribute (list) instead of `cmd` for
   `ansible.builtin.command`:
-  - Avoids quoting issues entirely.
+  - Keeps each argument in its own list element, including values with spaces.
   - Allows comments above individual parameters.
   - Easier to build command arguments conditionally from variables.
 - Use `creates` or `removes` parameters to achieve idempotency when the command
@@ -1636,11 +1671,12 @@ modules.
 - name: "Run database migration"
   ansible.builtin.command:
     argv: "{{ __migration_cmd }}"
+    expand_argument_vars: false
   vars:
     __migration_cmd:
       - "/usr/bin/myapp"
       - "migrate"
-      - "--database={{ database_name }}"  # argv doesn't need quote filter - no shell parsing involved
+      - "--database={{ database_name }}"  # Pass the database name literally, including any dollar signs.
   changed_when:
     - __migration_result is ansible.builtin.success
     - "'No migrations to apply' not in __migration_result['stdout']"
@@ -1690,22 +1726,24 @@ modules.
 
 **Reasoning:**
 
-- Dedicated Ansible modules are idempotent by design, provide better error
-  handling, and integrate properly with Ansible's change detection and check
-  mode.
+- Dedicated state-management modules usually handle change detection and
+  idempotency for their supported operations. Check the module's documented
+  behavior and check-mode support; using a module does not by itself guarantee
+  idempotency.
 - [`ansible.builtin.command`](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/command_module.html)
   executes commands directly without a shell, avoiding shell injection
   vulnerabilities and unexpected shell interpretation.
 - [`ansible.builtin.shell`](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/shell_module.html)
   spawns a shell process, which is necessary for shell features but introduces
   security risks if variables are not properly quoted.
-- The `argv` attribute passes arguments directly to the executable without shell
-  parsing, eliminating all quoting issues and making the command structure
-  explicit.
-- The
-  [`quote` filter](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/quote_filter.html)
-  escapes special characters to prevent command injection when variables contain
-  user-controlled or untrusted data.
+- The `argv` attribute avoids splitting a command string. Shell quotes added to
+  its elements become part of the argument value. Ansible can still expand
+  environment variables: `command` expands values such as `$HOME` by default
+  since ansible-core 2.16. Environment expansion alone does not require `shell`.
+- Neither `argv` nor the `quote` filter prevents the executable from treating a
+  value as an option or interpreting its own expression language. Validate
+  inputs for that command and use an end-of-options marker (`--`) where it is
+  supported and appropriate.
 
 
 ### Scripts<a id="scripts"></a>
@@ -1909,8 +1947,8 @@ printf 'Changes applied\n'
 **You MUST:**
 
 - Keep an `.ansible-lint` file in the root of every project with Ansible
-  content. It selects the `production` profile, skips `use-loop` and links to
-  this section.
+  content. It selects the `production` profile, sets `strict: true`, skips
+  `use-loop` and links to this section.
 - Check playbooks, collections, roles and other applicable files with
   [`ansible-lint --strict`](https://docs.ansible.com/projects/lint/), which
   reads that file.
@@ -1921,6 +1959,23 @@ printf 'Changes applied\n'
   `antsibull-changelog lint-changelog-yaml changelogs/changelog.yaml`, and check
   changelog fragments with `antsibull-changelog lint`. Do not exclude the entire
   changelog directory merely to exempt generated output.
+- Document which SHOULD-level recommendations the project enforces as lint
+  errors. An enabled rule can be stricter than this guide's minimum obligations.
+- Keep suppressions specific to the affected rule and the smallest applicable
+  scope. Explain the reason next to the suppression. Use them for documented
+  exceptions or false positives; existing nonconforming code is a finding to
+  fix, not an exception.
+- When CI requires `ansible-lint-foundata`, install the tested package version
+  or reviewed local build in the same environment as Ansible Lint, enable the
+  selected rule IDs, and verify that all expected IDs appear in
+  `ansible-lint --list-rules --format brief` using the project's configuration.
+  Fail the check if any are missing. A successful stock-only run does not prove
+  that the project's custom rules ran.
+
+Local use without the extension MAY fall back to stock Ansible Lint. The
+extension is optional unless the project adopts it; required CI coverage must
+not silently fall back. Record adopted rules and their remaining review
+requirements in the project's contributor documentation.
 
 **Good examples:**
 
@@ -1930,6 +1985,7 @@ printf 'Changes applied\n'
 
 ---
 profile: "production"
+strict: true
 
 skip_list:
   - "use-loop"
@@ -1965,7 +2021,12 @@ exclude_paths:
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-- Ensure that all tasks are idempotent.
+- Configuration automation MUST converge without reporting repeated changes
+  when inputs and managed state remain unchanged. Intentionally repeatable
+  operations, such as backups or maintenance jobs, MUST have an explicit trigger
+  or a documented purpose. Change reporting MUST reflect the operation's actual
+  behavior. Setting `changed_when: false` on a mutating command does not make it
+  idempotent.
 - Avoid overriding role defaults, variables, or input parameters using
   `set_fact`. Instead, use a distinct variable name.
 - Do not use `meta: end_play`, as it terminates the entire play rather than just
@@ -1983,7 +2044,10 @@ exclude_paths:
   [`ansible.builtin.template`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/template_module.html)
   module, append `.j2` to the template file name for clarity and convention.
 - [Use tags with caution](https://redhat-cop.github.io/automation-good-practices/#_use_tags_cautiously_either_for_roles_or_for_complete_purposes).
-- [Use the verbosity parameter with debug statements](https://redhat-cop.github.io/automation-good-practices/#_use_the_verbosity_parameter_with_debug_statements).
+- Debug tasks MUST set `verbosity` explicitly. Diagnostic output SHOULD use
+  `verbosity: 1` or higher. Output deliberately intended for normal runs MAY
+  use `verbosity: 0`. See
+  [Use the verbosity parameter with debug statements](https://redhat-cop.github.io/automation-good-practices/#_use_the_verbosity_parameter_with_debug_statements).
 - Build structured data using native mappings and lists. Jinja expressions and
   filters MAY transform those values. When JSON or YAML text is needed,
   serialize the complete value using `ansible.builtin.to_json`,
@@ -1999,6 +2063,41 @@ exclude_paths:
   copies of existing permission bits. The result must not depend on the previous
   mode, file type, or umask. Explicit special bits remain permitted. This shows
   both representations without making the result dependent on existing state.
+- When a mode comes from a variable, put the octal comment at its literal
+  definition. Do not repeat it at every use. The resolved value must still meet
+  the permission rule; review dynamic values and definitions, which the current
+  `foundata-file-mode` rule does not check.
+- Artifact-staging copies that must retain source-file permissions MAY use
+  `ansible.builtin.copy` with `mode: "preserve"`. Explain why those permissions
+  must be retained and add a task-local `# noqa: foundata-file-mode`. This
+  exception does not apply to ordinary configuration deployment or to relative
+  symbolic modes.
+
+**Good examples:**
+
+```yaml
+# vars/main.yml
+example_config_mode: "u=rw,g=r,o=" # 0640
+```
+
+```yaml
+- name: "Set configuration permissions"
+  ansible.builtin.file:
+    path: "/etc/example.conf"
+    mode: "{{ example_config_mode }}"
+
+# The staging tree must retain the release artifact's executable bits for packaging.
+- name: "Stage release artifact" # noqa: foundata-file-mode
+  ansible.builtin.copy:
+    src: "release/"
+    dest: "/srv/build/staging/"
+    mode: "preserve"
+
+- name: "Report the published artifact location"
+  ansible.builtin.debug:
+    msg: "Artifact published to {{ artifact_url }}"
+    verbosity: 0
+```
 
 
 ## Linguistic guidelines<a id="linguistic-guidelines"></a>
