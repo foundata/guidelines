@@ -31,10 +31,12 @@ The terms MUST, SHOULD, and other key words are used as defined in
 - [Arguments and ownership](#arguments-ownership)
 - [Convergence and results](#convergence-results)
 - [Performance](#performance)
+- [Resource engine](#resource-engine)
 - [Check mode and diff mode](#check-diff-mode)
 - [Secrets and errors](#secrets-errors)
 - [HTTP transport](#http-transport)
 - [Command-line execution](#cli-execution)
+  - [Execution locator](#execution-locator)
 - [Activation, operations and bootstrap](#activation-bootstrap)
 - [Info and facts modules](#info-facts-modules)
 - [Action plugins](#action-plugins)
@@ -82,9 +84,9 @@ The terms MUST, SHOULD, and other key words are used as defined in
 
 **You SHOULD:**
 
-- Plan the intended catalogue of resources before implementing the first one.
-  Track planned features and release scope in issues or milestones; link them
-  from the catalogue without maintaining a second backlog.
+- Choose the intended resources from the interface inventory before
+  implementing the first one. Track planned resources and release scope in
+  issues or milestones.
 - Keep a product collection module-only: modules, module utilities and
   documentation fragments. Add action, filter or test plugins only for work a
   module cannot do (see
@@ -132,9 +134,9 @@ The terms MUST, SHOULD, and other key words are used as defined in
   product build, decided by a predicate before any change. Eligibility can be
   narrower than the write window, for example to exclude a defective patch
   release.
-- **Resource catalogue:** `docs/resources.yml` of a product collection. It lists
-  the intended resources with identity, transport, execution host and evidence.
-  It is a development index; nothing reads it at runtime.
+- **Interface inventory:** a generated file per product series that lists the
+  objects and fields of the product's configuration interface. It is
+  development evidence; nothing reads it at runtime.
 - **Collection contract:** what a consumer may rely on across the whole
   collection: the ownership model, the null contract, the activation policy,
   the supported product series and ansible-core versions, and the locator
@@ -877,6 +879,87 @@ effective-behavior probe in the integration scenario.
 observations from integration tests.
 
 
+## Resource engine<a id="resource-engine"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+Most products expose their resources in one uniform way. A hand-written module
+per resource then repeats the same reading, comparing, writing and verifying,
+and every copy has to get the rules of this guide right again.
+
+**You SHOULD:**
+
+- Implement the resource lifecycle once per product, as an engine in the
+  collection's module utilities: identity resolution, comparison of managed
+  fields, minimal writes, read-back, check mode, diff, secret handling, the
+  eligibility check and the hand-off to activation.
+- Describe each resource as a short definition for that engine: identity,
+  endpoints or commands, managed fields with their types, secret fields and
+  the activation it needs.
+- Keep a module file thin: documentation, argument specification and one call
+  into the engine. Serve the singular and the list-capable module of a
+  resource from the same definition.
+- Use the definition as the product-owned schema that validates an open
+  settings dictionary.
+- Generate the README's overview of resources from the definitions instead of
+  keeping a list by hand.
+
+**You MUST:**
+
+- Curate every definition. Decide identity, ownership, omission and deletion
+  per resource. A generated list of endpoints is no substitute.
+- Keep the engine in the product's collection. Share only transport and safety
+  mechanics across products, see [Shared code](#shared-code).
+- Write an irregular resource by hand on the same client instead of adding a
+  special case to the engine.
+
+**You MAY:**
+
+- Generate a module's documentation and argument specification from its
+  definition. Commit the generated files and let `validate-modules` check them.
+
+**Good examples:**
+
+```python
+class FirewallAlias(Resource):
+    """Definition of an OPNsense firewall alias for the product engine."""
+
+    endpoint = "firewall/alias"
+    identity = "name"
+    fields = {
+        "type": Choice("host", "network", "port", "url"),
+        "content": ListOf(str),
+        "description": str,
+        "enabled": bool,
+        "password": str,
+    }
+    secret_fields = frozenset({"password"})
+    activation = "firewall_apply"
+```
+
+```python
+def main() -> None:
+    module = AnsibleModule(
+        argument_spec=build_spec(FirewallAlias),
+        supports_check_mode=True,
+    )
+    run_resource(module, FirewallAlias)
+```
+
+**Reasoning:**
+
+- With an engine, a rule of this guide is implemented and tested once per
+  product. A new resource costs a definition and its tests.
+- The pattern is established. The community
+  [OPNsense collection](https://github.com/O-X-L/ansible-opnsense) serves well
+  over a hundred modules from one shared base.
+- A special case inside the engine is paid for by every resource. A
+  hand-written module keeps the exception in one place.
+
+**Enforcement:** unit tests of the engine over a fake transport, a test per
+definition, and review of every hand-written resource module.
+
+
 ## Check mode and diff mode<a id="check-diff-mode"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
@@ -1264,7 +1347,8 @@ Command-line modules require the product's CLI on the execution host.
 
 **You MUST:**
 
-- Keep deployment-specific invocations in a declared locator profile.
+- Keep deployment-specific invocations in a declared locator profile, see
+  [Execution locator](#execution-locator).
 - Run subprocesses through `module.run_command` with an argument list,
   `use_unsafe_shell=False`, `expand_user_and_vars=False`, explicit option
   boundaries, and validated executable paths and object identifiers.
@@ -1427,6 +1511,43 @@ subprocess.run(argv, timeout=60, check=True)
 with literal `$NAME`, `${NAME}` and `~` arguments, a hanging child, a
 flooding child and a descendant that keeps stdin open, the pylint sanity
 test, and qualification against the real command-line interface.
+
+### Execution locator<a id="execution-locator"></a>
+
+The `exec` option tells a command-line module how to reach the product's
+command-line interface. A collection's locator profile names the kinds and
+fields it supports for a product and rejects everything else. API modules have
+no locator.
+
+```yaml
+exec:
+  kind: "podman"     # podman | package | custom
+  user: ""           # user of the module process on the execution host
+  container: ""      # podman: the container to enter
+  target_user: ""    # application identity inside the container or wrapper
+  executable: ""     # custom: absolute path
+  argv: []           # custom: arguments before the product command
+  chdir: "/"         # working directory of the module process
+  env: {}            # environment of the module process, allowlisted keys
+  target_chdir: ""   # working directory of the application command
+  target_env: {}     # environment of the application command, allowlisted keys
+```
+
+**You MUST:**
+
+- Let `become` establish `user` and verify it in the module. Never switch users
+  inside the module.
+- Select `target_user` through explicit container options or a qualified
+  product wrapper, and verify it before a write. Matching user IDs on the host
+  say nothing about the identity inside a container, and container UID 0 is a
+  different identity from host root.
+- Treat `custom` as a facility the caller is trusted with. It runs only the
+  prefixes a product profile validates and does not confine them.
+- Keep the product-specific end of the command line in the product's module
+  utilities.
+- Use JSON on stdin and a final JSON report line for helpers the collection
+  ships itself. Parse a native command-line interface in its own supported
+  formats.
 
 
 ## Activation, operations and bootstrap<a id="activation-bootstrap"></a>
@@ -1901,8 +2022,8 @@ assert run_module(name="web")["changed"] is True
 - Coverage is a diagnostic, not an approval score. A suite that asserts its own
   mocks measures nothing.
 
-**Enforcement:** the sessions of [Checks and tooling](#checks-tooling), review
-of the tests, and catalogue links from a claimed operation to its evidence.
+**Enforcement:** the sessions of [Checks and tooling](#checks-tooling) and
+review of the tests against the operations the documentation claims.
 
 
 ## Compatibility and releases<a id="compatibility-releases"></a>
@@ -1926,12 +2047,29 @@ product collection, product series.
 
 **For modules that manage product state:**
 
-- Pass the collection's eligibility check before every change, including
-  command-line paths and operational modules. Keep version and capability
-  discovery read-only and free of side effects.
-- Distinguish eligible ranges from the exact builds tested.
-- Fail before any change on an ineligible target, and let read-only modules
-  warn instead.
+- Declare the write window and each operation's eligibility in one
+  compatibility definition in the module utilities.
+- Pass that check before every change, including command-line paths and
+  operational modules. Keep version and capability discovery read-only and
+  free of side effects.
+- Detect the product version on the target. Never trust a version the caller
+  supplies, and refresh a cached result after an upgrade or a reconnect.
+- State eligibility per operation: eligible builds or justified ranges, known
+  defective builds, and required editions or plugins. Admit exact builds where
+  the evidence does not support a range.
+- Qualify a recovery feature such as a rollback by its observed effect.
+- Fail before any change on an ineligible target, and before selecting an
+  adapter for an unsupported option. Let read-only modules warn instead.
+- Keep adapters in `module_utils/<family>/`, one per product series only where
+  wire behavior differs.
+- Support one product series per release by default. Drop the previous series
+  in a breaking release, and remove its adapters, eligibility entries, support
+  statements and examples in the same change.
+- State in the README which collection release last supported each dropped
+  series, so consumers of an older series can stay on it.
+- For a hosted service without a detectable version, declare a service
+  compatibility policy: the supported API contract, the date it was qualified,
+  and the schema or capability checks. Do not invent a product version.
 
 **You MUST NOT:**
 
@@ -1940,11 +2078,16 @@ product collection, product series.
   bypass eligibility checks.
 - Drop a product series or an ansible-core version, or change the meaning of an
   omitted field, in a patch release.
-- Read the resource catalogue or any other development index at runtime.
+- Read the interface inventory or any other development file at runtime.
 
 **You SHOULD:**
 
 - Keep `module.deprecate()` calls rare.
+
+**You MAY:**
+
+- Support two product series in one release when there is a concrete reason,
+  such as a fleet that cannot upgrade in one step.
 
 **Reasoning:**
 
@@ -1959,10 +2102,18 @@ product collection, product series.
   `collection_name`, while 2.21 adds rules against passing it.
 - Testing one patch release does not qualify its whole series. A product
   release is also distinct from a selectable API version.
+- Supporting two product series in one code base keeps adapters alive and
+  doubles the product tests. One series per release leaves that cost with the
+  consumers who need the overlap.
+- Ansible loads one version of a collection per run. A fleet on two product
+  series needs a release that supports both, or one run per series with its
+  own collection installation.
+- A product can answer a recovery request with a success status and still not
+  perform it.
 
 **Enforcement:** a policy test comparing the runtime compatibility definition
-with the positive support claims in the documentation and the catalogue,
-changelog lint, and the build and import check.
+with the positive support claims in the documentation, changelog lint, and the
+build and import check.
 
 
 ## Checks and tooling<a id="checks-tooling"></a>
@@ -2044,6 +2195,7 @@ mypy_config = ".mypy.ini"
 [sessions.docs_check]
 
 [sessions.license_check]
+run_license_check = false      # REUSE.toml covers files without a header
 
 [sessions.extra_checks]
 run_no_unwanted_files = true
@@ -2163,6 +2315,9 @@ item marked not applicable.
 - [ ] **Performance:** no per-item searches, pagination complete, activation
   batched; a list-capable module validates everything first and reports per
   item ([Performance](#performance)).
+- [ ] **Engine:** a new resource is a definition on the product engine; a
+      hand-written resource module is justified
+      ([Resource engine](#resource-engine)).
 - [ ] **Check and diff:** zero writes in check mode; diff requested, bounded and
   sanitized ([Check mode and diff mode](#check-diff-mode)).
 - [ ] **Secrets:** `no_log` on nested inputs; `exception=None` in handlers;
