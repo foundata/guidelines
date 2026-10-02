@@ -238,8 +238,8 @@ Following the indentation rules produces consistent code that is easy to read.
 **You SHOULD:**
 
 - Separate adjacent tasks with one blank line. Accept the formatter's placement
-  around comments and nested blocks; do not add blank lines immediately after
-  `pre_tasks:`, `tasks:`, `post_tasks:`, or `block:`.
+  around multiline values, comments and nested blocks; do not add blank lines
+  immediately after `pre_tasks:`, `tasks:`, `post_tasks:`, or `block:`.
 - Use a single space to separate Jinja2 template markers from variable names or
   expressions.
 - Break up lengthy Jinja templates into multiple templates when they contain
@@ -248,9 +248,11 @@ Following the indentation rules produces consistent code that is easy to read.
 **Reasoning:**
 
 Following the formatter produces consistent code without competing formatting
-passes. `ansible-lint --fix` collapses multiple blank lines between tasks and
-removes structural blank lines and extra empty lines at EOF. A yamllint maximum
-can limit blank lines, but cannot require a separator between tasks.
+passes. `ansible-lint --fix` usually collapses multiple blank lines between
+tasks and removes structural blank lines and extra empty lines at EOF, but can
+retain two blank lines after multiline values or comments. Use a yamllint
+maximum of two, not one, to accept that output. A maximum cannot require a
+separator between tasks.
 
 **Good examples:**
 
