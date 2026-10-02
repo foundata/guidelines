@@ -1,8 +1,8 @@
 # Ansible roles and collections
 
 This guide defines how to organize Ansible roles and collections and describe
-role parameters. It covers collection boundaries, naming, dependencies and role
-argument specifications.
+role parameters. It covers collection boundaries, naming, dependencies,
+deployment roles and role argument specifications.
 
 For task, playbook and template authoring, follow the
 [Ansible playbook guidelines](./ansible-playbooks.md). For modules and
@@ -17,6 +17,7 @@ The terms MUST, SHOULD, and other key words are used as defined in
 ## Table of contents
 
 - [Scoping (collections and roles)](#scoping)
+- [Deployment roles](#deployment-roles)
 - [Role argument specifications](#roles)
 - [Author information](#author-information)
 
@@ -47,6 +48,16 @@ The terms MUST, SHOULD, and other key words are used as defined in
   - it carries a distinct risk or review domain (e.g., destructive directory
     operations),
   - it has an independent consumer set (usable without the rest).
+- Keep one collection per product, whatever its deployment paths. Do not create
+  `foo_podman` next to `foo_package`.
+- Classify content by what it changes. Installing and starting the product on
+  a host is deployment. Objects inside the product, including its plugins and
+  apps, are resources managed by modules.
+- Give every setting one owner across files, environment, API and overlays that
+  someone else manages. Reserve the settings a deployment derives, and fail
+  before writing a setting another party owns.
+- Keep test-target provisioning in the test harness, never in a delivered role.
+  A hosted product may be tested against a supplied test account instead.
 
 **You MUST NOT:**
 
@@ -65,9 +76,20 @@ The terms MUST, SHOULD, and other key words are used as defined in
   Windows subsystems (`win_fileserver`, `win_dhcp`). Do not use vendor prefixes
   such as `ms_`: they mark the vendor, not the platform gate (SQL Server also
   runs on Linux).
-- Use a single `run` role for single-lifecycle collections and named lifecycle
-  roles for multi-lifecycle ones (`foundata.podman`: `host`, `quadlet`). Drop
-  scope prefixes that repeat the collection name (role `objects` in
+- Name a role `run` only when it is the collection's whole interface: one
+  role that installs, configures and runs the software (`foundata.sshd.run`).
+- Otherwise name each role after what it manages:
+  - a component or lifecycle (`foundata.podman`: `host`, `quadlet`;
+    `foundata.proxmox`: `pve`),
+  - a host concern in a base collection (`foundata.linux`: `user`, `disk`,
+    `reboot`),
+  - a deployment path in a collection that also ships modules (`podman`,
+    `package`, `helm`),
+  - `config` for a workflow role that sequences the collection's modules.
+- Choose role names for the collection's foreseeable shape. A role name is
+  part of the FQCN and of every variable prefix (`<role>_<collection>_*`), so
+  renaming it later breaks consumers.
+- Drop scope prefixes that repeat the collection name (role `objects` in
   `foundata.ad`, not `ad_objects`).
 - Keep dependencies one-way: verticals may depend on the base collection, never
   the reverse.
@@ -82,6 +104,10 @@ foundata.sshd             # vertical: encapsulated software, role "run"
 foundata.ad               # vertical: own upstream dep (microsoft.ad) + own risk domain
 foundata.win_fileserver   # vertical: generic term -> win_ prefix
 foundata.ad.objects       # role: no "ad_" stutter; vars objects_ad_*
+foundata.podman.quadlet   # role: named lifecycle; vars quadlet_podman_*
+foundata.proxmox.pve      # role: product component; vars pve_proxmox_*
+foundata.zammad.podman    # role: deployment path next to modules; vars podman_zammad_*
+foundata.zammad.config    # role: workflow over the collection's modules
 ```
 
 **Bad examples:**
@@ -92,6 +118,8 @@ foundata.ntfs             # collection around a single primitive module -> modul
 foundata.ms_dhcp          # vendor prefix instead of platform prefix
 foundata.windows.registry # 1:1 wrapper around ansible.windows.win_regedit
 foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_objects_ad_*)
+foundata.zammad.run       # ships modules too; "run" does not say what the role manages
+foundata.zammad.install   # names a phase; a second deployment path cannot be told apart
 ```
 
 **Reasoning:**
@@ -111,6 +139,52 @@ foundata.ad.ad_objects    # scope prefix repeats the collection (vars: ad_object
 - 1:1 wrappers double the documentation surface, lag upstream features, and hide
   the ecosystem from users. Opinionated composition is where in-house
   collections add value.
+- A setting with two owners changes on every run. One owner per setting keeps
+  a deployment role and a module from writing the same state.
+
+
+## Deployment roles<a id="deployment-roles"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+A deployment role installs and runs a product whose configuration is managed
+through modules. These rules add to [Scoping](#scoping).
+
+**You MUST:**
+
+- Limit a deployment role to installation, startup configuration, the service
+  lifecycle, readiness, placement of persistent data and the data migrations
+  it supports.
+- Leave a setting that a resource module owns to that module. Do not template
+  a file or field a module also writes.
+- Leave host container policy, the reverse proxy, the firewall and filesystem
+  provisioning to the caller or the base collection, unless the collection's
+  scope includes them.
+- State how the role adopts or creates its service account and which data
+  survives removal. Refuse a changed image generation or data path unless the
+  role supports that migration.
+- Document what the installation hands to the resource modules: the execution
+  locator values and the settings the role reserves for itself.
+- Order bootstrap explicitly: wait until the product answers, initialize once
+  through the collection's bootstrap module, then verify the completed state.
+  Keep an open setup endpoint unexposed until then.
+- Pin the image or package generations the role was qualified with. List the
+  tested data migration paths, their backup prerequisites and the transitions
+  the role rejects.
+
+**You MUST NOT:**
+
+- Add an installation role, or an empty one, for a product the collection only
+  configures. Bootstrap and API access are then prerequisites of the caller.
+- Offer a downgrade or present an older image as a rollback.
+
+**Reasoning:**
+
+- Deployment and configuration have separate lifecycles. A role that does both
+  has to run the product before it can configure it, and restarts become part
+  of every setting change.
+- Supporting two product generations does not make their data compatible in
+  both directions. A migrated database does not move back with the image.
 
 
 ## Role argument specifications<a id="roles"></a>
