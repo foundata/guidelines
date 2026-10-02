@@ -68,8 +68,8 @@ The terms MUST, SHOULD, and other key words are used as defined in
     role or collection.
 - Start files with comments explaining their purpose, including example usage if
   reasonable.
-- Include blank lines before and after the `---` separator, followed by the rest
-  of the file.
+- Start YAML documents with `---`. Let `ansible-lint --fix` determine spacing
+  around the separator.
 - Check all
   [`YAML_FILENAME_EXTENSIONS`](https://docs.ansible.com/ansible/latest/reference_appendices/config.html#yaml-filename-extensions)
   when searching for files (e.g., `vars_files`, `include_vars`, plugins, or
@@ -95,18 +95,16 @@ The terms MUST, SHOULD, and other key words are used as defined in
 #   ansible-playbook -e ping_data_return="crash" playbook.yml
 
 ---
-
 - name: "Example playbook"
   hosts: "localhost"
   tasks:
-
     - name: "Connect to host, verify a Python installation."
       ansible.builtin.ping:
         data: "{{ ping_data_return }}"
 
-
     - name: "Print a very long line"
       ansible.builtin.debug:
+        verbosity: 1
         msg: >
           Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod
           tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At
@@ -121,7 +119,6 @@ The terms MUST, SHOULD, and other key words are used as defined in
         - foo is not ansible.builtin.defined
         - bar is not ansible.builtin.defined
 
-
     # Use parentheses and new lines to group conditions when it helps to understand the
     # logic. In doubt, use parentheses if there are multiple and/or.
     - name: "Shut down CentOS 8 (or newer) and Debian 10 systems"
@@ -130,14 +127,14 @@ The terms MUST, SHOULD, and other key words are used as defined in
       when:
         - ansible_facts['distribution'] is ansible.builtin.defined
         - ansible_facts['distribution_major_version'] is ansible.builtin.defined
-        - ((ansible_facts['distribution'] | ansible.builtin.lower) == 'centos' and
-          ansible_facts['distribution_version'] is version('8.0.0', '>=')) or
+        - >-
+          ((ansible_facts['distribution'] | ansible.builtin.lower) == 'centos' and
+          ansible_facts['distribution_version'] is ansible.builtin.version('8.0.0', '>=')) or
           ((ansible_facts['distribution'] | ansible.builtin.lower) == 'debian' and
           ansible_facts['distribution_major_version'] == '10')
       changed_when:
         - __shutdown_result is ansible.builtin.success
       register: __shutdown_result
-
 
     - name: "Include OS vars (with default fallback)"
       ansible.builtin.include_vars:
@@ -145,7 +142,6 @@ The terms MUST, SHOULD, and other key words are used as defined in
         files_matching: "^({{ ansible_facts['distribution'] }}|default)(\\{{ lookup('ansible.builtin.config', 'YAML_FILENAME_EXTENSIONS') | join('|\\\\') }})$"
 
 # newline (Unix line feed, \n) at end of file
-
 ```
 
 **Bad examples:**
@@ -158,12 +154,10 @@ The terms MUST, SHOULD, and other key words are used as defined in
       ansible.builtin.ping:
         data: "{{ ping_data_return }}"
 
-
     - name: "Print a very long line"
       ansible.builtin.debug:
         msg: "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet."
       when: foo is not ansible.builtin.defined and bar is not ansible.builtin.defined
-
 
     - name: "Include OS vars"
       ansible.builtin.include_vars:
@@ -201,7 +195,6 @@ The terms MUST, SHOULD, and other key words are used as defined in
 
 - Use two spaces to represent sub-maps when indenting.
 - Especially indent list contents beyond the list definition.
-- Start multi-line maps with a dash (`-`).
 
 **Reasoning:**
 
@@ -217,6 +210,7 @@ Following the indentation rules produces consistent code that is easy to read.
       - "Dummy 1"
       - "Dummy 2"
       - "Dummy 3"
+    verbosity: 1
 ```
 
 **Bad examples:**
@@ -235,14 +229,17 @@ Following the indentation rules produces consistent code that is easy to read.
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
+**You MUST:**
+
+- Let `ansible-lint --fix` determine mechanical YAML layout. Do not restore
+  spacing that the formatter removes.
+- End files with a newline. Do not require an additional empty line at EOF.
+
 **You SHOULD:**
 
-- Add one blank line:
-  - After `pre_tasks:`, `tasks:`, `post_tasks:`, or `block:`
-  - Before and after the YAML `---` document separator
-  - At the end of a file
-- Add two blank lines:
-  - After each task block
+- Separate adjacent tasks with one blank line. Accept the formatter's placement
+  around comments and nested blocks; do not add blank lines immediately after
+  `pre_tasks:`, `tasks:`, `post_tasks:`, or `block:`.
 - Use a single space to separate Jinja2 template markers from variable names or
   expressions.
 - Break up lengthy Jinja templates into multiple templates when they contain
@@ -250,49 +247,44 @@ Following the indentation rules produces consistent code that is easy to read.
 
 **Reasoning:**
 
-Following the spacing rules produces consistent code that is easy to read.
+Following the formatter produces consistent code without competing formatting
+passes. `ansible-lint --fix` collapses multiple blank lines between tasks and
+removes structural blank lines and extra empty lines at EOF. A yamllint maximum
+can limit blank lines, but cannot require a separator between tasks.
 
 **Good examples:**
 
 ```yaml
-
 ---
-
 - name: "Molecule | Prepare"
   hosts: "molecule"
   gather_facts: false
   pre_tasks:
-
     - name: "Molecule | Prepare | Basic self-checks for the testing infrastructure"
       block:
-
         - name: "Molecule | Prepare | Fail if MOLECULE_SCENARIO_DIRECTORY is not set or empty"
           ansible.builtin.fail:
             msg: "MOLECULE_SCENARIO_DIRECTORY env var is not set or empty"
           when:
-            - (lookup('env', 'MOLECULE_SCENARIO_DIRECTORY') | ansible.builtin.trim) | ansible.builtin.length == 0
+            - (lookup('ansible.builtin.env', 'MOLECULE_SCENARIO_DIRECTORY') | ansible.builtin.trim) | ansible.builtin.length == 0
 
-  task:
-
+  tasks:
     - name: "Set a variable"
       ansible.builtin.set_fact:
-        foo: "{{ bar | default('baz') }}"
-
+        foo: "{{ bar | ansible.builtin.default('baz') }}"
 
     - name: "Set another variable"
       ansible.builtin.set_fact:
-        bar: "{{ baz | default('foo, barbaz') }}"
+        bar: "{{ baz | ansible.builtin.default('foo, barbaz') }}"
 ```
 
 **Bad examples:**
 
 ```yaml
-
 ---
 - name: "Molecule | Prepare"
   hosts: "molecule"
   gather_facts: false
-
 
   pre_tasks:
     - name: "Molecule | Prepare | Basic self-checks for the testing infrastructure"
@@ -303,7 +295,7 @@ Following the spacing rules produces consistent code that is easy to read.
             msg: "MOLECULE_SCENARIO_DIRECTORY env var is not set or empty"
           when:
             - (lookup('env', 'MOLECULE_SCENARIO_DIRECTORY') | ansible.builtin.trim) | ansible.builtin.length == 0
-  task:
+  tasks:
     - name: "Set a variable"
         ansible.builtin.set_fact:
             foo: "{{bar|default('baz')}}"
@@ -325,9 +317,9 @@ Following the spacing rules produces consistent code that is easy to read.
 **You SHOULD:**
 
 - Quote all strings.
-- Use double quotes (`"`) for YAML strings.
-  - Use single quotes only when they simplify nested expressions, such as Jinja
-    map references with mixed quoting styles.
+- Use double quotes (`"`) for quoted YAML strings. Single quotes are permitted
+  when the string contains double quotes. Use block scalars where quoting
+  becomes cumbersome.
 - Use single quotes (`'`) for Jinja2 strings.
 
 **You MUST NOT:**
@@ -344,7 +336,6 @@ Following the spacing rules produces consistent code that is easy to read.
   ansible.builtin.ping:
     data: "{{ ping_return }}"
 
-
 # double quotes with nested single quotes for Jinja2
 - name: "Start all nodes"
   become: true
@@ -352,32 +343,29 @@ Following the spacing rules produces consistent code that is easy to read.
     name: "{{ item['node_name'] }}"
     state: "started"
     enabled: true
-  with_items: "{{ nodes }}"
-
+  loop: "{{ nodes }}"
 
 # folded scalar style (useful to prevent complicated quoting or lines longer than 160 chars)
 - name: "Node infos"
   ansible.builtin.debug:
+    verbosity: 1
     msg: >
       Node {{ item['node_name'] }} is {{ item['status'] }} and in {{ item['az'] }}
       availability zone and belongs to "{{ item['customer'] }}" customer.
-  with_items: "{{ nodes }}"
-
+  loop: "{{ nodes }}"
 
 # don't quote booleans and numbers
 - name: "Download example homepage"
   ansible.builtin.get_url:
     dest: "/tmp"
     timeout: 60
-    url: 'https://example.com'
+    url: "https://example.com"
     validate_certs: true
 
-
 # variables example 1
-- name: "set a variable"
+- name: "Set a variable"
   ansible.builtin.set_fact:
     foo: "bar" # explicitly references the string "bar"
-
 
 # variables example 2
 - name: "Print a variable"
@@ -386,9 +374,9 @@ Following the spacing rules produces consistent code that is easy to read.
     # {{ }} wrapping, so you should not be using Jinja2 delimiters unless you are
     # looking for double interpolation.
     var: foo
+    verbosity: 1
   when:
     - (ansible_facts['os_family'] | ansible.builtin.lower) == 'redhat'
-
 
 # variables example 3
 - name: "Set another variable"
@@ -405,8 +393,6 @@ Following the spacing rules produces consistent code that is easy to read.
     name: horton
     state: 'started'
     enabled: true
-
-
 
 - name: "Assign a value without quoting"
   ansible.builtin.set_fact:
@@ -592,15 +578,13 @@ Following the spacing rules produces consistent code that is easy to read.
     state: "restarted"
     enabled: true
 
-
 - name: "Create filter.d directory for easier fail2ban extension"
   ansible.builtin.file:
     owner: "fail2ban"
     group: "fail2ban"
-    mode: "0755"
+    mode: "u=rwx,g=rx,o=rx" # 0755
     path: "/etc/fail2ban/filter.d"
     state: "directory"
-
 
 - name: "Copy sshd.conf to /etc/fail2ban/filter.d/"
   ansible.builtin.copy:
@@ -617,10 +601,8 @@ Following the spacing rules produces consistent code that is easy to read.
     state   : "restarted"
     enabled : true
 
-
 - name: "Create filter.d directory for easier fail2ban extension"
   ansible.builtin.file: "path:=/etc/fail2ban/filter.d state=directory owner=fail2ban group=fail2ban mode=0755"
-
 
 - name: "Copy sshd.conf to /etc/fail2ban/filter.d/"
   ansible.builtin.copy: "dest=/etc/fail2ban/filter.d/ src=files/filters/sshd.conf"
@@ -639,7 +621,8 @@ Following the spacing rules produces consistent code that is easy to read.
 
 **You MUST:**
 
-- Use bracket notation for value retrieval.
+- Use bracket notation for dictionary-key and sequence-item value retrieval.
+  Method calls such as `mapping.keys()` are outside this rule.
 
 **You SHOULD:**
 
@@ -648,7 +631,7 @@ Following the spacing rules produces consistent code that is easy to read.
 
 **You MUST NOT:**
 
-- Mix dot and bracket notation within the same project.
+- Mix dot and bracket notation for value retrieval within the same project.
 
 **Good examples:**
 
@@ -667,21 +650,20 @@ Following the spacing rules produces consistent code that is easy to read.
           - "16.04"
           - "16.10"
 
-
 - name: "Show field1 (prints: one)"
   ansible.builtin.debug:
     msg: "{{ foo['field1'] }}"
-
+    verbosity: 1
 
 - name: "Nice Linux distribution? (prints: Fedora)"
   ansible.builtin.debug:
     msg: "{{ platforms[0]['name'] }}"
-
+    verbosity: 1
 
 - name: "Ubuntu version used? (prints: 16.10)"
   ansible.builtin.debug:
     msg: "{{ platforms[1]['versions'][1] }}"
-
+    verbosity: 1
 ```
 
 **Bad examples:**
@@ -701,16 +683,13 @@ Following the spacing rules produces consistent code that is easy to read.
           - "16.04"
           - "16.10"
 
-
 - name: "Show field1 (prints: one)"
   ansible.builtin.debug:
     msg: "{{ foo.field1 }}"
 
-
 - name: "Nice Linux distribution? (prints: Fedora)"
   ansible.builtin.debug:
     msg: "{{ platforms.0.name }}"
-
 
 - name: "Ubuntu version used? (prints: 16.10)"
   ansible.builtin.debug:
@@ -764,17 +743,17 @@ Following the spacing rules produces consistent code that is easy to read.
       - "virtualization_role"
       - "virtualization_type"
   when:
-    - not (__used_facts is subset(ansible_facts.keys()))
-
+    - not (__used_facts is ansible.builtin.subset(ansible_facts.keys()))
 
 - name: "Debug | System introduction"
   ansible.builtin.debug:
+    verbosity: 1
     msg: >
       Hello 👋
       I am a {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }}
       (major {{ ansible_facts['distribution_major_version'] }}) box from the {{ ansible_facts['os_family'] }} family.
-      I am running as a {{ ansible_facts['virtualization_role'] | default('bare-metal') }} on
-      {{ ansible_facts['virtualization_type'] | default('physical hardware') }}.
+      I am running as a {{ ansible_facts['virtualization_role'] | ansible.builtin.default('bare-metal') }} on
+      {{ ansible_facts['virtualization_type'] | ansible.builtin.default('physical hardware') }}.
 ```
 
 **Bad examples:**
@@ -838,8 +817,9 @@ Following the spacing rules produces consistent code that is easy to read.
   [`ansible.builtin.success`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/success_test.html)
   and
   [`ansible.builtin.failed`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/failed_test.html)
-  tests instead of comparing return codes directly (e.g., `['rc'] == 0` or
-  `['rc'] != 0`).
+  tests when evaluating Ansible task status. Compare `rc` when interpreting
+  command-specific exit codes; task status and process exit status are not
+  interchangeable.
 - Normalize categorical string facts (such as `os_family` or `distribution`) to
   lowercase at comparison time with
   [`ansible.builtin.lower`](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/lower_filter.html),
@@ -858,48 +838,44 @@ Following the spacing rules produces consistent code that is easy to read.
     foo: true
     bar: false
 
-
 - name: "Check if hostname is set"
   ansible.builtin.assert:
     that:
       - inventory_hostname is ansible.builtin.defined
       - inventory_hostname | ansible.builtin.length > 0
 
-
 - name: "Check message content"
   ansible.builtin.assert:
     that:
       # quote the whole expression to prevent YAML parsing ": " as a mapping
-      - "result.msg == 'some_key: some_value'"
-
+      - "result['msg'] == 'some_key: some_value'"
 
 - name: "Check hostname contains pattern"
   ansible.builtin.assert:
     that:
       # parentheses ensure concatenation happens before the test
-      - inventory_hostname is ansible.builtin.contains("local" ~ "host")
-
+      - inventory_hostname is ansible.builtin.contains('local' ~ 'host')
 
 - name: "Run only if list is not empty"
   ansible.builtin.debug:
     msg: "List has items"
+    verbosity: 1
   when:
     - my_list | ansible.builtin.length > 0
-
 
 - name: "Handle SUSE systems"
   ansible.builtin.debug:
     msg: "The operating-system family is SUSE"
+    verbosity: 1
   when:
     - (ansible_facts['os_family'] | ansible.builtin.lower) == 'suse'
-
 
 - name: "Handle supported operating-system families"
   ansible.builtin.debug:
     msg: "The operating-system family is supported"
+    verbosity: 1
   when:
     - (ansible_facts['os_family'] | ansible.builtin.lower) in ['redhat', 'suse']
-
 
 # Using success/failed tests to handle a command's task status
 - name: "Run a command and check result"
@@ -912,13 +888,12 @@ Following the spacing rules produces consistent code that is easy to read.
   ignore_errors: true # Preserve the failed status for the handling task below.
   register: __myapp_check_result
 
-
 - name: "Handle command result"
   ansible.builtin.debug:
     msg: "Command succeeded"
+    verbosity: 1
   when:
     - __myapp_check_result is ansible.builtin.success
-
 
 - name: "Handle command failure"
   ansible.builtin.fail:
@@ -936,13 +911,11 @@ Following the spacing rules produces consistent code that is easy to read.
     that:
       - inventory_hostname # this would be only valid if this variable would be a boolean
 
-
 # BAD: Second part is not a list item and accidentally quoted, always evaluates to True
 - name: "Check if hostname is valid"
   ansible.builtin.assert:
     that:
       - inventory_hostname is ansible.builtin.defined and 'inventory_hostname | ansible.builtin.length > 0'
-
 
 # BAD: Unquoted colon+space is parsed as YAML mapping, always truthy
 - name: "Check message content"
@@ -950,13 +923,11 @@ Following the spacing rules produces consistent code that is easy to read.
     that:
       - result.msg == "some_key: some_value"
 
-
 # BAD: Without parentheses, ~ is evaluated after the test, result is "Truehost"
 - name: "Check hostname contains pattern"
   ansible.builtin.assert:
     that:
       - inventory_hostname is contains "local" ~ "host"
-
 
 # BAD: Couples the comparison to the capitalization supplied by the fact source
 - name: "Handle SUSE systems"
@@ -965,7 +936,6 @@ Following the spacing rules produces consistent code that is easy to read.
   when:
     - ansible_facts['os_family'] == 'Suse'
 
-
 # BAD: Mixes externally supplied capitalization into the comparison interface
 - name: "Handle supported operating-system families"
   ansible.builtin.debug:
@@ -973,14 +943,12 @@ Following the spacing rules produces consistent code that is easy to read.
   when:
     - ansible_facts['os_family'] in ['RedHat', 'Suse']
 
-
-# BAD: Comparing return codes directly instead of using success/failed tests
+# BAD: Using process exit status as a substitute for Ansible task status
 - name: "Handle command result"
   ansible.builtin.debug:
     msg: "Command succeeded"
   when:
     - __myapp_check_result['rc'] == 0  # use "is ansible.builtin.success" instead
-
 
 - name: "Handle command failure"
   ansible.builtin.fail:
@@ -1023,11 +991,17 @@ Following the spacing rules produces consistent code that is easy to read.
 
 - Always use the list format for `when`, `changed_when`, and `failed_when`
   conditions, even for single conditions.
-- Place the pipe operator (`|`) at the beginning of continuation lines for long
-  piped expressions.
-- Break lines after unparenthesized `or` operators.
 - Avoid chaining unparenthesized `and` operators; use separate list entries
   instead.
+
+**You SHOULD:**
+
+- Use a folded scalar (`>-`) for a long conditional expression when deliberate
+  line breaks improve readability. The formatter can reflow plain multiline
+  scalars, but preserves folded-scalar layout.
+- In folded expressions, break after `or` operators and place filter pipes (`|`)
+  at the beginning of continuation lines. Do not force short expressions onto
+  multiple lines merely because they contain `or`.
 
 **Good examples:**
 
@@ -1038,16 +1012,16 @@ Following the spacing rules produces consistent code that is easy to read.
     that:
       - ansible_version['full'] is version(foobar_meta['galaxy_info']['min_ansible_version'], "<")
 
-
 # Multiple 'or' conditions with line breaks after each 'or'
 - name: "Check distribution info"
   ansible.builtin.debug:
     msg: "Distribution info missing or no platforms defined"
+    verbosity: 1
   when:
-    - ansible_facts['distribution'] is not ansible.builtin.defined or
+    - >-
+      ansible_facts['distribution'] is not ansible.builtin.defined or
       ansible_facts['distribution_version'] is not ansible.builtin.defined or
       (foobar_meta['galaxy_info']['platforms'] | ansible.builtin.length) < 1
-
 
 # Complex piped expressions with '|' at the beginning of continuation lines
 - name: "Check platform support"
@@ -1055,20 +1029,22 @@ Following the spacing rules produces consistent code that is easy to read.
     msg: "Platform not supported"
   when:
     - (foobar_meta['galaxy_info']['platforms'] | ansible.builtin.length) > 0
-    - ansible_facts['distribution'] is not ansible.builtin.defined or
+    - >-
+      ansible_facts['distribution'] is not ansible.builtin.defined or
       ansible_facts['distribution_version'] is not ansible.builtin.defined or
       (foobar_meta['galaxy_info']['platforms'] | ansible.builtin.length) < 1
-    - (foobar_meta['galaxy_info']['platforms']
-       | ansible.builtin.selectattr('name', 'match', '^' ~ ansible_facts['distribution'] ~ '$')
-       | ansible.builtin.map(attribute='versions') | ansible.builtin.flatten
-       | ansible.builtin.select('match', '^(' ~ ansible_facts['distribution_version'] ~ '|all)$', ignorecase=true)
-       | ansible.builtin.list | ansible.builtin.length) < 1
-
+    - >-
+      (foobar_meta['galaxy_info']['platforms']
+      | ansible.builtin.selectattr('name', 'match', '^' ~ ansible_facts['distribution'] ~ '$')
+      | ansible.builtin.map(attribute='versions') | ansible.builtin.flatten
+      | ansible.builtin.select('match', '^(' ~ ansible_facts['distribution_version'] ~ '|all)$', ignorecase=true)
+      | ansible.builtin.list | ansible.builtin.length) < 1
 
 # Multiple 'and' conditions as separate list entries
 - name: "Run when all conditions are met"
   ansible.builtin.debug:
     msg: "All conditions met"
+    verbosity: 1
   when:
     - condition_a
     - condition_b
@@ -1085,13 +1061,11 @@ Following the spacing rules produces consistent code that is easy to read.
       - ansible_version['full'] is version(foobar_meta['galaxy_info']['min_ansible_version'], "<")
   when: ansible_facts['distribution'] is ansible.builtin.defined
 
-
 # BAD: Chaining 'and' in a single line instead of separate list entries
 - name: "Run when all conditions are met"
   ansible.builtin.debug:
     msg: "All conditions met"
   when: condition_a and condition_b and condition_c
-
 
 # BAD: Pipe at end of line instead of beginning of continuation line, missing line breaks
 - name: "Check platform support"
@@ -1141,14 +1115,12 @@ Following the spacing rules produces consistent code that is easy to read.
     - "nginx"
     - "curl"
 
-
 # Lookup-based - keep with_fileglob if there is no additional filtering needed
 - name: "Include cleanup tasks"
   ansible.builtin.include_tasks:
     file: "{{ item }}"
   with_fileglob:
     - "../tasks/cleanup/*.yml"
-
 
 # Lookup-based, but no with_fileglob as alphabetical order has to be guaranteed
 - name: "Include additional tasks from foo/ in alphabetical order"
@@ -1298,7 +1270,6 @@ Following the spacing rules produces consistent code that is easy to read.
 
 ```yaml
 ---
-
 - name: "A cool playbook"
   hosts: "localhost"
   tasks:
@@ -1309,7 +1280,7 @@ Following the spacing rules produces consistent code that is easy to read.
         - name: "Display a message"
           ansible.builtin.debug:
             msg: "Hello world!"
-
+            verbosity: 1
 
         - name: "Get basic information from 'linux_container' hosts"
           delegate_to: "{{ item }}"
@@ -1319,28 +1290,29 @@ Following the spacing rules produces consistent code that is easy to read.
             /usr/bin/grep "PRETTY" /etc/os-release; /usr/bin/uname -r;
           args:
             executable: "/bin/bash"
-          changed_when: false
-          failed_when: false
+          changed_when:
+            - false
+          failed_when:
+            - false
           loop: "{{ groups['linux_container'] }}"
           loop_control:
             label: "{{ item }}"
           register: __basicinfo_result
 
-
         - name: "Show basic information from 'linux_container' hosts"
           ansible.builtin.debug:
             msg: "{{ processed_result.split('\n') }}"
+            verbosity: 1
           vars:
             processed_result: |-
-              {% for result in __basicinfo_result.results %}
-              Host: {{ result.item }} - {{ result.stdout_lines | default(['No output']) | join(', ') }}
+              {% for result in __basicinfo_result['results'] %}
+              Host: {{ result['item'] }} - {{ result['stdout_lines'] | ansible.builtin.default(['No output']) | ansible.builtin.join(', ') }}
               {% endfor %}
           when:
             - __basicinfo_result is ansible.builtin.defined
-            - __basicinfo_result.results is ansible.builtin.defined
-            - __basicinfo_result.results[0].stdout_lines is ansible.builtin.defined
+            - __basicinfo_result['results'] is ansible.builtin.defined
+            - __basicinfo_result['results'][0]['stdout_lines'] is ansible.builtin.defined
           run_once: true
-
 
     - name: "Install nginx"
       ansible.builtin.apt:
@@ -1348,7 +1320,6 @@ Following the spacing rules produces consistent code that is easy to read.
         state: "present"
       when:
         - (ansible_facts['os_family'] | ansible.builtin.lower) == 'redhat'
-
 
     - name: "Create some EC2 Instances"
       amazon.aws.ec2_instance:
@@ -1365,7 +1336,6 @@ Following the spacing rules produces consistent code that is easy to read.
       tags:
         - "ec2"
 
-
     - name: "Include tasks to cleanup"
       ansible.builtin.include_tasks:
         file: "cleanup.yml"
@@ -1373,22 +1343,21 @@ Following the spacing rules produces consistent code that is easy to read.
         - "always"
         - "cleanup"
 
-
     - name: "Manage device {{ device_name }}"
       foo.module:
         device: "{{ device_name }}"
       when:
         - (ansible_facts['os_family'] | ansible.builtin.lower) == 'redhat'
-      changed_when: false
-      failed_when: false
+      changed_when:
+        - false
+      failed_when:
+        - false
 ```
 
 **Bad examples:**
 
 ```yaml
-
 ---
-
 - hosts: "localhost"
   name: "A cool playbook" # should be the first one
   tasks:
@@ -1399,7 +1368,6 @@ Following the spacing rules produces consistent code that is easy to read.
             msg: "Hello world!"
       when: true # when key should be before block
 
-
   - name: "Create some EC2 Instances"
     when: ansible_os_family == 'RedHat'
     tags: "ec2"
@@ -1407,7 +1375,6 @@ Following the spacing rules produces consistent code that is easy to read.
     register: __ec2_output
     with_items: "{{ instance_names }}"
     ignore_errors: true
-
 
   - ansible.builtin.include_tasks: "setup.yml"
     tags: "setup"
@@ -1458,8 +1425,9 @@ Following the spacing rules produces consistent code that is easy to read.
 
 **You SHOULD:**
 
-- When refactoring existing code that uses different notation, add the old value
-  as an alias with a comment for backwards compatibility.
+- Update `notify` references together with renamed `listen` topics. Document
+  consumer-facing topic changes in release notes. Existing nonconforming aliases
+  are findings to fix, not exceptions to the lowercase requirement.
 
 **Good examples:**
 
@@ -1472,7 +1440,6 @@ Following the spacing rules produces consistent code that is easy to read.
   listen:
     - "restart nginx"
 
-
 - name: "Reload NGINX configuration"
   ansible.builtin.service:
     name: "nginx"
@@ -1480,16 +1447,14 @@ Following the spacing rules produces consistent code that is easy to read.
   listen:
     - "reload nginx"
 
-
-# Handler with backwards-compatible alias during refactoring
+# Handler with multiple lowercase topics
 - name: "Restart application service"
   ansible.builtin.service:
     name: "myapp"
     state: "restarted"
   listen:
     - "restart myapp"
-    - "Restart MyApp"  # legacy alias, remove after full migration
-
+    - "restart application"
 
 # In tasks/main.yml - triggering handlers via listen value
 - name: "Update NGINX configuration"
@@ -1518,14 +1483,12 @@ Following the spacing rules produces consistent code that is easy to read.
   notify:
     - "Restart nginx service"  # coupled to handler's name
 
-
 # BAD: Non-list notation for listen
 - name: "Restart NGINX service"
   ansible.builtin.service:
     name: "nginx"
     state: "restarted"
   listen: "restart nginx"  # should be a list
-
 
 # BAD: Mixed case in listen value
 - name: "Restart NGINX service"
@@ -1635,13 +1598,10 @@ modules.
 - When using the `cmd` attribute with variables, apply the
   [`quote` filter](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/quote_filter.html)
   to prevent command injection: `{{ myvar | ansible.builtin.quote }}`
-- Include a comment explaining why `command` or `shell` is necessary instead of
-  a dedicated module (see [Comments](#comments)). Example:
-
-  ```text
-  # The command or shell module is used intentionally:
-  # Ansible provides no dedicated module to perform this operation.
-  ```
+- Explain non-obvious reasons why a dedicated module is unsuitable, or why
+  particular shell features or execution behavior are required (see
+  [Comments](#comments)). A nearby explanation may cover related tasks. Do not
+  add generic boilerplate or repeat what the task already makes clear.
 
 **You SHOULD:**
 
@@ -1684,15 +1644,17 @@ modules.
     - "'No migrations to apply' not in __migration_result['stdout']"
   register: __migration_result
 
-
 # When shell is necessary (pipes, redirects) - use quote filter for variables
 - name: "Find and count log files"
   ansible.builtin.shell:
-    cmd: >-
+    executable: "/bin/bash"
+    cmd: |-
+      set -u
+      set -e -o pipefail
       find /var/log -name '*.log' -mtime +{{ log_retention_days | ansible.builtin.quote }} | wc -l
-  changed_when: false
+  changed_when:
+    - false
   register: __log_count_result
-
 
 # Using creates for idempotency
 - name: "Initialize application database"
@@ -1712,12 +1674,10 @@ modules.
   ansible.builtin.command:
     cmd: "apt-get install -y nginx"  # use ansible.builtin.apt instead
 
-
 # BAD: Using shell without necessity
 - name: "Apply sysctl settings"
   ansible.builtin.shell:
     cmd: "sysctl --system"  # no shell features needed, use command
-
 
 # BAD: Using cmd string instead of argv list, missing quote filter for variables in cmd
 - name: "Run command with complex arguments"
@@ -1805,12 +1765,13 @@ embedded in `ansible.builtin.shell` tasks and standalone scripts executed via
   ansible.builtin.shell:
     executable: "/bin/bash"
     cmd: |
-      set -e
+      set -u
+      set -e -o pipefail
       service_status="$(systemctl is-active myservice 2>/dev/null || true)"
       printf '%s\n' "${service_status}"
-  changed_when: false
+  changed_when:
+    - false
   register: __service_result
-
 
 # Using ansible.builtin.script for complex logic - script can be linted/tested standalone
 - name: "Run complex data migration"
@@ -1854,7 +1815,6 @@ printf 'Changes applied\n'
   ansible.builtin.shell:
     cmd: "for f in /tmp/*.txt; do [[ -f $f ]] && cat $f; done"  # Bashism: [[ ]]
   # no executable defined, no error handling
-
 
 # BAD: Complex script that should be in a separate file
 - name: "Complex inline script"
@@ -1900,12 +1860,11 @@ printf 'Changes applied\n'
 
 - Provide explanations for role and collection variables using comments in
   `/defaults` or `/vars` where they are defined.
-- Whenever
-  [`ansible.builtin.command`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/command_module.html)
-  or
-  [`ansible.builtin.shell`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/shell_module.html)
-  modules are used, include a comment with a justification why they are needed
-  to aid future maintenance.
+- When using `ansible.builtin.command` or `ansible.builtin.shell`, explain
+  non-obvious reasons why a dedicated module is unsuitable, or why particular
+  shell features or execution behavior are required. A nearby explanation may
+  cover related tasks. Do not add generic boilerplate or repeat what the task
+  already makes clear.
 
 **You SHOULD:**
 
@@ -1925,6 +1884,20 @@ printf 'Changes applied\n'
 - Concise comments preserve context that the code cannot express. Narrating
   visible behavior adds noise and is more likely to become outdated when the
   implementation changes.
+
+**Good example:**
+
+```yaml
+# The application's validator checks cross-file references that file checks cannot.
+- name: "Validate application configuration"
+  ansible.builtin.command:
+    argv:
+      - "/usr/local/bin/myapp"
+      - "config"
+      - "validate"
+  changed_when:
+    - false
+```
 
 
 ## Linting<a id="linting"></a>
@@ -1949,7 +1922,6 @@ printf 'Changes applied\n'
 # https://foundata.com/en/guidelines/ansible-playbooks/#linting
 
 ---
-
 profile: "production"
 
 skip_list:
@@ -1997,12 +1969,21 @@ skip_list:
   module, append `.j2` to the template file name for clarity and convention.
 - [Use tags with caution](https://redhat-cop.github.io/automation-good-practices/#_use_tags_cautiously_either_for_roles_or_for_complete_purposes).
 - [Use the verbosity parameter with debug statements](https://redhat-cop.github.io/automation-good-practices/#_use_the_verbosity_parameter_with_debug_statements).
-- Use Jinja templates for generating text and semi-structured data, not for
-  creating structured data.
-- Specify file permissions using symbolic notation with the octal equivalent as
-  a trailing comment for clarity. Example: `mode: "u=rw,g=r,o=r" # 0644`. This
-  improves readability by showing intent (who can do what) while preserving the
-  familiar numeric representation for quick reference.
+- Build structured data using native mappings and lists. Jinja expressions and
+  filters MAY transform those values. When JSON or YAML text is needed,
+  serialize the complete value using `ansible.builtin.to_json`,
+  `ansible.builtin.to_nice_json`, `ansible.builtin.to_yaml`, or
+  `ansible.builtin.to_nice_yaml`. Do not manually assemble document structure or
+  escaping through text interpolation. A `.j2` template containing
+  `{{ tpl_config | ansible.builtin.to_nice_json }}` follows this rule.
+- Specify file permissions using complete, absolute symbolic assignments, with
+  the matching octal equivalent as a trailing comment. Example:
+  `mode: "u=rw,g=r,o=r" # 0644`. Set permissions for all of `u`, `g`, and `o`
+  explicitly using `=` (or an equivalent explicit `a=` assignment). Do not use
+  relative `+` or `-` operations, incomplete assignments, conditional `X`, or
+  copies of existing permission bits. The result must not depend on the previous
+  mode, file type, or umask. Explicit special bits remain permitted. This shows
+  both representations without making the result dependent on existing state.
 
 
 ## Linguistic guidelines<a id="linguistic-guidelines"></a>
