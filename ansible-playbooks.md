@@ -1929,23 +1929,49 @@ printf 'Changes applied\n'
 
 ## Linting<a id="linting"></a>
 
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
 **You MUST:**
 
-- Check your playbooks, collections, roles, and other applicable files with
-  [`ansible-lint --profile production --strict --skip-list use-loop`](https://docs.ansible.com/ansible-lint/).
+- Keep an `.ansible-lint` file in the root of every project with Ansible
+  content. It selects the `production` profile, skips `use-loop` and links to
+  this section.
+- Check playbooks, collections, roles and other applicable files with
+  [`ansible-lint --strict`](https://docs.ansible.com/projects/lint/), which
+  reads that file.
+- Lint test content such as Molecule scenarios as well. Install the collections
+  it uses instead of excluding it.
+
+**Good examples:**
+
+```yaml
+# ansible-lint config implementing foundata's guidelines. Details, reasoning:
+# https://foundata.com/en/guidelines/ansible-playbooks/#linting
+
+---
+
+profile: "production"
+
+skip_list:
+  - "use-loop"
+```
 
 **Reasoning:**
 
 - Ansible Lint is an official project by the Ansible Core Team and is widely
-  adopted. It can be run offline and provides a command-line tool for linting
-  playbooks, helping to identify areas for potential improvement. Following its
-  recommendations promotes consistent, high-quality code.
+  adopted. Following its recommendations promotes consistent code.
 - Ansible Lint automatically
   [runs `ansible-playbook --syntax-check`](https://ansible.readthedocs.io/projects/lint/rules/syntax-check/).
+  A collection that is not installed fails that check, which is why test
+  content needs its collections.
+- Every run of ansible-lint reads the configuration file, including editor
+  integrations and a `antsibull-nox` session of a collection (if any).
+  Command-line options apply only where someone types them.
 - The `with_<lookup>` syntax is not deprecated and remains valid. See the
-  [Loops](#loops) section for when to use `with_*` vs `loop`. The ansible-lint
-  behaviour is
-  [still discussed](https://github.com/ansible/ansible-lint/issues/2204).
+  [Loops](#loops) section for when to use `with_*` vs `loop`. As of 2026-Q4,
+  ansible-lint lists `use-loop` in its `production` profile as a
+  [planned rule](https://github.com/ansible/ansible-lint/issues/2204). The
+  skip keeps `with_*` loops valid once it ships.
 
 
 ## Miscellaneous<a id="misc"></a>
