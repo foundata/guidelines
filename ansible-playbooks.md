@@ -1914,6 +1914,11 @@ printf 'Changes applied\n'
   reads that file.
 - Lint test content such as Molecule scenarios as well. Install the collections
   it uses instead of excluding it.
+- Exclude generator-owned `changelogs/changelog.yaml` from Ansible Lint,
+  including autofix. Validate it separately with
+  `antsibull-changelog lint-changelog-yaml changelogs/changelog.yaml`, and check
+  changelog fragments with `antsibull-changelog lint`. Do not exclude the entire
+  changelog directory merely to exempt generated output.
 
 **Good examples:**
 
@@ -1926,6 +1931,10 @@ profile: "production"
 
 skip_list:
   - "use-loop"
+
+exclude_paths:
+  - ".cache/"
+  - "changelogs/changelog.yaml"
 ```
 
 **Reasoning:**
@@ -1939,6 +1948,10 @@ skip_list:
 - Every run of ansible-lint reads the configuration file, including editor
   integrations and a `antsibull-nox` session of a collection (if any).
   Command-line options apply only where someone types them.
+- A custom `exclude_paths` list replaces the default, so keep `.cache/` in it.
+  Full exclusion preserves generator-owned formatting; dedicated changelog
+  validation retains syntax and changelog-format checks. Skipping individual
+  YAML style rules alone does not stop `--fix` from reformatting a file.
 - The `with_<lookup>` syntax is not deprecated and remains valid. See the
   [Loops](#loops) section for when to use `with_*` vs `loop`. As of 2026-Q4,
   ansible-lint lists `use-loop` in its `production` profile as a
