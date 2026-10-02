@@ -129,11 +129,12 @@ The terms MUST, SHOULD, and other key words are used as defined in
   it accepts.
 - **Product series:** a product's release line, such as OPNsense 26.7. A
   collection declares its support in series.
-- **Write window:** the product series a collection release admits for writes.
+- **Supported series:** the product series a collection release is tested
+  against. On any other series a module warns and proceeds.
 - **Eligibility:** whether an operation or option is allowed on the detected
-  product build, decided by a predicate before any change. Eligibility can be
-  narrower than the write window, for example to exclude a defective patch
-  release.
+  target. An operation is ineligible only where it is known to be harmful or
+  impossible there, for example on a defective build or without a required
+  plugin. An ineligible operation fails before any change.
 - **Interface inventory:** a generated file per product series that lists the
   objects and fields of the product's configuration interface. It is
   development evidence; nothing reads it at runtime.
@@ -1353,11 +1354,13 @@ Command-line modules require the product's CLI on the execution host.
   `use_unsafe_shell=False`, `expand_user_and_vars=False`, explicit option
   boundaries, and validated executable paths and object identifiers.
 - Send secrets through stdin or another protected channel supported by the
-  product. Use `binary_data=True` when the exact bytes matter.
+  product. Pass bytes only together with `binary_data=True`.
 - Qualify each locator profile's deadline mechanism and descendant cleanup.
   Declare the implementation and executable path as prerequisites. Use a
   supervisor that records expiry separately when command and timeout statuses
   collide.
+- Give `timeout` a duration above zero. Round a remaining budget up, never
+  down to zero.
 - Report interrupted writes as unknown and reconcile before retrying.
 - Request bytes with `encoding=None` and check both streams' sizes before
   decoding or parsing. Never put raw output in a message.
@@ -1370,7 +1373,8 @@ Command-line modules require the product's CLI on the execution host.
 - Verify the module's user and the application identity separately before a
   write. Reject unused or conflicting locator fields.
 - Keep the inherited and supplied environment within the locator profile's
-  documented policy.
+  documented policy. Check the environment the child will actually receive;
+  `environ_update` only adds to the inherited one.
 
 **You MUST NOT:**
 
@@ -1495,6 +1499,9 @@ subprocess.run(argv, timeout=60, check=True)
 - GNU `timeout -k` signals its process group; detached descendants need
   separate cleanup. BusyBox signals only the monitored PID and uses different
   exit statuses, so deadline implementations need separate qualification.
+- GNU `timeout` treats a duration of zero as no limit.
+- Without `binary_data=True`, `run_command` appends a newline to its input.
+  On bytes that raises `TypeError`, after the child process has started.
 - GNU `timeout` normally returns 124 on expiry; `KILL` can produce 137 or a
   negative signal number. Command exits and external kills can share those
   statuses. `--preserve-status` does not resolve the ambiguity.
@@ -1669,8 +1676,8 @@ real target.
 - Keep a read free of managed product changes, token rotation, refresh actions
   and initialization. Document an unavoidable authentication or audit side
   effect and distinguish it from a resource change.
-- Validate the response schema even when the target is outside the write
-  window. Fail explicitly, or return a separately documented raw diagnostic
+- Validate the response schema even when the target is outside the supported
+  series. Fail explicitly, or return a separately documented raw diagnostic
   shape, rather than inventing normalized state.
 
 **You MUST NOT:**
@@ -1773,11 +1780,12 @@ documentation lint, and review of the intended semantics.
 
 - Keep product parsers, adapters, schemas, normalization and fixtures in the
   product's own collection. Share only product-independent mechanics.
-- Import only stable helpers in released collections. Experimental helpers
-  may be used on unreleased branches.
+- Change a shared helper and its consumers together until their first
+  publication, and publish them at the same time. From then on, a public
+  helper's signature, exceptions and defaults and a fragment's options are
+  versioned interfaces.
 - Mark an internal utility with a leading underscore and say so in its
-  docstring. Treat a public helper's signature, its exceptions and a fragment's
-  options as versioned interfaces.
+  docstring.
 - Build a fresh argument specification, or deep-copy a nested one, before
   extending it.
 - Share documentation through fully qualified fragments and test the merged
@@ -1786,11 +1794,13 @@ documentation lint, and review of the intended semantics.
 - Declare collection dependencies in `galaxy.yml` with the lowest version the
   code actually needs, and test that version and the latest compatible one.
 - Meet a shared helper's safety conditions, such as bounded output, secret
-  redaction and a process deadline, before it becomes stable.
+  redaction and a process deadline, before it is published.
 
 **You MUST NOT:**
 
-- Extract a helper that has one consumer and call it shared.
+- Publish a shared helper that has one consumer. Move it into that consumer.
+- Add deprecations, compatibility shims or migration notes for an interface
+  that was never published.
 - Add a runtime dependency to a dependency-free utility collection to satisfy a
   style rule, such as a typing backport for a decorator.
 
@@ -1816,6 +1826,8 @@ _BASE_SPEC["validate_certs"] = {"type": "bool", "default": False}
 
 - Two consumers are the smallest evidence that an interface is general rather
   than one product's shape with a generic name.
+- An unpublished interface has no outside consumer to protect. Versioning it
+  while its shape is still being found costs effort and prevents nothing.
 - Editing a shared argument specification in place changes it for every
   consumer in the process. A fresh copy prevents that cross-module state.
 
@@ -1976,8 +1988,8 @@ tests, the documentation and yamllint sessions of
 - Exercise the real argument specification and JSON exit and failure paths;
   do not replace `AnsibleModule` with a fake in every test.
 - Cover applicable lifecycle cases: creation, update, no-op, deletion, omission,
-  reset, invalid input, ambiguous identity, ineligible targets, check and diff
-  mode.
+  reset, invalid input, ambiguous identity, an unsupported series, an
+  ineligible operation, check and diff mode.
 - Cover applicable failure and transport cases: secret masking with traceback
   capture enabled, partial writes and their `changed` results, delayed
   visibility, malformed responses, request counts and retry after a timeout.
@@ -2047,23 +2059,26 @@ product collection, product series.
 
 **For modules that manage product state:**
 
-- Declare the write window and each operation's eligibility in one
+- Declare the supported series and each operation's exclusions in one
   compatibility definition in the module utilities.
-- Pass that check before every change, including command-line paths and
-  operational modules. Keep version and capability discovery read-only and
-  free of side effects.
 - Detect the product version on the target. Never trust a version the caller
   supplies, and refresh a cached result after an upgrade or a reconnect.
-- State eligibility per operation: eligible builds or justified ranges, known
-  defective builds, and required editions or plugins. Admit exact builds where
-  the evidence does not support a range.
+- Warn once per module run when the detected series is not supported, name
+  the supported series in the warning, and proceed.
+- List exclusions per operation: known defective builds and required editions
+  or plugins, each with its evidence. Everything else is allowed.
+- Fail before any change where an operation is excluded on the detected
+  target, and where an option does not exist there.
+- Run both checks before every change, including command-line paths and
+  operational modules. Keep version and capability discovery read-only and
+  free of side effects.
+- Declare a series supported only after the integration tests pass on it.
+  Test each new release of a supported series.
 - Qualify a recovery feature such as a rollback by its observed effect.
-- Fail before any change on an ineligible target, and before selecting an
-  adapter for an unsupported option. Let read-only modules warn instead.
 - Keep adapters in `module_utils/<family>/`, one per product series only where
   wire behavior differs.
 - Support one product series per release by default. Drop the previous series
-  in a breaking release, and remove its adapters, eligibility entries, support
+  in a breaking release, and remove its adapters, exclusions, support
   statements and examples in the same change.
 - State in the README which collection release last supported each dropped
   series, so consumers of an older series can stay on it.
@@ -2078,6 +2093,7 @@ product collection, product series.
   bypass eligibility checks.
 - Drop a product series or an ansible-core version, or change the meaning of an
   omitted field, in a patch release.
+- Add an adapter or a workaround for a series the release does not support.
 - Read the interface inventory or any other development file at runtime.
 
 **You SHOULD:**
@@ -2091,8 +2107,12 @@ product collection, product series.
 
 **Reasoning:**
 
-- The eligibility check belongs in the shared client, before the request is
+- The compatibility check belongs in the shared client, before the request is
   sent, so no module can forget it.
+- A module that refuses every untested series stops working on the day
+  upstream releases, and most releases change nothing a module touches. The
+  warning tells the operator about the risk, and the read-back after each
+  write reports a wrong result.
 - Compatibility covers behavior and dependencies, not only the spelling of an
   option. A silently changed default is a breaking change without a renamed
   parameter.
@@ -2100,8 +2120,9 @@ product collection, product series.
   every ansible-core version.
 - The sanity rules for `module.deprecate()` differ: 2.16 requires
   `collection_name`, while 2.21 adds rules against passing it.
-- Testing one patch release does not qualify its whole series. A product
-  release is also distinct from a selectable API version.
+- A defect can appear in one patch release of a supported series. An exclusion
+  names that build and keeps the series supported. A product release is also
+  distinct from a selectable API version.
 - Supporting two product series in one code base keeps adapters alive and
   doubles the product tests. One series per release leaves that cost with the
   consumers who need the overlap.
@@ -2112,8 +2133,9 @@ product collection, product series.
   perform it.
 
 **Enforcement:** a policy test comparing the runtime compatibility definition
-with the positive support claims in the documentation, changelog lint, and the
-build and import check.
+with the positive support claims in the documentation, tests that an
+unsupported series warns and an excluded operation fails before any change,
+changelog lint, and the build and import check.
 
 
 ## Checks and tooling<a id="checks-tooling"></a>
@@ -2338,7 +2360,7 @@ item marked not applicable.
   ([Action plugins](#action-plugins),
   [Filter and test plugins](#filter-test-plugins)).
 - [ ] **Sharing:** fresh specifications; fragments tested with each consumer;
-  stable helpers only in releases ([Shared code](#shared-code)).
+  no published helper with a single consumer ([Shared code](#shared-code)).
 - [ ] **Documentation:** header, markup, returns and limits accurate; the
   collection contract stated where consumers read; architecture and rationale
   current, with planned work in issues and supporting evidence linked
@@ -2346,7 +2368,8 @@ item marked not applicable.
 - [ ] **Tests:** every layer on every admitted ansible-core version, payload
   units on the floor; product claims backed by integration evidence
   ([Testing](#testing)).
-- [ ] **Release:** eligibility checked before changes; deprecations declarative;
+- [ ] **Release:** unsupported series warn, excluded operations fail before
+  changes; deprecations declarative;
   changelog fragment present
   ([Compatibility and releases](#compatibility-releases)).
 - [ ] **Checks:** all `antsibull-nox` sessions pass; every ignore entry
