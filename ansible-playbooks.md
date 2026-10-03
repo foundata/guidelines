@@ -1441,7 +1441,7 @@ findings. Extended ordering is currently diagnostic-only: stock's cached autofix
 can overwrite another ordering transform. Apply the suggested middle-key order
 manually rather than relying on two competing autofixes.
 
-The list requirement for `when`, `changed_when`, and `failed_when` is defined in
+The list requirement for `when`, `changed_when`, `failed_when` and `until` is in
 [Conditional formatting](#conditionals-formatting), including single conditions.
 
 **Good examples:**
