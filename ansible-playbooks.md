@@ -2115,9 +2115,23 @@ exclude_paths:
   idempotent.
 - Avoid overriding role defaults, variables, or input parameters using
   `set_fact`. Instead, use a distinct variable name.
-- Do not use `meta: end_play`, as it terminates the entire play rather than just
-  the tasks for a specific host (when working with multiple hosts in the
-  inventory). If absolutely necessary, consider using `meta: end_host` instead.
+- Reusable roles MUST NOT use `ansible.builtin.meta: end_play` or
+  `ansible.builtin.meta: end_host` unless terminating their caller is an
+  explicit, documented part of the role's contract. `end_play` stops the play
+  for all hosts; `end_host` stops the remaining play for the current host,
+  including unrelated roles and tasks. Neither merely exits the current role.
+- Prefer role-local conditions or `ansible.builtin.meta: end_role` to skip
+  remaining role tasks. `end_role` requires ansible-core 2.18 or later; use
+  conditions when supporting older versions. It leaves later play tasks and
+  other roles running and does not cancel notified handlers. Do not call it
+  outside a role or from a handler. See the
+  [meta module documentation](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/meta_module.html).
+- Orchestration playbooks MAY deliberately use `end_play` or `end_host` when
+  that termination scope is required. Explain the purpose and affected scope
+  in an adjacent comment. The current `foundata-no-end-play` check rejects
+  every `end_play`; use task-local `# noqa: foundata-no-end-play` for a
+  documented use permitted by this policy. Do not substitute `end_host` just
+  to avoid the lint finding.
 - Limit the use of the
   [`ansible.builtin.copy`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/copy_module.html)
   module to scenarios such as copying remote files, static files, or uploading
@@ -2161,6 +2175,23 @@ exclude_paths:
   symbolic modes.
 
 **Good examples:**
+
+```yaml
+# roles/nginx/tasks/main.yml (requires ansible-core >= 2.18)
+- name: "Skip disabled NGINX role"
+  ansible.builtin.meta: "end_role"
+  when:
+    - not (nginx_web_enabled | ansible.builtin.bool)
+```
+
+```yaml
+# In an orchestration playbook; deployment_plan_only is a play-wide switch.
+# After planning, deliberately skip deployment for all hosts in this play.
+- name: "Finish deployment planning" # noqa: foundata-no-end-play
+  ansible.builtin.meta: "end_play"
+  when:
+    - deployment_plan_only | ansible.builtin.bool
+```
 
 ```yaml
 # vars/main.yml
