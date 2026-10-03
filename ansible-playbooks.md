@@ -322,7 +322,14 @@ separator between tasks.
 
 **You SHOULD:**
 
-- Quote all strings.
+- Quote ordinary string values, including strings that resemble booleans or
+  numbers.
+- Leave structural keys and simple identifiers plain, such as variable names
+  in `register`, `loop_control.loop_var` and `set_fact` keys.
+- Leave implicit Jinja2 expressions plain where YAML permits, including
+  conditions and `ansible.builtin.debug`'s `var` parameter. Use outer YAML
+  quotes when required by YAML syntax, such as expressions containing `: `.
+  Do not add `{{ }}` delimiters in these expression contexts.
 - Use double quotes (`"`) for quoted YAML strings. Single quotes are permitted
   when the string contains double quotes. Use block scalars where quoting
   becomes cumbersome.
@@ -332,8 +339,6 @@ separator between tasks.
 
 - Quote non-string types, such as booleans (`true`, `false`) or numbers (e.g.,
   `1337`).
-- Quote references to the local Ansible environment, such as the names of
-  variables being assigned values.
 
 **Good examples:**
 
@@ -376,9 +381,7 @@ separator between tasks.
 # variables example 2
 - name: "Print a variable"
   ansible.builtin.debug:
-    # be aware that this option already runs in Jinja2 context and has an implicit
-    # {{ }} wrapping, so you should not be using Jinja2 delimiters unless you are
-    # looking for double interpolation.
+    # var is an implicit Jinja2 expression; omit {{ }} delimiters.
     var: foo
     verbosity: 1
   when:
@@ -388,6 +391,25 @@ separator between tasks.
 - name: "Set another variable"
   ansible.builtin.set_fact:
     baz: "{{ foo }}" # explicitly references the variable foo
+```
+
+These tasks expect an `app_config` mapping with a string `label` field:
+
+```yaml
+- name: "Show application configuration"
+  ansible.builtin.debug:
+    var: app_config
+    verbosity: 1
+  when:
+    - app_config is ansible.builtin.defined
+  register: __app_config_result
+
+- name: "Show active application configuration"
+  ansible.builtin.debug:
+    var: app_config
+    verbosity: 1
+  when:
+    - "app_config['label'] == 'mode: active'"
 ```
 
 **Bad examples:**
@@ -402,14 +424,14 @@ separator between tasks.
 
 - name: "Assign a value without quoting"
   ansible.builtin.set_fact:
-    baz: another_var  # can cause ambiguity if `another_var` (string or existing variable?)
+    baz: another_var # literal string, not a variable lookup; quote for style
 ```
 
 **Reasoning:**
 
 - We have stricter rules than much of the community (cf.
   [8.2. YAML and Jinja2 Syntax](https://redhat-cop.github.io/automation-good-practices/#_yaml_and_jinja2_syntax)):
-  - We believe all strings
+  - We believe ordinary string values
     [should be quoted](https://news.ycombinator.com/item?id=34509789).
   - The number of rules to remember, if you want to use the quotes only when
     they are really needed, is somewhat excessive for such a simple thing as
@@ -420,10 +442,15 @@ separator between tasks.
   - Escaping with `\` is **not** possible; instead, `''` (two single quotes) is
     used.
   - They do **not** prevent variable interpolation.
-- Properly escaped strings makes it easier to troubleshoot malformed strings and
-  ensures the desired effect.
-- YAML requires you to quote the entire line if it starts with `{{ foo }}` to
+- Properly escaped strings make it easier to troubleshoot malformed strings and
+  ensure the desired effect.
+- YAML requires you to quote the entire scalar if it starts with `{{ foo }}` to
   distinguish between a value and a YAML dictionary.
+- Outer YAML quotes preserve an expression as a string for Ansible to evaluate;
+  they do not turn the expression's result into a Jinja2 string literal.
+  The `debug.var` parameter already uses
+  [implicit Jinja2 evaluation](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/debug_module.html#parameter-var).
+  Ordinary module string parameters need `{{ }}` for variable substitution.
 - Syntax highlighting generally works better when strings are explicitly quoted.
 - Refer to the following for more information about edge cases:
   - [Ansible FAQ: "When should I use {{ }}? Also, how to interpolate variables or dynamic variable names"](https://docs.ansible.com/ansible/latest/reference_appendices/faq.html#when-should-i-use-also-how-to-interpolate-variables-or-dynamic-variable-names)
@@ -1372,6 +1399,8 @@ See
        - Place `owner`, `group` and `mode` together (in this order).
        - Arrange all other, optional module parameters in alphabetical order,
          unless doing so negatively impacts readability or logic.
+         This is advisory and applies only to module parameters, not application
+         data in `vars`, `set_fact` assignments or nested module payloads.
      - `args`: If using the args syntax for complex module parameters.
      - `vars`: If using additional or inline variables to the module.
      - `environment`: If setting environment variables for an action.
