@@ -1466,7 +1466,14 @@ The list requirement for `when`, `changed_when`, and `failed_when` is defined in
 
 - Use `listen` to trigger handlers instead of relying on the handler's `name`.
 - Always use list notation for `listen` values.
-- Use all lowercase for `listen` values.
+- Use lowercase for `listen` values except documented migration aliases.
+- Name new role-specific topics `<public-variable-prefix><action>_<object>`.
+  The role's public variable prefix, including its trailing underscore,
+  identifies the owning role and collection. The action states what happens;
+  the object identifies the affected service, component, or resource. For a
+  role with prefix `nginx_web_`, use `nginx_web_restart_nginx`, not
+  `nginx_web_restart`. Keep the object explicit even when it repeats part of
+  the prefix.
 
 These requirements apply to notifiable handlers, not static `import_tasks`
 directives. Check the imported handlers instead. A dynamic `include_tasks`
@@ -1476,35 +1483,51 @@ notifiable handlers.
 **You SHOULD:**
 
 - Update `notify` references together with renamed `listen` topics. Document
-  consumer-facing topic changes in release notes. Existing nonconforming aliases
-  are findings to fix, not exceptions to the lowercase requirement.
+  consumer-facing topic changes in release notes.
+
+**You MAY:**
+
+- Use shared broadcast topics without an individual role's prefix when several
+  roles intentionally respond to one notification. Keep the action and object
+  explicit, use lowercase, and document the purpose and intended listeners.
+- Retain already-published topics as temporary migration aliases, including
+  unprefixed or mixed-case values. Mark each alias with an adjacent comment
+  and document its removal version. Add the new canonical topic, use it for
+  new callers, and remove each alias at the documented version. This exception
+  does not permit new nonconforming topics or indefinite aliases.
+
+The current `foundata-handler-listen` check does not interpret migration
+comments. For a documented mixed-case alias, use a task-local
+`# noqa: foundata-handler-listen` until the check supports migration exceptions.
+All other handler requirements still apply.
 
 **Good examples:**
 
 ```yaml
-# In handlers/main.yml
+# In handlers/main.yml of the nginx role in the web collection
 - name: "Restart NGINX service"
   ansible.builtin.service:
     name: "nginx"
     state: "restarted"
   listen:
-    - "restart nginx"
+    - "nginx_web_restart_nginx"
 
 - name: "Reload NGINX configuration"
   ansible.builtin.service:
     name: "nginx"
     state: "reloaded"
   listen:
-    - "reload nginx"
+    - "nginx_web_reload_nginx"
 
-# Handler with multiple lowercase topics
+# In handlers/main.yml of the myapp role in the web collection
 - name: "Restart application service"
   ansible.builtin.service:
     name: "myapp"
     state: "restarted"
   listen:
-    - "restart myapp"
-    - "restart application"
+    - "myapp_web_restart_myapp"
+    # Shared broadcast for all application-service handlers in the web stack.
+    - "web_restart_application_services"
 
 # In tasks/main.yml - triggering handlers via listen value
 - name: "Update NGINX configuration"
@@ -1513,7 +1536,18 @@ notifiable handlers.
     dest: "/etc/nginx/nginx.conf"
     mode: "u=rw,g=r,o=r" # 0644
   notify:
-    - "reload nginx"
+    - "nginx_web_reload_nginx"
+```
+
+```yaml
+# Preserve the published topic while callers migrate; remove it in 3.0.0.
+- name: "Restart NGINX service" # noqa: foundata-handler-listen
+  ansible.builtin.service:
+    name: "nginx"
+    state: "restarted"
+  listen:
+    - "nginx_web_restart_nginx"
+    - "Restart Nginx" # Migration alias; remove in 3.0.0.
 ```
 
 **Bad examples:**
@@ -1539,15 +1573,23 @@ notifiable handlers.
   ansible.builtin.service:
     name: "nginx"
     state: "restarted"
-  listen: "restart nginx"  # should be a list
+  listen: "nginx_web_restart_nginx"  # should be a list
 
-# BAD: Mixed case in listen value
+# BAD: New mixed-case topic without a documented migration exception
 - name: "Restart NGINX service"
   ansible.builtin.service:
     name: "nginx"
     state: "restarted"
   listen:
-    - "Restart Nginx"  # should be all lowercase
+    - "Nginx_Web_Restart_Nginx"  # should be all lowercase
+
+# BAD: The prefix identifies the owner but the affected object is missing
+- name: "Restart NGINX service"
+  ansible.builtin.service:
+    name: "nginx"
+    state: "restarted"
+  listen:
+    - "nginx_web_restart"
 ```
 
 **Reasoning:**
@@ -1555,6 +1597,9 @@ notifiable handlers.
 - Handler names must be unique within a play, while multiple handlers can share
   the same `listen` value. This allows one notification to trigger multiple
   handlers.
+- Topics share the play's scope. Role prefixes prevent accidental broadcasts;
+  explicit action/object names identify the operation without relying on the
+  role name to imply its target.
 - Using `listen` decouples the trigger mechanism from the display name, making
   maintenance easier and allowing names to follow their own readability rules
   without affecting notification logic.
@@ -1562,6 +1607,9 @@ notifiable handlers.
   maintains consistency with other list-based attributes.
 - Lowercase values prevent case-sensitivity issues and ensure consistent
   matching across the codebase.
+- Published topics are interfaces used by callers outside the role. Temporary
+  aliases preserve those callers during migration; a removal version keeps the
+  exception bounded.
 
 
 ### Templates<a id="templates"></a>
