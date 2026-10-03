@@ -1619,8 +1619,17 @@ All other handler requirements still apply.
 **You MUST:**
 
 - Pass all external data a template needs through `tpl_*` variables defined in
-  the task's `vars:`, including values such as `ansible_managed`.
+  the task's `vars:`, including values such as `ansible_managed`. This covers
+  dependencies in included, imported and inherited templates. Renderer-provided
+  metadata has no general exemption.
+- Document any template-local values a fragment expects from its caller.
 - Refactor existing templates to `tpl_*` inputs when you touch them.
+
+**You SHOULD:**
+
+- Import reusable macro libraries without context and pass their data as macro
+  arguments. Imports using `with context` must follow the same external-input
+  requirements.
 
 **You MUST NOT:**
 
@@ -1630,6 +1639,13 @@ All other handler requirements still apply.
 Variables defined inside the template, its own loop variables and macro
 parameters are local to the template and do not need the `tpl_*` prefix. Jinja
 built-in facilities such as `loop` and `namespace()` remain available.
+
+Includes inherit the caller's context by default; imports do not. An included
+fragment may use documented caller-local values, but must not read ambient
+Ansible variables. See
+[Jinja's context behavior](https://jinja.palletsprojects.com/en/stable/templates/#import-context-behavior).
+Alternative delimiters, whether configured in the task or a `#jinja2:` header,
+do not change these input requirements.
 
 **Good examples:**
 
@@ -1659,6 +1675,33 @@ built-in facilities such as `loop` and `namespace()` remain available.
 {{ tpl_content }}
 ```
 
+Reusable macros receive their inputs as arguments:
+
+```yaml
+- name: "Config | Default | Create or update vhost server name"
+  ansible.builtin.template:
+    src: "server-name.conf.j2"
+    dest: "/etc/nginx/conf.d/server-name.conf"
+    owner: "root"
+    group: "root"
+    mode: "u=rw,g=r,o=r" # 0644
+  vars:
+    tpl_server_name: "{{ nginx_web_server_name }}"
+```
+
+```jinja
+{# templates/server-name.conf.j2 #}
+{% import "macros.j2" as config without context %}
+{{ config.server_name(tpl_server_name) }}
+```
+
+```jinja
+{# templates/macros.j2 #}
+{% macro server_name(name) -%}
+server_name {{ name }};
+{%- endmacro %}
+```
+
 **Bad examples:**
 
 ```jinja
@@ -1679,6 +1722,9 @@ built-in facilities such as `loop` and `namespace()` remain available.
   different source.
 - Defaults, filters, and merges stay in the task where they are visible. The
   template remains a plain rendering of its inputs.
+- Splitting a template across files must not hide external dependencies.
+  Explicit macro arguments keep reusable helpers independent of their caller's
+  context.
 
 
 
