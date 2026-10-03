@@ -734,6 +734,19 @@ separator between tasks.
   `gather_facts: false`.
 - Use the `ansible_facts` dictionary to access facts (e.g.,
   `ansible_facts['distribution']`).
+- Distinguish the fact keys the role needs from the `gather_subset` selectors
+  used to collect them. A mapping from selectors to required keys is also
+  suitable; use its keys for collection and its values for presence checks.
+- Include `!all` and `!min` when restricting collection to explicitly selected
+  subsets, then list the required selectors.
+- Document whether cached values are acceptable. A presence check does not
+  establish freshness; refresh affected facts before using them when current
+  values are required or earlier changes have invalidated them.
+
+**You SHOULD:**
+
+- Test with `gather_facts: false` and fact injection disabled, including missing
+  facts and stale values that the role must refresh.
 
 **You MUST NOT:**
 
@@ -743,14 +756,24 @@ separator between tasks.
 - Use `ansible_<factname>` legacy variables (e.g., `ansible_distribution`) to
   access facts.
 
+This restriction applies to injected fact aliases, not every `ansible_*` name.
+Magic variables such as `ansible_version` and connection variables such as
+`ansible_host` remain valid. See
+[Ansible's special variables](https://docs.ansible.com/projects/ansible/latest/reference_appendices/special_variables.html).
+
 **Good examples:**
 
 ```yaml
+# This role accepts cached platform facts; refresh them after platform changes.
 - name: "Init | Gather role-specific facts"
   ansible.builtin.setup:
-    gather_subset: "{{ __used_facts }}"
+    gather_subset:
+      - "!all"
+      - "!min"
+      - "distribution"
+      - "virtual"
   vars:
-    __used_facts:
+    __required_fact_keys:
       # from subset "distribution"
       - "distribution"
       - "distribution_major_version"
@@ -760,7 +783,7 @@ separator between tasks.
       - "virtualization_role"
       - "virtualization_type"
   when:
-    - not (__used_facts is ansible.builtin.subset(ansible_facts.keys()))
+    - not (__required_fact_keys is ansible.builtin.subset(ansible_facts.keys()))
 
 - name: "Debug | System introduction"
   ansible.builtin.debug:
@@ -790,17 +813,23 @@ separator between tasks.
   `gather_facts: false` is a legitimate optimization for administrators. Your
   code should not depend on externally defined behavior and should gather only
   the facts it needs.
-- Gathering only specific facts using `ansible.builtin.setup` with
-  `gather_subset` makes roles more robust and faster, as they explicitly declare
-  and load their dependencies.
+- `gather_subset` selects collectors; the presence check lists required output
+  keys. Some fact names are also supported selectors, but a collector can
+  return several related facts and require other collectors. The returned
+  mapping is not limited to the keys the role needs.
+- `!all` alone retains the default minimum set. Add `!min` to exclude it before
+  selecting the required subsets. See the
+  [`setup` parameters](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/setup_module.html#parameters).
 - The `ansible_<factname>` variables are legacy convenience variables. Using
   `ansible_facts['<factname>']` is the modern, explicit approach and makes it
   clear that you are accessing facts rather than regular variables.
 - Compatibility with `INJECT_FACTS_AS_VARS = false` ensures playbooks work
   regardless of the Ansible configuration.
-- The conditional `when: not (__used_facts is subset(ansible_facts.keys()))`
-  ensures facts are only gathered if they are not already available, preventing
-  redundant operations if another role or the playbook already gathered them.
+- The example skips collection when all required keys exist. This avoids
+  redundant work when cached platform facts are acceptable. It does not check
+  their age or whether the underlying state has changed. For example, gather
+  network facts again after changing network configuration if later tasks
+  depend on the new state.
 
 
 ## Conditionals<a id="conditionals"></a>
