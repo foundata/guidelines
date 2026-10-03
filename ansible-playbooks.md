@@ -1629,10 +1629,10 @@ notifiable handlers.
   new callers, and remove each alias at the documented version. This exception
   does not permit new nonconforming topics or indefinite aliases.
 
-The current `foundata-handler-listen` check does not interpret migration
-comments. For a documented mixed-case alias, use a task-local
-`# noqa: foundata-handler-listen` until the check supports migration exceptions.
-All other handler requirements still apply.
+`foundata-handler-listen` recognizes adjacent `Migration alias; remove in
+3.0.0.` comments and `Shared broadcast` comments. Review their purpose and
+removal deadline; the check does not establish whether an exception is
+justified.
 
 **Good examples:**
 
@@ -2343,10 +2343,11 @@ exclude_paths:
   [meta module documentation](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/meta_module.html).
 - Orchestration playbooks MAY deliberately use `end_play` or `end_host` when
   that termination scope is required. Explain the purpose and affected scope
-  in an adjacent comment. The current `foundata-no-end-play` check rejects
-  every `end_play`; use task-local `# noqa: foundata-no-end-play` for a
-  documented use permitted by this policy. Do not substitute `end_host` just
-  to avoid the lint finding.
+  in an adjacent comment. `foundata-no-end-play` checks for that comment in
+  direct orchestration tasks. Reusable roles and task files with unknown caller
+  scope require task-local `# noqa: foundata-no-end-play` for a documented
+  exception. Review the contract and affected scope; never substitute `end_host`
+  just to avoid a finding.
 - Limit the use of the
   [`ansible.builtin.copy`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/copy_module.html)
   module to scenarios such as copying remote files, static files, or uploading
