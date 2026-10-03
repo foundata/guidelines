@@ -441,6 +441,10 @@ separator between tasks.
 
 - Use Fully Qualified Collection Names (FQCN) for all modules, plugins, tests,
   filters, and lookups (e.g., `ansible.builtin.copy` instead of `copy`).
+  This includes literal plugin names passed to `lookup`, `query`, `q`, `map`,
+  `select`, `reject`, `selectattr` and `rejectattr`. Jinja globals such as
+  `range()` and `namespace()`, language keywords, and comparison-operator test
+  aliases such as `==` are not collection plugin names.
 - Use [`snake_case`](https://en.wikipedia.org/wiki/Snake_case) for variables,
   roles, collections and modules.
 - Only use characters from the set `[a-z0-9_]`.
@@ -461,7 +465,10 @@ separator between tasks.
 
 - name: "Determine version of foo"
   ansible.builtin.shell:
+    executable: "/bin/bash"
     cmd: |
+      set -u
+      set -o pipefail
       __foo_installed=""
       if command -v 'foo' > /dev/null 2>&1
       then
@@ -472,6 +479,8 @@ separator between tasks.
         fi
       fi
       printf '%s' "${__foo_installed}"
+  changed_when:
+    - false
   register: __foo_installed_result
 ```
 
@@ -1034,7 +1043,7 @@ separator between tasks.
 - name: "Check Ansible version"
   ansible.builtin.assert:
     that:
-      - ansible_version['full'] is version(foobar_meta['galaxy_info']['min_ansible_version'], "<")
+      - ansible_version['full'] is ansible.builtin.version(foobar_meta['galaxy_info']['min_ansible_version'], '<')
 
 # Multiple 'or' conditions with line breaks after each 'or'
 - name: "Check distribution info"
@@ -1059,9 +1068,9 @@ separator between tasks.
       (foobar_meta['galaxy_info']['platforms'] | ansible.builtin.length) < 1
     - >-
       (foobar_meta['galaxy_info']['platforms']
-      | ansible.builtin.selectattr('name', 'match', '^' ~ ansible_facts['distribution'] ~ '$')
+      | ansible.builtin.selectattr('name', 'ansible.builtin.match', '^' ~ ansible_facts['distribution'] ~ '$')
       | ansible.builtin.map(attribute='versions') | ansible.builtin.flatten
-      | ansible.builtin.select('match', '^(' ~ ansible_facts['distribution_version'] ~ '|all)$', ignorecase=true)
+      | ansible.builtin.select('ansible.builtin.match', '^(' ~ ansible_facts['distribution_version'] ~ '|all)$', ignorecase=true)
       | ansible.builtin.list | ansible.builtin.length) < 1
 
 # Multiple 'and' conditions as separate list entries
@@ -1502,6 +1511,7 @@ notifiable handlers.
   ansible.builtin.template:
     src: "nginx.conf.j2"
     dest: "/etc/nginx/nginx.conf"
+    mode: "u=rw,g=r,o=r" # 0644
   notify:
     - "reload nginx"
 ```
