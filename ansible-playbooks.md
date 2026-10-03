@@ -810,7 +810,8 @@ separator between tasks.
 **You MUST:**
 
 - Ensure all conditional expressions (`when`, `changed_when`, `failed_when`,
-  `assert.that`) evaluate to actual boolean values, not truthy/falsy values.
+  `until`, `assert.that`) evaluate to actual boolean values, not truthy/falsy
+  values.
 - Use validated boolean variables directly. For other values, use explicit
   predicates or supported boolean conversion:
   - `myvar | ansible.builtin.length > 0` instead of just `myvar`
@@ -830,7 +831,7 @@ separator between tasks.
 
 - Rely on implicit truthy evaluation of strings, lists, or dictionaries.
 - Accidentally quote sub-expressions within a conditional (the quoted part
-  becomes a literal string and is always truthy).
+  becomes a string instead of a boolean expression).
 
 **You SHOULD:**
 
@@ -929,6 +930,31 @@ separator between tasks.
     - __myapp_check_result is ansible.builtin.failed
 ```
 
+This diagnostic requires `diff` and two configuration files. Exit code 1 means
+the files differ; it is an expected result, not a task failure:
+
+```yaml
+- name: "Compare application configurations"
+  ansible.builtin.command:
+    argv:
+      - "diff"
+      - "--"
+      - "/etc/myapp/config.conf"
+      - "/etc/myapp/config.expected"
+  changed_when:
+    - false
+  failed_when:
+    - __config_diff_result['rc'] not in [0, 1]
+  register: __config_diff_result
+
+- name: "Report configuration differences"
+  ansible.builtin.debug:
+    msg: "Configurations differ"
+    verbosity: 1
+  when:
+    - __config_diff_result['rc'] == 1
+```
+
 **Bad examples:**
 
 ```yaml
@@ -938,13 +964,13 @@ separator between tasks.
     that:
       - inventory_hostname # this would be only valid if this variable would be a boolean
 
-# BAD: Second part is not a list item and accidentally quoted, always evaluates to True
+# BAD: The quoted sub-expression is a string, not a boolean predicate
 - name: "Check if hostname is valid"
   ansible.builtin.assert:
     that:
       - inventory_hostname is ansible.builtin.defined and 'inventory_hostname | ansible.builtin.length > 0'
 
-# BAD: Unquoted colon+space is parsed as YAML mapping, always truthy
+# BAD: Unquoted colon+space is parsed as a YAML mapping, not a boolean expression
 - name: "Check message content"
   ansible.builtin.assert:
     that:
@@ -1022,10 +1048,17 @@ separator between tasks.
 
 **You MUST:**
 
-- Always use the list format for `when`, `changed_when`, and `failed_when`
-  conditions, even for single conditions.
-- Avoid chaining unparenthesized `and` operators; use separate list entries
-  instead.
+- Always use the list format for `when`, `changed_when`, `failed_when`, and
+  `until` conditions, even for single conditions.
+- Use separate list entries for independent, top-level `and` clauses. Keep
+  `or` alternatives in one list entry and preserve grouping in mixed
+  expressions; do not split nested clauses into separate entries.
+
+Separate list entries are joined with `and`: all must be true. This also means
+`failed_when` only marks failure, and `changed_when` only reports change, when
+all their entries are true. For alternatives, use one entry containing `or`.
+See
+[Ansible's failure conditions](https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_error_handling.html#defining-failure).
 
 **You SHOULD:**
 
@@ -1039,6 +1072,31 @@ separator between tasks.
 **Good examples:**
 
 ```yaml
+# Retry until a boolean test succeeds, using list format for one condition
+- name: "Wait for application readiness"
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:8080/health"
+    status_code: 200
+  until:
+    - __health_result is ansible.builtin.success
+  retries: 5
+  delay: 2
+  register: __health_result
+
+# This application can report an error in stdout even with exit code 0
+- name: "Check application exit status and error output"
+  ansible.builtin.command:
+    argv:
+      - "/usr/bin/myapp"
+      - "--check"
+  changed_when:
+    - false
+  failed_when:
+    - >-
+      __myapp_check_result['rc'] != 0 or
+      'ERROR' in __myapp_check_result['stdout']
+  register: __myapp_check_result
+
 # Single condition in list format
 - name: "Check Ansible version"
   ansible.builtin.assert:
@@ -1087,6 +1145,19 @@ separator between tasks.
 **Bad examples:**
 
 ```yaml
+# BAD: Fails only when both are true, hiding either failure on its own
+- name: "Check application exit status and error output"
+  ansible.builtin.command:
+    argv:
+      - "/usr/bin/myapp"
+      - "--check"
+  changed_when:
+    - false
+  failed_when:
+    - __myapp_check_result['rc'] != 0
+    - "'ERROR' in __myapp_check_result['stdout']"
+  register: __myapp_check_result
+
 # BAD: Not using list format
 - name: "Check Ansible version"
   ansible.builtin.assert:
@@ -1113,6 +1184,10 @@ separator between tasks.
 
 - Using list format for all conditions ensures cleaner diffs when adding or
   removing conditions, making changes more readable and easier to review.
+- `until` retries the task until all its conditions are true or retries are
+  exhausted. List format is a guideline convention; Ansible also accepts a
+  scalar expression. The health-check example assumes an HTTP endpoint where
+  status 200 means ready.
 - Placing the pipe operator at the beginning of continuation lines improves
   readability by making the data flow through filters immediately visible.
 - Breaking lines after `or` operators and using separate list entries for `and`
