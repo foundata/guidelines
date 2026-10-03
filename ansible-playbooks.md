@@ -1239,16 +1239,18 @@ separator between tasks.
 
 - Use `name:` as the first key for plays, tasks and handlers.
 - Begin all names with an uppercase letter.
-- Use the `block`, `rescue` and `always` as the last key on tasks.
+- Place `block`, `rescue` and `always` after all other task keys, in that
+  order when present. These boundaries follow stock
+  [`key-order`](https://docs.ansible.com/projects/lint/rules/key-order/).
+- Put any dynamic part of a task name at the end, as required by stock
+  [`name[template]`](https://docs.ansible.com/projects/lint/rules/name/).
 
 **You SHOULD:**
 
-- Arrange keys in tasks to follow this general order (omit any keys that are not
-  needed):
+- Extend stock `key-order` by arranging the keys between `name` and the final
+  `block`/`rescue`/`always` group in this order (omit unused keys):
   1. Attributes defining what the task is, where to run it and what its
      parameters are:
-     - `name`: Always first, providing a clear description of what the task
-       does.
      - `delegate_to`
      - `become`
      - `module`: The actual action.
@@ -1276,9 +1278,10 @@ separator between tasks.
   5. Attributes defining what to do afterwards or to get triggered by:
      - `notify`
      - `listen`
-  6. `tags`
-- If it is necessary to make task names dynamic, do so by appending
-  `{{ variables }}` at the end of the string.
+  6. `tags`, before any `block`, `rescue` or `always` key.
+- Leave keys not listed above in their relative slots within the middle group;
+  they must not precede `name` or follow block-related keys. Do not apply this
+  extension to play keys or arbitrary nested data mappings.
 - The `include_*` and `import_*` statements are not treated differently from
   other tasks/plays. This clarification is included because many other style
   guides impose separate rules for these.
@@ -1289,6 +1292,12 @@ separator between tasks.
   attribute of a playbook), as they do not expand properly.
 - Use loop variables (e.g., the default `item`) in task names within a loop, as
   they also do not expand properly.
+
+Keep stock `key-order` enabled. The foundata extension reports only additional
+ordering constraints; it must not reverse stock's ordering or duplicate its
+findings. Extended ordering is currently diagnostic-only: stock's cached autofix
+can overwrite another ordering transform. Apply the suggested middle-key order
+manually rather than relying on two competing autofixes.
 
 The list requirement for `when`, `changed_when`, and `failed_when` is defined in
 [Conditional formatting](#conditionals-formatting), including single conditions.
@@ -1449,6 +1458,11 @@ The list requirement for `when`, `changed_when`, and `failed_when` is defined in
 - Use `listen` to trigger handlers instead of relying on the handler's `name`.
 - Always use list notation for `listen` values.
 - Use all lowercase for `listen` values.
+
+These requirements apply to notifiable handlers, not static `import_tasks`
+directives. Check the imported handlers instead. A dynamic `include_tasks`
+handler needs its own `listen` topics; its included tasks are not individually
+notifiable handlers.
 
 **You SHOULD:**
 
@@ -1765,6 +1779,11 @@ embedded in `ansible.builtin.shell` tasks and standalone scripts executed via
 - Follow applicable parts of the
   [Shell scripting style guide](./shell-scripting.md)
 - Use `changed_when` and/or `failed_when` to properly reflect script outcomes.
+- Enable `set -o pipefail` for inline shell pipelines, in accordance with stock
+  [`risky-shell-pipe`](https://docs.ansible.com/projects/lint/rules/risky-shell-pipe/).
+  Handle expected nonzero statuses explicitly. If a pipeline intentionally
+  requires different failure semantics, document them and use a task-local
+  suppression; do not disable the stock rule globally.
 - Start *inline* scripts with:
 
   ```sh
@@ -1777,8 +1796,9 @@ embedded in `ansible.builtin.shell` tasks and standalone scripts executed via
 - Start *inline* scripts with:
 
   ```sh
-  set -u              # no uninitialized vars
-  set -e -o pipefail  # exit on (pipeline) errors
+  set -u             # no uninitialized vars
+  set -e             # stop on unhandled failures, subject to shell context
+  set -o pipefail    # required when using pipelines
   ```
 
   This deviates from the usual
@@ -1949,6 +1969,12 @@ printf 'Changes applied\n'
 - Keep an `.ansible-lint` file in the root of every project with Ansible
   content. It selects the `production` profile, sets `strict: true`, skips
   `use-loop` and links to this section.
+- Treat stock rules and their formatter as the compatibility baseline. Foundata
+  rules MAY add stricter checks, but MUST NOT require output rejected by an
+  enabled stock rule or undo its formatting. Resolve an actual conflict by
+  adapting this guide, not by silently disabling stock checks. A documented,
+  narrowly scoped exception remains possible where the underlying operation
+  requires it.
 - Check playbooks, collections, roles and other applicable files with
   [`ansible-lint --strict`](https://docs.ansible.com/projects/lint/), which
   reads that file.
@@ -1969,8 +1995,10 @@ printf 'Changes applied\n'
   or reviewed local build in the same environment as Ansible Lint, enable the
   selected rule IDs, and verify that all expected IDs appear in
   `ansible-lint --list-rules --format brief` using the project's configuration.
-  Fail the check if any are missing. A successful stock-only run does not prove
-  that the project's custom rules ran.
+  Fail the check if any are missing. Also run known-invalid, isolated fixtures
+  and require each adopted rule's diagnostic: listing proves discovery, not
+  execution, because `--list-rules` bypasses profile filtering. A successful
+  stock-only run does not prove that the project's custom rules ran.
 
 Local use without the extension MAY fall back to stock Ansible Lint. The
 extension is optional unless the project adopts it; required CI coverage must
