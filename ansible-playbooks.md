@@ -2075,9 +2075,10 @@ exclude_paths:
   module to scenarios such as copying remote files, static files, or uploading
   binary blobs. For most file operations, prefer using
   [`ansible.builtin.template`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/template_module.html).
-  Even if the file currently does not require templating, this preemptively
-  simplifies future updates, especially when templating functionality needs to
-  be added later.
+  Even if a file does not yet need templating, starting with a template avoids
+  changing its source location and deployment task when templating is added.
+  This follows
+  [Red Hat CoP's Automation Good Practices](https://github.com/redhat-cop/automation-good-practices/blob/main/coding_style/README.adoc#ansible-guidelines).
 - When using the
   [`ansible.builtin.template`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/template_module.html)
   module, append `.j2` to the template file name for clarity and convention.
