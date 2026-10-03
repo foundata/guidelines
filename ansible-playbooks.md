@@ -1806,8 +1806,11 @@ modules.
     executable: "/bin/bash"
     cmd: |-
       set -u
-      set -e -o pipefail
-      find /var/log -name '*.log' -mtime +{{ log_retention_days | ansible.builtin.quote }} | wc -l
+      set -o pipefail
+      if ! find /var/log -name '*.log' -mtime +{{ log_retention_days | ansible.builtin.quote }} | wc -l; then
+        printf '%s\n' 'Failed to count log files' >&2
+        exit 1
+      fi
   changed_when:
     - false
   register: __log_count_result
@@ -1874,15 +1877,21 @@ embedded in `ansible.builtin.shell` tasks and standalone scripts executed via
 
 **You MUST:**
 
-- Write POSIX-compliant scripts (avoid Bashisms) for maximum portability, even
-  when executing with Bash.
-- Use `executable: "/bin/bash"` with `ansible.builtin.shell` since there is no
-  way to define a shebang for inline scripts.
+- Keep script bodies POSIX-compatible for reuse. The shell options below are
+  explicit exceptions with their own runtime requirements.
+- Use `executable: "/bin/bash"` with `ansible.builtin.shell`. Document Bash at
+  this path as a prerequisite on the execution host, including delegated hosts,
+  and ensure it is available before the task runs. Ansible otherwise uses
+  `/bin/sh`; an inline shebang does not select the shell.
 - Use block scalar style (`|`) for multi-line scripts and the chomping indicator
   (`|-`) when trailing newlines matter.
 - Follow applicable parts of the
-  [Shell scripting style guide](./shell-scripting.md)
+  [Shell scripting style guide](./shell-scripting.md).
 - Use `changed_when` and/or `failed_when` to properly reflect script outcomes.
+- Check critical command and assignment statuses explicitly. Handle expected
+  nonzero statuses narrowly; do not hide other failures with `|| true`.
+- Test important failure paths, including pipeline stages, command
+  substitutions and functions used as conditions, on supported shell versions.
 - Enable `set -o pipefail` for inline shell pipelines, in accordance with stock
   [`risky-shell-pipe`](https://docs.ansible.com/projects/lint/rules/risky-shell-pipe/).
   Handle expected nonzero statuses explicitly. If a pipeline intentionally
@@ -1897,25 +1906,31 @@ embedded in `ansible.builtin.shell` tasks and standalone scripts executed via
 **You SHOULD:**
 
 - Keep inline scripts short (roughly 50 lines maximum).
-- Start *inline* scripts with:
+- Use `set -e` only for simple, linear scripts where any failed command should
+  stop execution, following the
+  [shell guide's exception](./shell-scripting.md#error-handling). Explain why
+  it is used and require Bash 4.4 or newer for this setup:
 
-  ```sh
-  set -u             # no uninitialized vars
-  set -e             # stop on unhandled failures, subject to shell context
-  set -o pipefail    # required when using pipelines
+  ```bash
+  set -u
+  set -e
+  set -o pipefail
+  shopt -s inherit_errexit
   ```
 
-  This deviates from the usual
-  [Shell scripting style guide](./shell-scripting.md) for
-  *stand alone* script recommendations (where `set -e` is prohibited) but
-  simplifies inline scripts by providing automatic error handling without
-  complex failure logic.
+  `inherit_errexit` preserves `-e` inside command substitutions, but does not
+  remove its conditional-context exceptions. Use explicit error handling for
+  branches, important pipeline statuses and substitutions used in logic. The
+  mandatory `set -u` and inline-pipeline `pipefail` requirements apply whether
+  or not `set -e` is used.
 - For complex logic, use the
   [`ansible.builtin.script`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/script_module.html)
   module, which allows maintaining the script as a standalone file that can be
   linted, tested, and version-controlled separately.
-- Lint and format scripts as standalone files before transferring them into an
-  Ansible task.
+- Use ShellCheck for shell syntax and dialect checks, and shfmt for formatting,
+  before embedding scripts in Ansible tasks. Check representative rendered
+  variants of scripts containing Jinja expressions; ShellCheck does not parse
+  Jinja or replace runtime tests.
 - Prefer
   [`ansible.builtin.raw`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/raw_module.html)
   over `ansible.builtin.shell` when no Python is available on the target (e.g.,
@@ -1924,14 +1939,21 @@ embedded in `ansible.builtin.shell` tasks and standalone scripts executed via
 **Good examples:**
 
 ```yaml
-# Short inline script with proper structure
+# Capture systemctl's active-state text for a report; an inactive service is allowed.
 - name: "Check and report service status"
   ansible.builtin.shell:
     executable: "/bin/bash"
     cmd: |
       set -u
-      set -e -o pipefail
-      service_status="$(systemctl is-active myservice 2>/dev/null || true)"
+      if service_status="$(systemctl is-active myservice)"; then
+        :
+      else
+        status="$?"
+        if [ "${status}" -ne 3 ] || [ "${service_status}" != 'inactive' ]; then
+          printf '%s\n' 'Failed to query myservice or found an unexpected state' >&2
+          exit "${status}"
+        fi
+      fi
       printf '%s\n' "${service_status}"
   changed_when:
     - false
@@ -1948,7 +1970,9 @@ embedded in `ansible.builtin.shell` tasks and standalone scripts executed via
   register: __migration_result
 ```
 
-```bash
+Standalone script outline; the migration commands are omitted:
+
+```sh
 #!/usr/bin/env sh
 #
 # files/scripts/migrate_data.sh - standalone file, can be linted with shellcheck
@@ -1956,7 +1980,10 @@ embedded in `ansible.builtin.shell` tasks and standalone scripts executed via
 export PATH="${PATH:-'/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin'}"
 export LC_ALL='en_US.UTF-8'
 set -u                                                      # no uninitialized vars
-set -o 2>/dev/null | grep -Fq 'pipefail' && set +o pipefail # disable, non-POSIX
+# Keep explicit pipeline-status handling for older shells.
+if set -o 2>/dev/null | grep -Fq 'pipefail'; then
+    set +o pipefail
+fi
 
 source_dir="${1}"
 dest_dir="${2}"
@@ -2008,6 +2035,15 @@ printf 'Changes applied\n'
 - POSIX-compliant scripts maximize portability across different systems and
   shells. Even when executing with Bash, avoiding Bashisms ensures scripts can
   be reused (partially) in other contexts.
+- Bash execution and portable script syntax are separate requirements.
+  `pipefail` is specified by POSIX.1-2024, but older shells may lack it;
+  `inherit_errexit` is Bash-specific. Keep the standalone shell guide's broader
+  compatibility policy separate from inline tasks that explicitly require Bash.
+- `set -e` depends on shell context. Testing a function in `if` or an `&&`/`||`
+  list can disable its effect inside the function. Combining `export` or
+  `local` with an assignment can hide a failed substitution; assign and check
+  the status separately (see
+  [ShellCheck SC2155](https://www.shellcheck.net/wiki/SC2155)).
 - The `ansible.builtin.script` module transfers a local script to the remote
   host, executes it, and removes it afterward. This allows complex scripts to be
   maintained as proper files with syntax highlighting, linting (shellcheck),
