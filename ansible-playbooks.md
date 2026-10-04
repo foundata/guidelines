@@ -2331,73 +2331,63 @@ exclude_paths:
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-- Configuration automation MUST converge without reporting repeated changes
-  when inputs and managed state remain unchanged. Intentionally repeatable
-  operations, such as backups or maintenance jobs, MUST have an explicit trigger
-  or a documented purpose. Change reporting MUST reflect the operation's actual
-  behavior. Setting `changed_when: false` on a mutating command does not make it
-  idempotent.
-- Avoid overriding role defaults, variables, or input parameters using
-  `set_fact`. Instead, use a distinct variable name.
+- Configuration automation MUST converge and report no changes on reruns with
+  unchanged inputs and managed state. Repeatable operations, such as backups or
+  maintenance jobs, MUST have an explicit trigger or documented purpose. Change
+  reporting MUST reflect actual behavior; `changed_when: false` does not make a
+  mutating command idempotent.
+- Avoid overwriting role defaults, variables or input parameters with
+  `set_fact`; use a distinct name.
 - Reusable roles MUST NOT use `ansible.builtin.meta: end_play` or
-  `ansible.builtin.meta: end_host` unless terminating their caller is an
-  explicit, documented part of the role's contract. `end_play` stops the play
-  for all hosts; `end_host` stops the remaining play for the current host,
-  including unrelated roles and tasks. Neither merely exits the current role.
+  `ansible.builtin.meta: end_host` unless their documented contract explicitly
+  includes ending the caller's play. `end_play` ends the play for all hosts;
+  `end_host` ends it for the current host. Both skip remaining tasks, including
+  unrelated roles.
 - Prefer role-local conditions or `ansible.builtin.meta: end_role` to skip
   remaining role tasks. `end_role` requires ansible-core 2.18 or later; use
-  conditions when supporting older versions. It leaves later play tasks and
-  other roles running and does not cancel notified handlers. Do not call it
-  outside a role or from a handler. See the
+  conditions for older versions. It leaves later play tasks and other roles
+  unaffected and does not cancel notified handlers. Do not use `end_role`
+  outside a role or in a handler. See the
   [meta module documentation](https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/meta_module.html).
-- Orchestration playbooks MAY deliberately use `end_play` or `end_host` when
-  that termination scope is required. Explain the purpose and affected scope
-  in an adjacent comment. `foundata-no-end-play` checks for that comment in
-  direct orchestration tasks. Reusable roles and task files with unknown caller
-  scope require task-local `# noqa: foundata-no-end-play` for a documented
-  exception. Review the contract and affected scope; never substitute `end_host`
-  just to avoid a finding.
-- Limit the use of the
-  [`ansible.builtin.copy`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/copy_module.html)
-  module to scenarios such as copying remote files, static files, or uploading
-  binary blobs. For most file operations, prefer using
-  [`ansible.builtin.template`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/template_module.html).
-  Even if a file does not yet need templating, starting with a template avoids
-  changing its source location and deployment task when templating is added.
-  This follows
-  [Red Hat CoP's Automation Good Practices](https://github.com/redhat-cop/automation-good-practices/blob/main/coding_style/README.adoc#ansible-guidelines).
-- When using the
+- Orchestration playbooks MAY use `end_play` or `end_host` when that termination
+  scope is required. Explain the purpose and scope in an adjacent comment.
+  Exceptions in reusable roles or task files with unknown callers also require
+  task-local `# noqa: foundata-no-end-play`. Review the caller's contract and
+  affected scope; never substitute `end_host` to bypass a finding.
+- Prefer
   [`ansible.builtin.template`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/template_module.html)
-  module, append `.j2` to the template file name for clarity and convention.
+  for file deployment, even for currently static content. This avoids changing
+  the source location and deployment task when templating is added. Append `.j2`
+  to template file names. Limit
+  [`ansible.builtin.copy`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/copy_module.html)
+  to cases such as remote copies, static files or binary blobs. See
+  [Red Hat CoP's Automation Good Practices](https://github.com/redhat-cop/automation-good-practices/blob/main/coding_style/README.adoc#ansible-guidelines).
 - [Use tags with caution](https://redhat-cop.github.io/automation-good-practices/#_use_tags_cautiously_either_for_roles_or_for_complete_purposes).
-- Debug tasks MUST set `verbosity` explicitly. Diagnostic output SHOULD use
+- Debug tasks MUST set `verbosity`. Diagnostic output SHOULD use
   `verbosity: 1` or higher. Output deliberately intended for normal runs MAY
   use `verbosity: 0`. See
   [Use the verbosity parameter with debug statements](https://redhat-cop.github.io/automation-good-practices/#_use_the_verbosity_parameter_with_debug_statements).
-- Build structured data using native mappings and lists. Jinja expressions and
-  filters MAY transform those values. When JSON or YAML text is needed,
-  serialize the complete value using `ansible.builtin.to_json`,
+- Build structured data as native mappings and lists. Jinja expressions and
+  filters MAY transform them. For JSON or YAML text, serialize the complete
+  value with `ansible.builtin.to_json`,
   `ansible.builtin.to_nice_json`, `ansible.builtin.to_yaml`, or
-  `ansible.builtin.to_nice_yaml`. Do not manually assemble document structure or
-  escaping through text interpolation. A `.j2` template containing
-  `{{ tpl_config | ansible.builtin.to_nice_json }}` follows this rule.
-- Specify file permissions using complete, absolute symbolic assignments, with
-  the matching octal equivalent as a trailing comment. Example:
-  `mode: "u=rw,g=r,o=r" # 0644`. Set permissions for all of `u`, `g`, and `o`
-  explicitly using `=` (or an equivalent explicit `a=` assignment). Do not use
-  relative `+` or `-` operations, incomplete assignments, conditional `X`, or
-  copies of existing permission bits. The result must not depend on the previous
-  mode, file type, or umask. Explicit special bits remain permitted. This shows
-  both representations without making the result dependent on existing state.
-- When a mode comes from a variable, put the octal comment at its literal
-  definition. Do not repeat it at every use. The resolved value must still meet
-  the permission rule; review dynamic values and definitions, which the current
-  `foundata-file-mode` rule does not check.
-- Artifact-staging copies that must retain source-file permissions MAY use
-  `ansible.builtin.copy` with `mode: "preserve"`. Explain why those permissions
-  must be retained and add a task-local `# noqa: foundata-file-mode`. This
-  exception does not apply to ordinary configuration deployment or to relative
-  symbolic modes.
+  `ansible.builtin.to_nice_yaml`. Do not assemble document structure or escaping
+  through text interpolation. Using
+  `{{ tpl_config | ansible.builtin.to_nice_json }}` in a `.j2` template follows
+  this rule.
+- Specify permissions as complete, absolute symbolic assignments with a matching
+  trailing octal comment: `mode: "u=rw,g=r,o=r" # 0644`. Assign all of `u`, `g`,
+  and `o` with `=` (or an equivalent explicit `a=`). Do not use relative `+` or
+  `-`, incomplete assignments, conditional `X`, or copied permission bits. The
+  result must not depend on the previous mode, file type, or umask. Explicit
+  special bits are permitted.
+- For variable modes, put the octal comment at the literal definition, not each
+  use. Review dynamic values and their definitions; resolved modes must still
+  meet the permission rule.
+- Artifact-staging copies MAY use `ansible.builtin.copy` with `mode: "preserve"`
+  when source-file permissions must be retained. Explain why and add task-local
+  `# noqa: foundata-file-mode`. This exception does not cover ordinary
+  configuration deployment or relative symbolic modes.
 
 **Good examples:**
 
