@@ -2239,83 +2239,92 @@ printf 'Changes applied\n'
 
 **You MUST:**
 
-- Keep an `.ansible-lint` file in the root of every project with Ansible
-  content. It selects the `production` profile, sets `strict: true`, skips
-  `use-loop` and links to this section.
-- Treat stock rules and their formatter as the compatibility baseline. Foundata
-  rules MAY add stricter checks, but MUST NOT require output rejected by an
-  enabled stock rule or undo its formatting. Resolve an actual conflict by
-  adapting this guide, not by silently disabling stock checks. A documented,
-  narrowly scoped exception remains possible where the underlying operation
-  requires it.
-- Check playbooks, collections, roles and other applicable files with
-  [`ansible-lint --strict`](https://docs.ansible.com/projects/lint/), which
-  reads that file.
-- Lint test content such as Molecule scenarios as well. Install the collections
-  it uses instead of excluding it.
-- Exclude generator-owned `changelogs/changelog.yaml` from Ansible Lint,
-  including autofix. Validate it separately with
-  `antsibull-changelog lint-changelog-yaml changelogs/changelog.yaml`, and check
-  changelog fragments with `antsibull-changelog lint`. Do not exclude the entire
-  changelog directory merely to exempt generated output.
-- Document which SHOULD-level recommendations the project enforces as lint
-  errors. An enabled rule can be stricter than this guide's minimum obligations.
-- Keep suppressions specific to the affected rule and the smallest applicable
-  scope. Explain the reason next to the suppression. Use them for documented
-  exceptions or false positives; existing nonconforming code is a finding to
-  fix, not an exception.
-- When CI requires `ansible-lint-foundata`, install the tested package version
-  or reviewed local build in the same environment as Ansible Lint, enable the
-  selected rule IDs, and verify that all expected IDs appear in
-  `ansible-lint --list-rules --format brief` using the project's configuration.
-  Fail the check if any are missing. Also run known-invalid, isolated fixtures
-  and require each adopted rule's diagnostic: listing proves discovery, not
-  execution, because `--list-rules` bypasses profile filtering. A successful
-  stock-only run does not prove that the project's custom rules ran.
+- Keep `.ansible-lint` in the project root, using the baseline below and
+  linking to this guide.
+- Run [`ansible-lint --strict`](https://docs.ansible.com/projects/lint/)
+  on all applicable Ansible content, including tests and Molecule scenarios.
+  Install their required collections so syntax checks can run.
+- Let stock rules and `--fix` define the formatting baseline. Custom rules
+  MUST remain compatible with both. Resolve conflicts by updating this guide.
+- Limit suppressions to specific rules and the smallest applicable scope.
+  Explain operational exceptions or false positives beside the suppression.
+  Existing nonconforming code must be fixed.
+- Document adopted custom rules, SHOULD-level recommendations enforced as
+  errors, and checks that still need human review.
+- Exclude generated `changelogs/changelog.yaml`, including from autofix,
+  without excluding the entire directory. Validate it with
+  `antsibull-changelog lint-changelog-yaml changelogs/changelog.yaml`
+  and validate fragments with `antsibull-changelog lint`.
+- When CI requires `ansible-lint-foundata`, install a tested package version
+  or reviewed build in the same environment as Ansible Lint. Enable the
+  adopted rule IDs and verify their discovery and execution before linting:
 
-Local use without the extension MAY fall back to stock Ansible Lint. The
-extension is optional unless the project adopts it; required CI coverage must
-not silently fall back. Record adopted rules and their remaining review
-requirements in the project's contributor documentation.
+  ```sh
+  ansible-lint-foundata verify --project-dir . && ansible-lint --strict
+  ```
+
+Local runs without the extension MAY fall back to stock rules. Required CI
+MUST fail if the extension is missing or verification fails.
 
 **Good examples:**
 
 ```yaml
-# ansible-lint config implementing foundata's guidelines. Details, reasoning:
-# https://foundata.com/en/guidelines/ansible-playbooks/#linting
+# ansible-lint config implementing foundata's guideline. Details, reasoning:
+# https://foundata.com/en/guidelines/ansible-playbooks/
 
 ---
 profile: "production"
 strict: true
 
+enable_list:
+  - "jinja-template-extension"
+  - "loop-var-prefix"
+  - "foundata-condition-list"
+  - "foundata-condition-bool"
+  - "foundata-fact-vars"
+  - "foundata-notify"
+  - "foundata-loop-collision"
+  - "foundata-set-fact"
+  - "foundata-handler-listen"
+  - "foundata-task-order"
+  - "foundata-file-mode"
+  - "foundata-debug-verbosity"
+  - "foundata-no-end-play"
+  - "foundata-task-name"
+  - "foundata-jinja-fqcn"
+  - "foundata-template-inputs"
+  - "foundata-command-argv"
+  - "foundata-string-quotes"
+  - "foundata-parameter-order"
+
+loop_var_prefix: "^__{role}_[a-z0-9_]+_item$"
+
 skip_list:
   - "use-loop"
 
 exclude_paths:
+  # Explicit exclusions replace ansible-lint's defaults.
   - ".cache/"
+  - ".git/"
+  - ".hg/"
+  - ".svn/"
+  - ".tox/"
+  - ".nox/"
+  - ".venv/"
+  # Generator-owned output; validate separately with antsibull-changelog.
   - "changelogs/changelog.yaml"
+
+# YAML formatting is configured in the adjacent .yamllint file.
 ```
 
 **Reasoning:**
 
-- Ansible Lint is an official project by the Ansible Core Team and is widely
-  adopted. Following its recommendations promotes consistent code.
-- Ansible Lint automatically
-  [runs `ansible-playbook --syntax-check`](https://ansible.readthedocs.io/projects/lint/rules/syntax-check/).
-  A collection that is not installed fails that check, which is why test
-  content needs its collections.
-- Every run of ansible-lint reads the configuration file, including editor
-  integrations and a `antsibull-nox` session of a collection (if any).
-  Command-line options apply only where someone types them.
-- A custom `exclude_paths` list replaces the default, so keep `.cache/` in it.
-  Full exclusion preserves generator-owned formatting; dedicated changelog
-  validation retains syntax and changelog-format checks. Skipping individual
-  YAML style rules alone does not stop `--fix` from reformatting a file.
-- The `with_<lookup>` syntax is not deprecated and remains valid. See the
-  [Loops](#loops) section for when to use `with_*` vs `loop`. As of 2026-Q4,
-  ansible-lint lists `use-loop` in its `production` profile as a
-  [planned rule](https://github.com/ansible/ansible-lint/issues/2204). The
-  skip keeps `with_*` loops valid once it ships.
+- Project configuration applies to CLI runs, editor integrations and CI.
+- A custom `exclude_paths` replaces the defaults, so retain `.cache/`.
+  Excluding generated output preserves its formatting; separate validation
+  checks its syntax and changelog format.
+- Skipping `use-loop` preserves the valid `with_*` forms described in
+  [Loops](#loops).
 
 
 ## Miscellaneous<a id="misc"></a>
