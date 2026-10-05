@@ -1940,7 +1940,10 @@ module-first collection.
   For the limits of postponed annotations on Python 3.9, see
   [Supported runtimes](#supported-runtimes).
 - Include `author` and document every module-specific option. Validate merged
-  documentation against the argument specification.
+  documentation against the argument specification. `validate-modules`
+  requires each `author` entry to end with a GitHub handle in parentheses,
+  `Name (@handle)`, or to be `!UNKNOWN`; a plain name with an e-mail address
+  fails sanity.
 - Keep options, suboptions, defaults, aliases, types, choices and conditional
   requirements consistent with the argument specification. Use collection
   versions for `version_added`, never ansible-core versions.
