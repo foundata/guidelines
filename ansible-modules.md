@@ -648,11 +648,26 @@ After a successful run, the declared state holds.
 
 **You SHOULD:**
 
-- Return a normalized public resource under a documented singular key when it
-  benefits callers. Match the `_info` module's field meanings and types;
-  exclude secret and unstable internals. Document absence or null after
-  deletion. In check mode, distinguish observations from predictions and omit
-  identifiers that do not exist yet.
+- Return these keys from a resource module, and no generic `resource` key, no
+  separate prediction key and no free text in `verified`:
+  - `changed`.
+  - The normalized public resource under its singular product key (`alias`,
+    `organization`), with the field meanings and types of the `_info` module,
+    without secrets and unstable internals. Product-assigned identifiers live
+    inside it and are omitted for a creation in check mode; the key is `null`
+    after deletion.
+  - `changed_fields`: the managed options that differed before the write,
+    empty for creation and deletion.
+  - `verified`: `observed` after a read-back or an unchanged run, `predicted`
+    in check mode, `unverifiable` where the product exposes no state, which
+    the resource documents.
+  - `diff` only when requested, see
+    [Check mode and diff mode](#check-diff-mode).
+- Return from an operational module `changed` (`true` only when it acted),
+  `activated` (what happened, or would happen in check mode), `verified` with
+  the same three values, and `verification`, a mapping per named object with
+  `in_sync`, `drift` or `unverifiable`, where the module compares named
+  objects.
 
 **Good examples:**
 
@@ -799,6 +814,9 @@ except TransportTimeout:
   narrows the window in which a concurrent editor can be overwritten.
 - Read-back catches normalization mismatches that would otherwise appear as
   permanent drift on every run.
+- Callers assert on `verified`, so it is one of three words. A boolean cannot
+  say why a state is unverified, and three builds from the same guide
+  returned a string, a boolean and a mapping under that name.
 
 **Enforcement:** unit tests over a fake transport that holds state and counts
 writes, a repeated real run, timeout and concurrency cases, and an
@@ -1642,8 +1660,8 @@ module initializes a product.
 # The module states what it verified; the workflow probes the effect.
 module.exit_json(
     changed=True,
-    status=response["status"],
-    verified="request accepted; effective state not verified by this module",
+    activated=True,
+    verified="unverifiable",  # the product exposes no loaded state for this scope
 )
 ```
 
