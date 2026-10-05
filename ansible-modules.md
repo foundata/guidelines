@@ -1617,8 +1617,12 @@ module initializes a product.
 - Wait for a bounded completion where the product exposes job status, and never
   report an accepted request as proof of effect.
 - Handle pending work from earlier failed runs, even if this run changes
-  nothing. For global activation, document and enforce an exclusive-writer or
-  maintenance policy before making changes.
+  nothing. For global activation, state the writer-coordination policy in the
+  module documentation and the README: who may write while automation runs,
+  and what a second writer causes. Add a parameter only where the product
+  can detect or prevent a second writer (revision checks, a configuration
+  lock, a maintenance mode); never ask the caller to assert a condition the
+  module cannot verify.
 - Establish recovery before a connectivity-sensitive change, or exclude it.
 - Make bootstrap distinguish fresh, complete, partial and inconsistent
   initialization, verify the completed state, and prevent duplicate
@@ -1700,6 +1704,9 @@ module.exit_json(changed=True, msg="Firewall rules are now active")
   failure: the play is green and the policy is the old one.
 - Activation is usually global. Applying one change can commit an operator's
   unrelated pending work, which needs a stated policy rather than luck.
+- A caller-side promise such as `exclusive_writer: true` changes nothing on
+  the wire, can never be false in practice, and blocks check mode; it
+  documents the policy in the wrong place.
 - A client-side rescue cannot repair a severed management path.
 
 **Enforcement:** state-machine unit tests for operational modules and bootstrap,
