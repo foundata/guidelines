@@ -6,6 +6,21 @@ includes source code) or doing operations. What makes sense to share in public
 will find its place in this repository.
 
 
+<!-- rumdl-disable MD033 -->
+<!-- HTML for consistent rendering across limited platform parsers -->
+<div align="center" id="project-readme-header">
+<br>
+<br>
+
+**⭐ Found this useful? Support open-source and star this project:**
+
+[![GitHub repository](https://img.shields.io/github/stars/foundata/guidelines.svg)](https://github.com/foundata/guidelines)
+
+<br>
+</div>
+<!-- rumdl-enable MD033 -->
+
+
 ## Table of contents
 
 Topics (in alphabetical order):
@@ -126,7 +141,10 @@ approach.
 ## Licensing, copyright<a id="licensing-copyright"></a>
 
 <!--REUSE-IgnoreStart-->
-Copyright (c) 2020, 2023-2026 [foundata GmbH](https://foundata.com/)
+<!-- rumdl-disable MD034 --><!-- should match SPDX-PackageSupplier -->
+Copyright (c) 2020, 2023-2026, [foundata GmbH](https://foundata.com/)
+(https://foundata.com)
+<!-- rumdl-enable MD034 -->
 
 This project is licensed under the
 [Creative Commons Attribution Share Alike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/deed)
