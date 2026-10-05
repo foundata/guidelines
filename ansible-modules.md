@@ -297,8 +297,9 @@ payload interpreter on the execution host selected by the task.
 
 - Choose the minimum for the control nodes the collection serves, not the
   newest maintained series. Use `>=2.19` by default.
-- Link the architecture documentation's reason for the minimum next to
-  `requires_ansible`, and review it when a listed platform rebases.
+- State the reason for the minimum next to `requires_ansible`: a link to
+  the architecture documentation where it exists, otherwise the skeleton's
+  anchors comment. Review it when a listed platform rebases.
 - Correct a declared minimum that the content never satisfied in a bugfix
   release; raise a minimum that worked in a breaking release.
 
