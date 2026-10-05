@@ -86,7 +86,8 @@ The terms MUST, SHOULD, and other key words are used as defined in
 
 - Choose the intended resources from the interface inventory before
   implementing the first one. Track planned resources and release scope in
-  issues or milestones.
+  issues or milestones; before the repository has a tracker, list them in the
+  architecture record and open the issues at publication.
 - Keep a product collection module-only: modules, module utilities and
   documentation fragments. Add action, filter or test plugins only for work a
   module cannot do (see
@@ -341,8 +342,10 @@ Control-node defaults as of September 2026:
   `firewall_rule` and `firewall_rules`.
 - Name a read-only module `<resource>_info`. Reserve the `_facts` suffix for
   modules that deliberately populate `ansible_facts`.
-- Name an operational module after its subsystem and verb: `firewall_apply`,
-  `firmware_update`, `system_reboot`.
+- Name an operational module after the scope it acts on and its verb:
+  `firewall_rule_apply`, `firmware_update`, `system_reboot`. Where a product
+  activates per object family, one module per family; never merge
+  activations with different semantics behind one module.
 - Place code where the framework expects it: `plugins/modules/`,
   `plugins/module_utils/`, `plugins/doc_fragments/`, `plugins/action/`,
   `plugins/filter/`, `plugins/test/`, and controller-only shared helpers in
@@ -377,7 +380,7 @@ Control-node defaults as of September 2026:
 action_groups:
   api:
     - firewall_alias
-    - firewall_apply
+    - firewall_rule_apply
     - firewall_rule
     - firewall_rules
     - system_info
@@ -811,8 +814,10 @@ effective-behavior probe in the integration scenario.
 - Read every page of a paginated listing, and treat a truncated listing as an
   error, never as "not found".
 - Conclude that a resource is absent only from the product's documented
-  absence response. A transport failure, a malformed body or a message text
-  is an error, never an empty result that leads to a create.
+  absence response, or from a complete listing whose completeness you
+  verified: every page read and any declared total matched. A transport
+  failure, a malformed body or a message text is an error, never an empty
+  result that leads to a create.
 - Write only changed items.
 - Trigger activation once per invocation or workflow, never once per item.
 - Poll with a deadline and a growing interval.
@@ -945,7 +950,7 @@ class FirewallAlias(Resource):
         "password": str,
     }
     secret_fields = frozenset({"password"})
-    activation = "firewall_apply"
+    activation = "firewall_rule_apply"
 ```
 
 ```python
@@ -1066,6 +1071,10 @@ the declared support attributes.
   boundary. Let utilities raise narrow domain exceptions, and build the message
   from the operation name, a code and allowlisted fields.
 - Validate diagnostic codes and categories against the collection's public
+- Treat every product response as secret-bearing unless the resource
+  definition allowlists the field. Publish only allowlisted fields of the
+  resource under management, never a listing row used for identity
+  resolution.
   error schema; use fixed fallbacks for unknown errors. Parse output-derived
   diagnostics with a reviewed product-specific parser. Return known codes and
   locally defined messages without raw input values.
@@ -1076,7 +1085,10 @@ the declared support attributes.
 - Catch every product and transport exception before it leaves `main()`.
 - Test that synthetic secrets are absent from serialized success and failure
   results, invocation data, diffs and action plugin output. Enable traceback
-  capture during these tests.
+  capture during these tests. From ansible-core 2.23 the raw module result
+  carries `_ansible_new_secrets`, the declared `no_log` values for the
+  controller; remove that key before the check and assert that it holds only
+  the declared values.
 - Give an unreadable secret an explicit set-once or rotation contract with an
   acceptance probe, or exclude the operation.
 
@@ -1596,6 +1608,12 @@ module initializes a product.
   report an accepted request as proof of effect.
 - Handle pending work from earlier failed runs, even if this run changes
   nothing. For global activation, document and enforce an exclusive-writer or
+- Where the product exposes the active state, make activation converge:
+  compare the active state with the saved state, activate only on a
+  difference or on an explicit `activate: always`, verify afterwards, and
+  report `changed` only when it activated. Where the active state is not
+  observable, document that the module reports a change on every run and
+  exclude it from idempotence checks explicitly.
   maintenance policy before making changes.
 - Establish recovery before a connectivity-sensitive change, or exclude it.
 - Make bootstrap distinguish fresh, complete, partial and inconsistent
@@ -1623,9 +1641,11 @@ module.exit_json(
 
 ```yaml
 # The shipped workflow runs the probe on every execution, not only on change.
-- name: "Activate the saved firewall changes"
-  foundata.opnsense.firewall_apply:
-    activate: "always"  # also clears activation left pending by a failed run
+- name: "Activate the saved firewall rules the appliance has not loaded"
+  foundata.opnsense.firewall_rule_apply:
+    activate: "auto"  # loaded versus saved; also clears activation left pending by a failed run
+    verify:
+      - "allow-https"
 
 - name: "Read the rule set the appliance reports as loaded"
   foundata.opnsense.firewall_rule_info:
@@ -1665,7 +1685,7 @@ module.exit_json(changed=True, msg="Firewall rules are now active")
 ```yaml
 # BAD: a change-triggered activation never runs when a previous run left work pending
 - name: "Apply firewall changes"
-  foundata.opnsense.firewall_apply:
+  foundata.opnsense.firewall_rule_apply:
   when:
     - __rule_result is changed
 ```
@@ -1937,7 +1957,7 @@ module: firewall_rule
 short_description: Manage one OPNsense firewall rule through the API
 description:
   - "With O(state=absent), removes only the named rule and never the appliance."
-  - "Changes are saved but not activated. Use M(foundata.opnsense.firewall_apply) afterwards."
+  - "Changes are saved but not activated. Use M(foundata.opnsense.firewall_rule_apply) afterwards."
 version_added: "1.0.0"
 author:
   - foundata Development Team (@foundata)
@@ -2276,13 +2296,13 @@ warn_unreachable = True
 follow_untyped_imports = True
 ```
 
-Run the `ansible-test` sessions by tag and the Molecule scenarios separately:
+Run the `ansible-test` meta sessions and the Molecule scenarios separately:
 
 ```sh
-nox                  # lint, docs, licenses, extra checks, build and import
-nox -t sanity        # every admitted ansible-core version
-nox -t units         # includes the payload Python floor
-nox -t integration   # file-only integration targets
+nox                            # lint, docs, licenses, extra checks, build and import
+nox -s ansible-test-sanity       # every admitted ansible-core version
+nox -s ansible-test-units        # includes the payload Python floor
+nox -s ansible-test-integration  # file-only integration targets
 MOLECULE_GLOB='extensions/molecule/**/molecule.yml' molecule test --all
 ```
 
@@ -2292,7 +2312,8 @@ versions in each. An explicit matrix of `molecule test -s <scenario>` jobs may
 replace `--all` if it covers every required scenario.
 
 Check `nox --list` and the generated CI matrix against the declared core and
-Python support.
+Python support. Select sessions by name; `antsibull-nox` registers tags for
+its CI matrix generator only, so `nox -t sanity` selects nothing.
 
 **Reasoning:**
 
