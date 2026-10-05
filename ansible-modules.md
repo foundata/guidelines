@@ -810,6 +810,9 @@ effective-behavior probe in the integration scenario.
   indexed resource.
 - Read every page of a paginated listing, and treat a truncated listing as an
   error, never as "not found".
+- Conclude that a resource is absent only from the product's documented
+  absence response. A transport failure, a malformed body or a message text
+  is an error, never an empty result that leads to a create.
 - Write only changed items.
 - Trigger activation once per invocation or workflow, never once per item.
 - Poll with a deadline and a growing interval.
@@ -916,6 +919,10 @@ and every copy has to get the rules of this guide right again.
   mechanics across products, see [Shared code](#shared-code).
 - Write an irregular resource by hand on the same client instead of adding a
   special case to the engine.
+- Give the engine the duties no inspected community engine fulfils together:
+  reject an incomplete or ambiguous lookup, keep the predicted state apart
+  from the observed one, report partial progress when a later step fails,
+  check the outcome of an activation, and protect pending changes of others.
 
 **You MAY:**
 
