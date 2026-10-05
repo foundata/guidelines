@@ -1866,8 +1866,10 @@ module-first collection.
 **You MUST:**
 
 - Start every module with exactly `#!/usr/bin/python`, followed by the license
-  lines of the [licensing guide](./licensing-apply.md), and keep the file
-  non-executable. Other plugin and module utility files have no shebang.
+  lines of the [licensing guide](./licensing-apply.md) and the sentence
+  `GNU General Public License v3.0+`, which the `validate-modules` sanity
+  test requires within the first twenty lines. Keep the file non-executable.
+  Other plugin and module utility files have no shebang.
 - Order the rest as the upstream
   [module format](https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html)
   requires: `from __future__ import annotations`, raw-string `DOCUMENTATION`,
@@ -1926,6 +1928,7 @@ resource options, attributes, `EXAMPLES`, `RETURN` and the implementation.
 #!/usr/bin/python
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: foundata GmbH (https://foundata.com)
+# GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import annotations
 
@@ -2009,8 +2012,10 @@ tests, the documentation and yamllint sessions of
   do not replace `AnsibleModule` with a fake in every test. Feed arguments by
   setting `basic._ANSIBLE_ARGS` to the JSON bytes of
   `{"ANSIBLE_MODULE_ARGS": {...}}` including `_ansible_remote_tmp` and
-  `_ansible_keep_remote_files`. Traceback capture is a module argument in a
-  unit test, `_ansible_tracebacks_for`, accepted from ansible-core 2.19 on.
+  `_ansible_keep_remote_files`. From ansible-core 2.21 the parser also needs a
+  serialization profile: set `basic._ANSIBLE_PROFILE = "legacy"` where that
+  attribute exists. Traceback capture is a module argument in a unit test,
+  `_ansible_tracebacks_for`, accepted from ansible-core 2.19 on.
 - Import only `ansible.module_utils` in unit tests that run on the payload
   floor. `ansible-test units` provides nothing else of the package there, so
   gate version-dependent cases on a feature of `module_utils`, not on
@@ -2231,12 +2236,14 @@ core_python_versions = { "2.16" = ["3.9", "3.12"], "2.17" = ["3.9", "3.12"], "2.
 
 [sessions.ansible_test_integration_w_default_container]
 include_devel = true
-core_python_versions = { "2.16" = ["3.9", "3.12"], "2.17" = ["3.9", "3.12"], "2.18" = ["3.9", "3.13"], "2.19" = ["3.9", "3.13"], "2.20" = ["3.9", "3.14"], "2.21" = ["3.9", "3.14"], "2.22" = ["3.9", "3.14"], "devel" = ["3.9", "3.14"] }
+core_python_versions = { "2.16" = ["3.9", "3.12"], "2.17" = ["3.9", "3.12"], "2.18" = ["3.9", "3.13"], "2.19" = ["3.9", "3.13"], "2.20" = ["3.9", "3.14"], "2.21" = ["3.9", "3.14"], "2.22" = ["3.9", "3.14"], "devel" = ["3.10", "3.14"] }
 ```
 
 `antsibull-nox` knows ansible-core versions before they reach PyPI; set
-`max_version` to leave an unreleased lane out. `DOCUMENTATION` strings start
-with `---` when the house `.yamllint` requires a document start.
+`max_version` to leave an unreleased lane out. The development branch drops
+Python versions ahead of the releases, 3.9 since 2.23, so its lane names the
+branch's own floor and does not raise the collection's. `DOCUMENTATION` strings
+start with `---` when the house `.yamllint` requires a document start.
 
 ```toml
 # ruff.toml
