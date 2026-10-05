@@ -144,3 +144,35 @@ a
 <!--REUSE-IgnoreEnd-->
 
 [![REUSE status](https://api.reuse.software/badge/github.com/foundata/guidelines)](https://api.reuse.software/info/github.com/foundata/guidelines)
+
+### Trademarks<a id="trademarks"></a>
+
+Third-party trademarks used in this repository:
+
+- Active Directory® is a trademark of Microsoft Corporation, registered in the
+  European Union and the United States.
+- Ansible®, CentOS®, Fedora®, Quay®, Red Hat® and RHEL® are trademarks of Red
+  Hat, LLC, registered in the United States and other countries.
+- Debian® is a trademark of Software in the Public Interest, Inc., registered in
+  Germany and the United States.
+- Docker® is a trademark of Docker, Inc., registered in the European Union and
+  the United States.
+- Kubernetes® is a trademark of The Linux Foundation, registered in the European
+  Union and the United States.
+- Linux® is a trademark of Linus Torvalds, registered in Germany, the European
+  Union and the United States.
+- PowerShell® is a trademark of Microsoft Corporation, registered in Germany and
+  the United States.
+- Ubuntu® is a trademark of Canonical Ltd., registered in Germany, the European
+  Union and the United States.
+- Windows® is a trademark of Microsoft Corporation, registered in Germany, the
+  European Union and the United States.
+
+Their use here is purely descriptive and does not imply any affiliation with or
+endorsement by the trademark holders.
+
+Own and licensed trademarks used in this repository:
+
+- foundata® is a trademark of [IPAM GmbH](https://ipam-services.com/),
+  registered in Germany and the European Union, licensed to
+  [foundata GmbH](https://foundata.com/).
