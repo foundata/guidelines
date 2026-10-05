@@ -291,11 +291,11 @@ payload interpreter on the execution host selected by the task.
 **You MUST:**
 
 - Choose the minimum for the control nodes the collection serves, not the
-  newest maintained series. Use `>=2.16` by default.
+  newest maintained series. Use `>=2.19` by default.
 - Link the architecture documentation's reason for the minimum next to
   `requires_ansible`, and review it when a listed platform rebases.
-- Test a plugin that creates template strings or handles templated values on
-  both sides of ansible-core 2.19, or raise the collection's minimum to 2.19.
+- Correct a declared minimum that the content never satisfied in a bugfix
+  release; raise a minimum that worked in a breaking release.
 
 **You SHOULD:**
 
@@ -306,6 +306,10 @@ payload interpreter on the execution host selected by the task.
 - Raising the minimum removes supported control-node platforms and requires a
   breaking release. The payload Python floor still depends on execution hosts;
   ansible-core 2.20 supports Python 3.9 on managed hosts.
+- We write Jinja's own filters and tests as `ansible.builtin.<name>`, which
+  ansible-core resolves from 2.19 (a 2.19 major change, documented by
+  `ansible-doc`). Any content with expressions therefore needs 2.19; older cores
+  fail at the first such name.
 - Framework changes can affect modules even when their code stays the same.
   In 2.19, exception capture changed; see [Secrets and errors](#secrets-errors).
 - Controller plugins also face 2.19's new template trust model,
@@ -1067,14 +1071,14 @@ the declared support attributes.
 - Keep secrets out of process arguments, URLs, result keys, diffs, warnings and
   diagnostics. Treat an encoded or transformed secret, and a secret returned by
   the product, as sensitive.
-- Convert an expected operational failure into `fail_json` at the module
-  boundary. Let utilities raise narrow domain exceptions, and build the message
-  from the operation name, a code and allowlisted fields.
-- Validate diagnostic codes and categories against the collection's public
 - Treat every product response as secret-bearing unless the resource
   definition allowlists the field. Publish only allowlisted fields of the
   resource under management, never a listing row used for identity
   resolution.
+- Convert an expected operational failure into `fail_json` at the module
+  boundary. Let utilities raise narrow domain exceptions, and build the message
+  from the operation name, a code and allowlisted fields.
+- Validate diagnostic codes and categories against the collection's public
   error schema; use fixed fallbacks for unknown errors. Parse output-derived
   diagnostics with a reviewed product-specific parser. Return known codes and
   locally defined messages without raw input values.
@@ -1293,7 +1297,7 @@ except URLError as error:
     raise ProductApiError(
         "HTTP connection failed", category="transport", code="connection_failed"
     ) from None
-except SSLValidationError:  # core 2.16 to 2.19
+except SSLValidationError:  # raised by core 2.19; 2.20 and newer raise URLError
     raise ProductApiError(
         "TLS validation failed", category="transport", code="tls_validation"
     ) from None
@@ -1350,7 +1354,7 @@ module.exit_json(changed=True)
   directly. With `open_url`, the client controls response reading, size limits
   and exception translation before the module decides how to report failure.
   See the upstream
-  [implementation](https://github.com/ansible/ansible/blob/stable-2.16/lib/ansible/module_utils/urls.py).
+  [implementation](https://github.com/ansible/ansible/blob/stable-2.19/lib/ansible/module_utils/urls.py).
 - Redirects can disclose credentials, and `netrc` can silently select
   credentials the caller did not supply; `open_url` reads it by default.
 - A successful HTTP status can carry an application validation failure.
@@ -1604,16 +1608,16 @@ module initializes a product.
 - Define what `changed` means for an operational module, including a
   deliberately non-idempotent one. Define its check-mode prediction without
   presenting a non-idempotent operation as convergence.
-- Wait for a bounded completion where the product exposes job status, and never
-  report an accepted request as proof of effect.
-- Handle pending work from earlier failed runs, even if this run changes
-  nothing. For global activation, document and enforce an exclusive-writer or
 - Where the product exposes the active state, make activation converge:
   compare the active state with the saved state, activate only on a
   difference or on an explicit `activate: always`, verify afterwards, and
   report `changed` only when it activated. Where the active state is not
   observable, document that the module reports a change on every run and
   exclude it from idempotence checks explicitly.
+- Wait for a bounded completion where the product exposes job status, and never
+  report an accepted request as proof of effect.
+- Handle pending work from earlier failed runs, even if this run changes
+  nothing. For global activation, document and enforce an exclusive-writer or
   maintenance policy before making changes.
 - Establish recovery before a connectivity-sensitive change, or exclude it.
 - Make bootstrap distinguish fresh, complete, partial and inconsistent
@@ -2174,8 +2178,8 @@ product collection, product series.
   parameter.
 - Declarative deprecations are checked by the sanity tests and read the same on
   every ansible-core version.
-- The sanity rules for `module.deprecate()` differ: 2.16 requires
-  `collection_name`, while 2.21 adds rules against passing it.
+- The sanity rules for `module.deprecate()` differ between cores: older ones
+  required `collection_name`, 2.21 adds rules against passing it.
 - A defect can appear in one patch release of a supported series. An exclusion
   names that build and keeps the series supported. A product release is also
   distinct from a selectable API version.
@@ -2252,11 +2256,11 @@ include_devel = true
 split_by_python_version = true
 # One session on the payload floor and one on the newest Python per lane.
 # A lane missing here runs on every Python that lane supports.
-core_python_versions = { "2.16" = ["3.9", "3.12"], "2.17" = ["3.9", "3.12"], "2.18" = ["3.9", "3.13"], "2.19" = ["3.9", "3.13"], "2.20" = ["3.9", "3.14"], "2.21" = ["3.9", "3.14"], "2.22" = ["3.9", "3.14"], "devel" = ["3.9", "3.14"] }
+core_python_versions = { "2.19" = ["3.9", "3.13"], "2.20" = ["3.9", "3.14"], "2.21" = ["3.9", "3.14"], "2.22" = ["3.9", "3.14"], "devel" = ["3.10", "3.14"] }
 
 [sessions.ansible_test_integration_w_default_container]
 include_devel = true
-core_python_versions = { "2.16" = ["3.9", "3.12"], "2.17" = ["3.9", "3.12"], "2.18" = ["3.9", "3.13"], "2.19" = ["3.9", "3.13"], "2.20" = ["3.9", "3.14"], "2.21" = ["3.9", "3.14"], "2.22" = ["3.9", "3.14"], "devel" = ["3.10", "3.14"] }
+core_python_versions = { "2.19" = ["3.9", "3.13"], "2.20" = ["3.9", "3.14"], "2.21" = ["3.9", "3.14"], "2.22" = ["3.9", "3.14"], "devel" = ["3.10", "3.14"] }
 ```
 
 `antsibull-nox` knows ansible-core versions before they reach PyPI; set
