@@ -2330,11 +2330,13 @@ changelog lint, and the build and import check.
 
 **Good examples:**
 
-The collection skeleton ships the base sessions in `antsibull-nox.toml`.
-Plugin code adds the lint, unit and integration sessions:
+The module-only skeletons ship these sessions in `antsibull-nox.toml`; a
+collection rendered from the role skeleton merges them into its existing
+sections instead of appending a second copy, and a collection that already
+carries them keeps its tuned lanes and skips:
 
 ```toml
-# antsibull-nox.toml, added to the skeleton's sessions
+# antsibull-nox.toml, as the module-only skeletons render it
 [sessions.lint]
 run_isort = false              # Ruff sorts imports
 run_black = false              # Ruff formats
