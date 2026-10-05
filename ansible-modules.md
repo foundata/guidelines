@@ -631,7 +631,8 @@ After a successful run, the declared state holds.
 - End through `exit_json` or `fail_json`. Report non-secret diagnostics with
   `module.warn` or `module.debug`.
 - Decode bytes at the transport boundary with an explicit encoding and error
-  policy.
+  policy, or at the product's protocol boundary where the transport is
+  bytes-only and the output may be binary.
 - Define rename and adoption behavior, concurrency protection and partial-write
   recovery. After an ambiguous outcome such as a timeout, read again by
   identity or operation ID before any retry.
@@ -1423,27 +1424,57 @@ Command-line modules require the product's CLI on the execution host.
   `use_unsafe_shell=False`, `expand_user_and_vars=False`, explicit option
   boundaries, and validated executable paths and object identifiers.
 - Send secrets through stdin or another protected channel supported by the
-  product. Pass bytes only together with `binary_data=True`.
+  product. Pass bytes only together with `binary_data=True`. Distinguish no
+  stdin from an empty stream: `run_command` opens no pipe for empty data.
+  Treat an incomplete write to stdin as an uncertain failure, even when the
+  command exits 0.
 - Qualify each locator profile's deadline mechanism and descendant cleanup.
-  Declare the implementation and executable path as prerequisites. Use a
-  supervisor that records expiry separately when command and timeout statuses
-  collide.
+  Declare the implementation and executable path as prerequisites; a
+  conventional executable name is no proof of its implementation, so record
+  the version output at qualification and select an implementation-specific
+  path where a distribution provides one. Use the operation's remaining
+  monotonic budget and state which observer owns the expiry flag; a
+  status-only wrapper that backs it up fires later, with its margin and its
+  cleanup grace documented, and a command status alone is never observed
+  expiry. Record the cleanup scope (process group, cgroup, container
+  session), how survivors are detected and which escapes remain; a
+  process-group qualification excludes commands that detach.
 - Give `timeout` a duration above zero. Round a remaining budget up, never
   down to zero.
 - Report interrupted writes as unknown and reconcile before retrying.
 - Request bytes with `encoding=None` and check both streams' sizes before
   decoding or parsing. Never put raw output in a message.
 - Use a reviewed supervisor in a module utility where output is untrusted or
-  unbounded. Limit both streams while reading and document the
-  `ansible-bad-function` sanity ignore. Test hangs, output floods, descendants
-  holding stdin open and descendant cleanup.
+  unbounded. It owns stdin and both output pipes together: it may take the
+  `Popen` object in a synchronous `before_communicate_callback`, provided it
+  bypasses core's own communication loop, bounds every read and write,
+  closes every pipe and bounds cleanup on every exit; test that handoff on
+  every admitted core. Add a sanity ignore only for a diagnostic the
+  implementation produces, with the versions, the reason and the removal
+  condition. Test hangs, output floods, descendants holding stdin open,
+  survivors after expiry and after a successful parent exit, including a
+  descendant that closes its pipes.
 - Validate the return code and the structure of the output before using a
-  returned field.
+  returned field. A non-zero exit is a result for the product's parser, like
+  an HTTP error response, never an exception of the transport.
 - Verify the module's user and the application identity separately before a
-  write. Reject unused or conflicting locator fields.
+  write: resolve both to numeric IDs in their namespace, probe the
+  application identity through the same locator prefix as the write with a
+  bounded, validated probe format, and probe again after a locator or
+  container change. A host UID never stands in for a target UID.
+- Reject unsupported non-null locator options after argument parsing. Shared
+  mechanics enforce the declared field set; product code validates values,
+  conflicts and prefix grammar.
 - Keep the inherited and supplied environment within the locator profile's
-  documented policy. Check the environment the child will actually receive;
-  `environ_update` only adds to the inherited one.
+  documented policy. Validate the environment the child will actually
+  receive: `os.environ`, plus the module-level `run_command_environ_update`,
+  plus the per-call update, after core's `PYTHONPATH` rewrite. Document
+  target-environment inheritance separately for a container or a wrapper.
+  Additions alone are not an allowlist.
+- Expose whether the requested write invocation started when a transport
+  bundles preflight and the write, separately from any probe it ran;
+  combine it with earlier attempts at the module boundary. It is no
+  evidence that the product committed anything.
 
 **You MUST NOT:**
 
@@ -1466,17 +1497,19 @@ operational exceptions and never echoes raw text or unchecked extracted values.
 
 ```python
 import json
+import math
 import signal
 
-DEADLINE_SECONDS = 120
 KILL_AFTER_SECONDS = 10
 MAX_OUTPUT_BYTES = 1024 * 1024
+# The wrapper backs up the module's own deadline observer and fires later.
+wrapper_seconds = math.ceil(deadline.remaining()) + 1
 
 argv = [
     profile.timeout_path,
     "-k",
     str(KILL_AFTER_SECONDS),
-    str(DEADLINE_SECONDS),
+    str(wrapper_seconds),
     *locator_argv(profile),
     RECONCILE_SOURCE,
 ]
@@ -1504,8 +1537,10 @@ try:
         handle_exceptions=False,  # preserve mutation status in the outer handler
     )
     # GNU profile only; BusyBox may return 143/137 or negative signal numbers.
+    # A wrapper status says the command was stopped, not that the deadline
+    # fired; the module's own observer decides expiry.
     if rc in (124, 137, -signal.SIGKILL):
-        fail_unknown("Reconciliation timed out or was killed", rc=rc)
+        fail_unknown("Reconciliation was stopped before it reported", rc=rc)
     if len(stdout) > MAX_OUTPUT_BYTES or len(stderr) > MAX_OUTPUT_BYTES:
         fail_unknown("Reconciliation produced more output than expected", rc=rc)
     if rc != 0:
@@ -1558,8 +1593,10 @@ subprocess.run(argv, timeout=60, check=True)
 
 **Reasoning:**
 
-- `run_command` has no timeout parameter and buffers both streams completely.
-  Checking sizes afterward limits parsing and reporting, not memory use.
+- `run_command` has no timeout parameter, writes stdin synchronously before
+  its selector loop and buffers both streams completely. Checking sizes
+  afterward limits parsing and reporting, not memory use; a kill timer on
+  the child fixes neither property.
   Sanity tests reject direct `subprocess` and `os` process calls in modules
   and module utilities.
 - Without `expand_user_and_vars=False`, `run_command` expands `$NAME`,
@@ -1568,7 +1605,9 @@ subprocess.run(argv, timeout=60, check=True)
 - GNU `timeout -k` signals its process group; detached descendants need
   separate cleanup. BusyBox signals only the monitored PID and uses different
   exit statuses, so deadline implementations need separate qualification.
-- GNU `timeout` treats a duration of zero as no limit.
+- GNU `timeout` treats a duration of zero as no limit. The `ansible-test`
+  image of the development branch ships uutils at `/usr/bin/timeout` and GNU
+  coreutils at `/usr/bin/gnutimeout`; the name proves nothing.
 - Without `binary_data=True`, `run_command` appends a newline to its input.
   On bytes that raises `TypeError`, after the child process has started.
 - GNU `timeout` normally returns 124 on expiry; `KILL` can produce 137 or a
@@ -1584,9 +1623,12 @@ subprocess.run(argv, timeout=60, check=True)
   failed.
 
 **Enforcement:** exact argument list and stdin assertions, expansion tests
-with literal `$NAME`, `${NAME}` and `~` arguments, a hanging child, a
-flooding child and a descendant that keeps stdin open, the pylint sanity
-test, and qualification against the real command-line interface.
+with literal `$NAME`, `${NAME}` and `~` arguments, an empty stream and an
+incomplete stdin write, a hanging child, a flooding child, a descendant that
+keeps stdin open and one that survives a successful exit, expiry with a
+colliding status, the pylint sanity test, and qualification against the real
+command-line interface. A shared helper's local tests qualify its mechanics,
+never a product's locator profile.
 
 ### Execution locator<a id="execution-locator"></a>
 
@@ -1620,7 +1662,8 @@ exec:
 - Treat `custom` as a facility the caller is trusted with. It runs only the
   prefixes a product profile validates and does not confine them.
 - Keep the product-specific end of the command line in the product's module
-  utilities.
+  utilities, including its option grammar; `--` is the wrapper's boundary,
+  not a universal insertion.
 - Use JSON on stdin and a final JSON report line for helpers the collection
   ships itself. Parse a native command-line interface in its own supported
   formats.
@@ -1931,9 +1974,10 @@ module-first collection.
 
 - Start every module with exactly `#!/usr/bin/python`, followed by the license
   lines of the [licensing guide](./licensing-apply.md) and the sentence
-  `GNU General Public License v3.0+`, which the `validate-modules` sanity
-  test requires within the first twenty lines. Keep the file non-executable.
-  Other plugin and module utility files have no shebang.
+  `GNU General Public License v3.0+`, which the
+  [`validate-modules` sanity test](https://docs.ansible.com/projects/ansible/devel/community/collection_contributors/collection_requirements.html#ci-testing)
+  requires within the first twenty lines. Keep the file non-executable. Other
+  plugin and module utility files have no shebang.
 - Order the rest as the upstream
   [module format](https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html)
   requires: `from __future__ import annotations`, raw-string `DOCUMENTATION`,
@@ -2044,6 +2088,11 @@ description:
 
 **Reasoning:**
 
+- We aim to follow the
+  [Ansible community package collection requirements](https://docs.ansible.com/projects/ansible/devel/community/collection_contributors/collection_requirements.html),
+  including passing upstream sanity tests. The module format, GPLv3 header
+  check (which checks the GNU sentence literally), documentation schemas and
+  argument-spec checks are upstream rules.
 - ansible-test requires the exact module shebang and rejects executable module
   files; Ansible replaces the interpreter line when it builds the payload.
 - Connection fragments do not document resource-specific options. A role's
@@ -2104,9 +2153,10 @@ tests, the documentation and yamllint sessions of
   them and returns `None`, so that misuse of a fixture is a type error
   before the test runs.
 - Give the file-only integration targets a fake product server started by a
-  hidden setup target, so that every module runs a real task against state
-  on every admitted ansible-core version. The fake is test material and
-  imitates only what the targets exercise.
+  hidden setup target, or local command fixtures for a command transport, so
+  that every module runs a real task against state on every admitted
+  ansible-core version. The fake is test material and imitates only what the
+  targets exercise.
 - Qualify claimed product operations, builds and locator profiles with real
   integration tests and cleanup on at least the lowest and highest admitted
   ansible-core versions. Keep destructive and network tests opt-in and limited
