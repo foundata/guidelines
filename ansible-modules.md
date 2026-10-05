@@ -347,6 +347,9 @@ Control-node defaults as of September 2026:
   `plugins/module_utils/`, `plugins/doc_fragments/`, `plugins/action/`,
   `plugins/filter/`, `plugins/test/`, and controller-only shared helpers in
   `plugins/plugin_utils/`.
+- Do not name a plugin file after a standard library package. A module
+  utility called `http.py` makes pylint lint the standard library's `http`
+  under that name during sanity on ansible-core 2.21.
 - Prefix internal module utility files with an underscore and say in their
   docstring that they are internal. Everything without an underscore is a
   public interface subject to the collection's compatibility policy.
@@ -1125,8 +1128,10 @@ except ProductApiError:
   masks only values registered through `no_log`.
 - From ansible-core 2.19, `fail_json` can attach the active exception when
   `ANSIBLE_DISPLAY_TRACEBACK` enables capture. The traceback includes the
-  exception's message, potentially containing a raw response. Every supported
-  core accepts `exception=None` to suppress it.
+  exception's message, potentially containing a raw response. With
+  `exception=None`, every supported core attaches a plain call stack instead,
+  which carries no exception message. The result still has an `exception` key
+  in a capturing run.
 - From 2.19, unhandled exceptions also become module results containing their
   text. Expected failures therefore need translation before leaving `main()`.
 - Truncation limits size, not disclosure; debug logging does not sanitize text.
@@ -1157,6 +1162,9 @@ logging, which `no_log` does not control.
   across retries and polling.
 - Bound response data and close every response, including those in `HTTPError`.
   Document the budget's DNS, header, chunk-framing and decompression limits.
+- Compare the received size with a declared `Content-Length` and treat a
+  shorter body as a protocol failure. `read1` reports a closed connection as
+  the end of the body.
 - Check the application-level status as well as the HTTP status.
 - Classify retry safety per operation, and restrict an automatic retry after an
   ambiguous write to a verified idempotency or reconciliation mechanism.
@@ -1187,6 +1195,7 @@ size and timing behavior. The domain exceptions follow the interface in
 ```python
 import json
 import socket
+import ssl
 import time
 from http.client import HTTPException
 from urllib.error import HTTPError, URLError
@@ -1258,10 +1267,14 @@ except URLError as error:
         raise TransportTimeout(
             "HTTP connection timed out", category="timeout", code="socket_timeout"
         ) from None
+    if isinstance(error.reason, ssl.SSLCertVerificationError):  # core 2.20 and later
+        raise ProductApiError(
+            "TLS validation failed", category="transport", code="tls_validation"
+        ) from None
     raise ProductApiError(
         "HTTP connection failed", category="transport", code="connection_failed"
     ) from None
-except SSLValidationError:
+except SSLValidationError:  # core 2.16 to 2.19
     raise ProductApiError(
         "TLS validation failed", category="transport", code="tls_validation"
     ) from None
@@ -1986,7 +1999,18 @@ tests, the documentation and yamllint sessions of
   admitted ansible-core version, plus the development branch. Run payload unit
   tests on the lowest declared Python.
 - Exercise the real argument specification and JSON exit and failure paths;
-  do not replace `AnsibleModule` with a fake in every test.
+  do not replace `AnsibleModule` with a fake in every test. Feed arguments by
+  setting `basic._ANSIBLE_ARGS` to the JSON bytes of
+  `{"ANSIBLE_MODULE_ARGS": {...}}` including `_ansible_remote_tmp` and
+  `_ansible_keep_remote_files`. Traceback capture is a module argument in a
+  unit test, `_ansible_tracebacks_for`, accepted from ansible-core 2.19 on.
+- Import only `ansible.module_utils` in unit tests that run on the payload
+  floor. `ansible-test units` provides nothing else of the package there, so
+  gate version-dependent cases on a feature of `module_utils`, not on
+  `ansible.release`.
+- Give an integration target that exercises payload code the `context/target`
+  alias. Only then do the Python lanes run its module under that Python;
+  `context/controller` targets run on the controller interpreter.
 - Cover applicable lifecycle cases: creation, update, no-op, deletion, omission,
   reset, invalid input, ambiguous identity, an unsupported series, an
   ineligible operation, check and diff mode.
@@ -2169,38 +2193,11 @@ changelog lint, and the build and import check.
 
 **Good examples:**
 
-```python
-# noxfile.py
-# /// script
-# dependencies = ["nox>=2025.02.09", "antsibull-nox"]
-# ///
-
-import sys
-
-import nox
-
-try:
-    import antsibull_nox
-except ImportError:
-    print("You need to install antsibull-nox in the same Python environment as nox.")
-    sys.exit(1)
-
-antsibull_nox.load_antsibull_nox_toml()
-
-
-if __name__ == "__main__":
-    nox.main()
-```
+The collection skeleton ships the base sessions in `antsibull-nox.toml`.
+Plugin code adds the lint, unit and integration sessions:
 
 ```toml
-# antsibull-nox.toml
-version = 1
-
-[collection]
-min_python_version = "ansible-test-config"
-
-[sessions]
-
+# antsibull-nox.toml, added to the skeleton's sessions
 [sessions.lint]
 run_isort = false              # Ruff sorts imports
 run_black = false              # Ruff formats
@@ -2211,40 +2208,28 @@ run_ruff_check = true
 run_flake8 = false             # Ruff covers it
 run_pylint = false             # sanity runs pylint with ansible-core's rules
 run_yamllint = true
+# Plugin documentation blocks follow the repository's YAML rules too; the
+# default applies yamllint's 80-column rules to DOCUMENTATION and EXAMPLES.
+yamllint_config_plugins = ".yamllint"
+yamllint_config_plugins_examples = ".yamllint"
 run_mypy = true
 mypy_config = ".mypy.ini"
-
-[sessions.docs_check]
-
-[sessions.license_check]
-run_license_check = false      # REUSE.toml covers files without a header
-
-[sessions.extra_checks]
-run_no_unwanted_files = true
-run_no_trailing_whitespace = true
-run_action_groups = true
-
-[[sessions.extra_checks.action_groups_config]]
-name = "api"
-pattern = "^.*$"
-exclusions = []
-doc_fragment = "foundata.opnsense.api"
-
-[sessions.build_import_check]
-run_galaxy_importer = true
-
-[sessions.ansible_test_sanity]
-include_devel = true
 
 [sessions.ansible_test_units]
 include_devel = true
 split_by_python_version = true
-# Payload unit tests also on the lowest declared Python, per ansible-core version.
-core_python_versions = { "2.16" = ["3.9", "3.12"], "2.21" = ["3.9", "3.14"] }
+# One session on the payload floor and one on the newest Python per lane.
+# A lane missing here runs on every Python that lane supports.
+core_python_versions = { "2.16" = ["3.9", "3.12"], "2.17" = ["3.9", "3.12"], "2.18" = ["3.9", "3.13"], "2.19" = ["3.9", "3.13"], "2.20" = ["3.9", "3.14"], "2.21" = ["3.9", "3.14"], "2.22" = ["3.9", "3.14"], "devel" = ["3.9", "3.14"] }
 
 [sessions.ansible_test_integration_w_default_container]
 include_devel = true
+core_python_versions = { "2.16" = ["3.9", "3.12"], "2.17" = ["3.9", "3.12"], "2.18" = ["3.9", "3.13"], "2.19" = ["3.9", "3.13"], "2.20" = ["3.9", "3.14"], "2.21" = ["3.9", "3.14"], "2.22" = ["3.9", "3.14"], "devel" = ["3.9", "3.14"] }
 ```
+
+`antsibull-nox` knows ansible-core versions before they reach PyPI; set
+`max_version` to leave an unreleased lane out. `DOCUMENTATION` strings start
+with `---` when the house `.yamllint` requires a document start.
 
 ```toml
 # ruff.toml
@@ -2257,6 +2242,10 @@ select = ["E4", "E7", "E9", "F", "I", "B", "C4", "UP", "RUF"]
 [lint.per-file-ignores]
 # Documentation constants precede the ordinary imports by design.
 "plugins/modules/*.py" = ["E402"]
+
+[lint.isort]
+# Keep collection imports in their own block after the ansible-core imports.
+known-first-party = ["ansible_collections"]
 ```
 
 ```ini
