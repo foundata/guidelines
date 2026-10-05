@@ -151,6 +151,9 @@ The terms MUST, SHOULD, and other key words are used as defined in
   architecture documentation. Planned work belongs in issues, execution logs
   in test artifacts and change history in Git. Public contracts remain in the
   README and module documentation.
+  A design delivered before the collection exists uses the same structure
+  in `design.md` of its design directory; the record moves into
+  `docs/architecture.md` when the collection is created.
 
 
 ## Scope and precedence<a id="scope-precedence"></a>
@@ -250,7 +253,9 @@ payload interpreter on the execution host selected by the task.
 - Run sanity, unit and file-only integration tests on every ansible-core series
   `requires_ansible` admits, plus the development branch.
 - Run payload unit tests on the lowest declared Python. Run live product tests
-  at least on the lowest and highest admitted ansible-core series.
+  at least on the lowest and highest admitted ansible-core series, through
+  the built artifact installed in a separate environment per series, with
+  verbose module paths proving which copy ran.
 - Document delegation for remote API modules. For command-line modules,
   document both the module's user and the application identity.
 
@@ -973,6 +978,14 @@ class FirewallAlias(Resource):
     }
     secret_fields = frozenset({"password"})
     activation = "firewall_rule_apply"
+
+
+class UnboundHostOverride(Resource):
+    """A composite identity and listing rows that belong to another resource."""
+
+    endpoint = "unbound/settings"
+    identity = ("hostname", "domain", "rr")  # no declared uniqueness; more than one match is refused
+    exclude_rows = (("isAlias", True),)  # listing rows that are not objects of this resource
 ```
 
 ```python
@@ -995,7 +1008,8 @@ def main() -> None:
   hand-written module keeps the exception in one place.
 
 **Enforcement:** unit tests of the engine over a fake transport, a test per
-definition, and review of every hand-written resource module.
+definition, review of every hand-written resource module, and a search for
+resource names in the engine that returns nothing.
 
 
 ## Check mode and diff mode<a id="check-diff-mode"></a>
@@ -2085,6 +2099,10 @@ tests, the documentation and yamllint sessions of
   Fixtures carry their types in `conftest.py`, and a test signature repeats
   them and returns `None`, so that misuse of a fixture is a type error
   before the test runs.
+- Give the file-only integration targets a fake product server started by a
+  hidden setup target, so that every module runs a real task against state
+  on every admitted ansible-core version. The fake is test material and
+  imitates only what the targets exercise.
 - Qualify claimed product operations, builds and locator profiles with real
   integration tests and cleanup on at least the lowest and highest admitted
   ansible-core versions. Keep destructive and network tests opt-in and limited
@@ -2293,7 +2311,9 @@ core_python_versions = { "2.19" = ["3.9", "3.13"], "2.20" = ["3.9", "3.14"], "2.
 ```
 
 `antsibull-nox` knows ansible-core versions before they reach PyPI; set
-`max_version` to leave an unreleased lane out. The development branch drops
+`max_version` to leave an unreleased lane out. Such a lane is installed from
+the GitHub archive of the series' stable branch; it runs, and it tests a
+moving target. The development branch drops
 Python versions ahead of the releases, 3.9 since 2.23, so its lane names the
 branch's own floor and does not raise the collection's. `DOCUMENTATION` strings
 start with `---` when the house `.yamllint` requires a document start.
@@ -2336,13 +2356,13 @@ nox                            # lint, docs, licenses, extra checks, build and i
 nox -s ansible-test-sanity       # every admitted ansible-core version
 nox -s ansible-test-units        # includes the payload Python floor
 nox -s ansible-test-integration  # file-only integration targets
-MOLECULE_GLOB='extensions/molecule/**/molecule.yml' molecule test --all
+nox -s molecule                  # the default scenario; arguments after -- go to Molecule
 ```
 
-CI runs all five. Run the Molecule command in separate environments for the
-lowest and highest admitted ansible-core series, using compatible tool
-versions in each. An explicit matrix of `molecule test -s <scenario>` jobs may
-replace `--all` if it covers every required scenario.
+Run the Molecule session once per admitted ansible-core series, lowest and
+highest, in environments with matching tool versions. The artifact runs of
+[Supported runtimes](#supported-runtimes) cover the floor where Molecule's
+shared playbooks cannot.
 
 Check `nox --list` and the generated CI matrix against the declared core and
 Python support. Select sessions by name; `antsibull-nox` registers tags for
