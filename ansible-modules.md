@@ -2056,6 +2056,10 @@ tests, the documentation and yamllint sessions of
 - Make fake transports and clocks controllable, and assert the calls made and
   the resulting state, not merely that a mock returned the value the test
   supplied.
+- Type unit tests like plugin code; the mypy settings cover `tests/unit`.
+  Fixtures carry their types in `conftest.py`, and a test signature repeats
+  them and returns `None`, so that misuse of a fixture is a type error
+  before the test runs.
 - Qualify claimed product operations, builds and locator profiles with real
   integration tests and cleanup on at least the lowest and highest admitted
   ansible-core versions. Keep destructive and network tests opt-in and limited
