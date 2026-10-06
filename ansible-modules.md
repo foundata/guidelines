@@ -1687,9 +1687,12 @@ module initializes a product.
 - Where the product exposes the active state, make activation converge:
   compare the active state with the saved state, activate only on a
   difference or on an explicit `activate: always`, verify afterwards, and
-  report `changed` only when it activated. Where the active state is not
-  observable, document that the module reports a change on every run and
-  exclude it from idempotence checks explicitly.
+  report `changed` only when it activated. An activation whose reply is
+  lost reports `outcome: unknown`, also with `activate: always` when the
+  state was already in sync, because nothing proves the activation ran.
+  Where the active state is not observable, document that the module
+  reports a change on every run and exclude it from idempotence checks
+  explicitly.
 - Wait for a bounded completion where the product exposes job status, and never
   report an accepted request as proof of effect.
 - Handle pending work from earlier failed runs, even if this run changes
