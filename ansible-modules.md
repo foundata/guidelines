@@ -1414,7 +1414,10 @@ tests for the real API semantics.
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-Command-line modules require the product's CLI on the execution host.
+Command-line modules reach the product's CLI through a qualified locator
+profile: on the execution host, or inside a container or behind a wrapper
+that the host reaches. A profile lists its host-side and its target-side
+prerequisites separately.
 
 **You MUST:**
 
@@ -1428,11 +1431,23 @@ Command-line modules require the product's CLI on the execution host.
   stdin from an empty stream: `run_command` opens no pipe for empty data.
   Treat an incomplete write to stdin as an uncertain failure, even when the
   command exits 0.
+  Probe a native reader with delayed input, input larger than a pipe buffer
+  and an early close: a CLI that reads its stdin nonblocking takes what is
+  available and fails on the rest. Where it cannot consume a stream
+  reliably, a fixed product helper writes the input to a private target file
+  (exclusive creation, owner and mode checked) and passes the path to the
+  documented native import, removing the file on success, failure and
+  interruption; qualify that cleanup like any other.
 - Qualify each locator profile's deadline mechanism and descendant cleanup.
   Declare the implementation and executable path as prerequisites; a
   conventional executable name is no proof of its implementation, so record
   the version output at qualification and select an implementation-specific
-  path where a distribution provides one. Use the operation's remaining
+  path where a distribution provides one. For a container or wrapper
+  locator, host process-group cleanup does not reach the target: qualify a
+  target-side watchdog prepared from the remaining budget of the same
+  deadline, inspect the target for survivors after expiry, and exclude
+  commands that detach unless a session or cgroup mechanism is qualified.
+  Use the operation's remaining
   monotonic budget and state which observer owns the expiry flag; a
   status-only wrapper that backs it up fires later, with its margin and its
   cleanup grace documented, and a command status alone is never observed
@@ -1471,6 +1486,10 @@ Command-line modules require the product's CLI on the execution host.
   plus the per-call update, after core's `PYTHONPATH` rewrite. Document
   target-environment inheritance separately for a container or a wrapper.
   Additions alone are not an allowlist.
+  For a container or a wrapper, inspect the environment the target command
+  actually inherits, privately and before a write; host validation says
+  nothing about it. Allow target overrides only for non-secret keys: a value
+  in `--env KEY=value` is argv.
 - Expose whether the requested write invocation started when a transport
   bundles preflight and the write, separately from any probe it ran;
   combine it with earlier attempts at the module boundary. It is no
