@@ -427,6 +427,9 @@ curl --silent \·
 - Use single quotes when literal strings are needed (no expansion).
 - Correctly escape identical quotes within quotes (use `'\''` and `"\""`, not
   `\'` or `\"`)
+- Quote the delimiter of a here-document (`<<'EOF'`) when its body must not
+  expand variables, command substitutions or backslashes. Leave it unquoted
+  only when the body intentionally expands `${variables}`.
 
 **You SHOULD:**
 
@@ -436,6 +439,10 @@ curl --silent \·
   [complicated escaping](https://www.grymoire.com/Unix/Quote.html#uh-8).
 - Always quote variables in test expressions: `[ -n "${var}" ]`.
 - Quote all command arguments.
+- Use `EOF` as the delimiter of a here-document; choose another word only when
+  the body contains a line `EOF`, for example a nested here-document.
+- Write redirections without a space, as `shfmt` does:
+  `cat >"${file}" <<'EOF'`.
 
 **You MUST NOT:**
 
@@ -464,6 +471,16 @@ fi
 
 # Mixed quoting to prevent complicated escaping
 printf '%s\n' "it's working"
+
+# Here-document without expansion: the body is written as it is
+cat >"${config_file}" <<'EOF'
+PATH="${HOME}/bin:${PATH}"
+EOF
+
+# Here-document with intended expansion
+cat >"${config_file}" <<EOF
+owner=${username}
+EOF
 ```
 
 **Bad examples:**
@@ -515,6 +532,9 @@ printf '%s\n' "The word for today is "\""Foo"\" # ...the same
   behavior when empty.
 - [Escaping / including identical quotes within quotes in shell](https://www.grymoire.com/Unix/Quote.html#uh-8)
   is not working as expected for programmers used to other languages.
+- An unquoted here-document delimiter silently expands `$`, backticks and
+  backslashes in generated files, scripts and configuration. That is a common
+  source of broken output and, with untrusted values, of injection.
 
 
 ## Variables<a id="variables"></a>
