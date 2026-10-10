@@ -764,7 +764,8 @@ scripts.
 ```powershell
 try {
     $configItem = Get-Item -LiteralPath $ConfigPath -ErrorAction Stop
-} catch {
+}
+catch {
     $errorRecord = $_
     throw "Configuration file not found: ${ConfigPath}. $($errorRecord.Exception.Message)"
 }
@@ -785,7 +786,8 @@ if (-not $?) {
 
 try {
     Remove-Item -LiteralPath $Path
-} catch {
+}
+catch {
 }
 ```
 
@@ -1219,7 +1221,8 @@ before `Invoke-ScriptAnalyzer` and `Invoke-Formatter` are available.
               ErrorAction      = 'Stop'
           }
           $formattedScript = Invoke-Formatter @formatterParameters
-      } catch {
+      }
+      catch {
           Write-Warning -Message "Formatting failed, leaving file unchanged: $($powerShellFile.FullName)"
           Write-Warning -Message $_.Exception.Message
           continue
