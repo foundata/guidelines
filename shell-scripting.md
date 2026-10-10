@@ -1282,22 +1282,34 @@ language.
 **You MUST:**
 
 - Keep snippets valid for `shfmt` and ShellCheck with the dialect the fence
-  names (`sh` for POSIX, `bash` for Bash).
+  names (`sh` for POSIX, `bash` for Bash). ShellCheck's SC2154 (referenced but
+  not assigned) and SC2034 (assigned but unused) do not apply to variables that
+  other snippets or the text set or use.
 - Write values the reader supplies as quoted variables that are set earlier or
   explained in the text (`"${domain_uuid}"`), not as `<domain>` placeholders,
   unless the block is marked `text` and is not meant to be run.
+- Fence commands the reader must not run, such as destructive or forbidden
+  examples, as `text`.
 
 **You MAY:**
 
 - Omit the shebang, the file header comment, `main()` and the boilerplate.
 - Omit `readonly` and UPPERCASE for values the reader may change and run again
   in the same shell.
+- Keep the fence language for bad examples that demonstrate a rule violation,
+  as in style guides, even when they fail `shfmt` or ShellCheck.
 
 **Good examples:**
 
 ```sh
 domain_uuid="$(virsh domuuid "${domain}")"
 virsh destroy "${domain_uuid}"
+```
+
+A broad cleanup the reader must not copy:
+
+```text
+podman rm -f $(podman ps -aq)
 ```
 
 **Bad examples:**
@@ -1313,6 +1325,10 @@ virsh destroy <domain-uuid>
   other than intended or fails with a confusing error.
 - Snippets are rerun step by step in one interactive shell, where `readonly`
   would refuse the next assignment.
+- A snippet is a fragment of a session: its variables come from earlier
+  snippets or the text, so ShellCheck cannot see where they are set or used.
+- A `text` fence tells readers and tools that extract, run or lint snippets
+  that a command is not meant to be run.
 
 
 ## Portability<a id="portability"></a>
