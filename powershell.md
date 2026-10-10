@@ -461,7 +461,9 @@ if ($computerName -eq $null) {
 
 - Typed and validated parameters make scripts self-documenting and catch invalid
   inputs early. Named parameters are easier to read and are checked by
-  PSScriptAnalyzer's `PSAvoidUsingPositionalParameters` rule.
+  PSScriptAnalyzer's `PSAvoidUsingPositionalParameters` rule. The rule reports
+  only commands with three or more positional arguments (PSScriptAnalyzer
+  1.25), so `Copy-Item a.txt b.txt` passes it; review catches the rest.
 - In PowerShell, comparisons can behave unexpectedly when the left-hand side is
   a collection. Placing `$null` on the left side avoids accidental
   collection-filtering behavior and is checked by
