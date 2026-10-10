@@ -29,6 +29,7 @@ The terms MUST, SHOULD, and other key words are used as defined in
 - [Output and printing](#output-and-printing)
 - [Error handling](#error-handling)
 - [Comments](#comments)
+- [Shell in documentation](#shell-in-documentation)
 - [Portability](#portability)
   - [Hints](#hints)
 - [`shell-boilerplate.sh`](#shell-boilerplate)
@@ -1267,6 +1268,51 @@ get_config_dir() {
 - Documentation blocks help maintainers understand the code without reading the
   implementation. The format follows
   [Google's Shell Style Guide](https://google.github.io/styleguide/shellguide.html).
+
+
+## Shell in documentation<a id="shell-in-documentation"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+Shell snippets in Markdown and other documentation follow this guide like
+scripts, with the exceptions below. The
+[Markdown style guide](./markdown.md#code-blocks) covers fences and their
+language.
+
+**You MUST:**
+
+- Keep snippets valid for `shfmt` and ShellCheck with the dialect the fence
+  names (`sh` for POSIX, `bash` for Bash).
+- Write values the reader supplies as quoted variables that are set earlier or
+  explained in the text (`"${domain_uuid}"`), not as `<domain>` placeholders,
+  unless the block is marked `text` and is not meant to be run.
+
+**You MAY:**
+
+- Omit the shebang, the file header comment, `main()` and the boilerplate.
+- Omit `readonly` and UPPERCASE for values the reader may change and run again
+  in the same shell.
+
+**Good examples:**
+
+```sh
+domain_uuid="$(virsh domuuid "${domain}")"
+virsh destroy "${domain_uuid}"
+```
+
+**Bad examples:**
+
+```sh
+virsh destroy <domain-uuid>
+```
+
+**Reasoning:**
+
+- Readers and tools copy snippets into shells and scripts. A placeholder like
+  `<domain-uuid>` is a redirection in the shell, so copying it runs something
+  other than intended or fails with a confusing error.
+- Snippets are rerun step by step in one interactive shell, where `readonly`
+  would refuse the next assignment.
 
 
 ## Portability<a id="portability"></a>
