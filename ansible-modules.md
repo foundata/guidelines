@@ -2453,10 +2453,11 @@ nox -s ansible-test-integration  # file-only integration targets
 nox -s molecule                  # the default scenario; arguments after -- go to Molecule
 ```
 
-Run the Molecule session once per admitted ansible-core series, lowest and
-highest, in environments with matching tool versions. The artifact runs of
-[Supported runtimes](#supported-runtimes) cover the floor where Molecule's
-shared playbooks cannot.
+Run the file-only lanes on every admitted series and the development
+branch, the Molecule session on the newest admitted series, and the
+installed-artifact acceptance of [Supported runtimes](#supported-runtimes)
+on the lowest and the newest admitted released core; add a live series only
+where the support contract requires it.
 
 Check `nox --list` and the generated CI matrix against the declared core and
 Python support. Select sessions by name; `antsibull-nox` registers tags for
