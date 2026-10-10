@@ -1245,6 +1245,11 @@ get_config_dir() {
 - Check for command availability before using non-standard utilities.
 - Use `./*` instead of bare `*` when passing glob results to commands that
   interpret leading dashes as options.
+- End options with `--` before operands that come from variables or user input,
+  when the command supports it: `rm -f -- "${file}"`,
+  `mv -- "${source}" "${target}"`, `grep -e "${pattern}" -- "${file}"`. For
+  commands without `--`, such as `printf` with its format argument, keep the
+  operand from starting with `-`, as `./*` does for globs.
 
 **You SHOULD:**
 
@@ -1319,6 +1324,19 @@ get_config_dir() {
   for file in ./*; do
     process_file "${file}"
   done
+  ```
+
+- The same failure happens with any variable operand: a value such as `-rf`
+  becomes an option. `--` marks the end of the options as defined by the POSIX
+  [utility syntax guidelines](https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/V1_chap12.html#tag_12_02)
+  and is supported by the common utilities; `./*` only covers globs.
+
+  ```sh
+  # Bad - a file named "-rf" is read as options
+  rm -f "${file}"
+
+  # Good
+  rm -f -- "${file}"
   ```
 
 - Setting `LC_ALL` ensures predictable sorting, character classification, and
