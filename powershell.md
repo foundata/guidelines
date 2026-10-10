@@ -1076,10 +1076,12 @@ before `Invoke-ScriptAnalyzer` and `Invoke-Formatter` are available.
       Rules = $formatterSettings['Rules']
   }
 
-  Invoke-ScriptAnalyzer `
-      -Path . `
-      -Recurse `
-      -Settings $analyzerSettings
+  $analyzerParameters = @{
+      Path     = '.'
+      Recurse  = $true
+      Settings = $analyzerSettings
+  }
+  Invoke-ScriptAnalyzer @analyzerParameters
   ```
 
 - Fix all errors and warnings reported by `PSScriptAnalyzer`. If a warning must
@@ -1163,11 +1165,13 @@ before `Invoke-ScriptAnalyzer` and `Invoke-Formatter` are available.
       }
   }
 
-  $powerShellFiles = Get-ChildItem `
-      -Path . `
-      -Recurse `
-      -File `
-      -Include '*.ps1', '*.psm1', '*.psd1'
+  $fileParameters = @{
+      Path    = '.'
+      Recurse = $true
+      File    = $true
+      Include = '*.ps1', '*.psm1', '*.psd1'
+  }
+  $powerShellFiles = Get-ChildItem @fileParameters
 
   foreach ($powerShellFile in $powerShellFiles) {
       $scriptDefinition = [System.IO.File]::ReadAllText($powerShellFile.FullName)
@@ -1178,10 +1182,12 @@ before `Invoke-ScriptAnalyzer` and `Invoke-Formatter` are available.
       }
 
       try {
-          $formattedScript = Invoke-Formatter `
-              -ScriptDefinition $scriptDefinition `
-              -Settings $formatterSettings `
-              -ErrorAction Stop
+          $formatterParameters = @{
+              ScriptDefinition = $scriptDefinition
+              Settings         = $formatterSettings
+              ErrorAction      = 'Stop'
+          }
+          $formattedScript = Invoke-Formatter @formatterParameters
       } catch {
           Write-Warning -Message "Formatting failed, leaving file unchanged: $($powerShellFile.FullName)"
           Write-Warning -Message $_.Exception.Message
