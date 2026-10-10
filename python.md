@@ -19,6 +19,7 @@ The terms MUST, SHOULD, and other key words are used as defined in
 - [Applications vs. libraries](#applications-vs-libraries)
 - [Supported Python versions](#supported-python-versions)
 - [Project structure and metadata](#project-structure-and-metadata)
+  - [Script bundles without packaging](#script-bundles)
 - [Linting, formatting and type checking](#linting-formatting-type-checking)
   - [Recommended `pyproject.toml` configuration](#recommended-pyproject-configuration)
   - [Additional Ruff rule categories](#additional-ruff-rule-categories)
@@ -334,6 +335,45 @@ product/
   suitable backend.
 - Thin entry points keep framework behavior separate from domain behavior and
   make tests faster and clearer.
+
+
+### Script bundles without packaging<a id="script-bundles"></a>
+
+Some repositories ship standalone scripts next to non-Python content, for
+example agent skills, CI helpers or tool directories. There, `pyproject.toml`,
+a `src` layout and entry points do not apply; the rest of this guide does.
+
+**You MUST:**
+
+- Declare the supported Python version in the README and use it as Ruff's
+  `target-version` and mypy's `python_version`.
+- Keep the tool settings of this guide in tool files (`ruff.toml`, `mypy.ini`)
+  when there is no `pyproject.toml`.
+- Let scripts import their sibling modules as top-level modules
+  (`import helpers`). Python puts the script's directory on `sys.path`, so no
+  `sys.path` changes are needed. For tests and type checking, put the script
+  directory on the search path through configuration (`PYTHONPATH=scripts` in
+  the documented test command, `mypy_path = scripts`), not in code.
+- Give scripts that are run directly a shebang and the executable bit; keep
+  shared modules without both.
+- Use the `python` template in `.gitignore` so `__pycache__` stays out.
+
+**You SHOULD:**
+
+- Stay on the standard library. When a script needs a third-party package,
+  prefer
+  [inline script metadata](https://packaging.python.org/en/latest/specifications/inline-script-metadata/)
+  (PEP 723) run with `uv run --script` over an undeclared environment.
+- Run the tools with `uvx ruff` and `uvx mypy`, and document the commands in the
+  README.
+
+**Reasoning:**
+
+- Loading sibling files with `importlib` by path creates a second module object
+  per file, with its own state, and type checkers lose the types. Plain imports
+  keep one module per file and let mypy follow them.
+- A `pyproject.toml` that only holds tool settings still makes `uv` treat the
+  directory as a project: `uv run` there creates `uv.lock` and `.venv`.
 
 
 ## Linting, formatting and type checking<a id="linting-formatting-type-checking"></a>
