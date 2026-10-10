@@ -385,9 +385,9 @@ if [ -f "${config_file}" ] \
   process_config "${config_file}"
 fi
 
-# Multi-line string without unwanted whitespace
-printf '%s\n' 'This is a single parameter '\
-'because there is no space before the backslash'
+# Long string without unwanted whitespace: printf joins the parts
+printf '%s%s\n' 'This is a single parameter ' \
+  'because printf joins both arguments without a separator'
 ```
 
 **Bad examples:**
@@ -470,20 +470,20 @@ printf '%s\n' "it's working"
 
 ```sh
 # Missing braces around variable names
-config_path="/etc/$app_name.conf"    # Ambiguous: is it $app_name or $app?
+config_path="/etc/$app_name.conf" # Ambiguous: is it $app_name or $app?
 
 # Unquoted variables
-rm -f $filepath                       # Breaks on spaces, glob expansion
-cat $input_file                       # Word splitting issues
+rm -f $filepath # Breaks on spaces, glob expansion
+cat $input_file # Word splitting issues
 
 # Double quotes for static strings (unnecessary)
-readonly log_level="info"             # Single quotes preferred
+readonly log_level="info" # Single quotes preferred
 
 # Unquoted variable in test
-[ -n ${var} ]                         # Breaks if var is empty or unset
+[ -n ${var} ] # Breaks if var is empty or unset
 
 # Missing quotes in command substitution argument
-result="$(cat ${input_file})"         # Should be "${input_file}"
+result="$(cat ${input_file})" # Should be "${input_file}"
 
 # Needless escaping single quotes within single-quoted strings
 printf '%s\n' 'it'\''s working'
@@ -572,7 +572,6 @@ message="${greeting}, ${user_name}!"
 # Using readonly and UPPERCASE for constants
 readonly CFG_WORKINGDIR="/tmp"
 
-
 # Declare and assign in the same line is OK here because the values are literals
 # and not a command substitution with an independent return value.
 export FOOBAR='baz'
@@ -597,17 +596,17 @@ fi
 
 ```sh
 # UPPERCASE for local variables (risky)
-HOME='/custom/path'      # Overwrites system HOME!
-USER='admin'             # Overwrites current user variable
+HOME='/custom/path' # Overwrites system HOME!
+USER='admin'        # Overwrites current user variable
 
 # Missing braces
-message="$greeting, $user_name!"  # Ambiguous
+message="$greeting, $user_name!" # Ambiguous
 
 # Unquoted assignment
-foo=bar                  # Works, but inconsistent with other assignments
+foo=bar # Works, but inconsistent with other assignments
 
 # Missing braces causes wrong interpolation
-file="$name_backup.txt"  # Tries to expand $name_backup, not $name
+file="$name_backup.txt" # Tries to expand $name_backup, not $name
 
 # Return value of mycmd is ignored, export/local will always return true.
 # This may prevent conditionals and traps from working correctly.
@@ -684,7 +683,6 @@ process_config() {
   return 0
 }
 
-
 ###
 # Print a formatted error message to STDERR.
 # Arguments:
@@ -695,7 +693,6 @@ print_error() {
   printf '%s: %s\n' "Error" "${1}" >&2
   return 0
 }
-
 
 ###
 # Main entry point.
@@ -891,7 +888,7 @@ if [[ "${input}" =~ ^[0-9]+$ ]]; then
 fi
 
 # Unquoted variable in test (dangerous)
-if [ -n ${var} ]; then    # Breaks if var is empty
+if [ -n ${var} ]; then # Breaks if var is empty
   printf '%s\n' 'var is set'
 fi
 
@@ -991,14 +988,14 @@ printf '%-20s %10d\n' 'Total files:' "${file_count}"
 ```sh
 # Using echo (behavior varies across implementations)
 echo 'Starting process...'
-echo -e 'Tab:\there'       # -e not portable
-echo -n 'No newline'       # -n not portable
+echo -e 'Tab:\there' # -e not portable
+echo -n 'No newline' # -n not portable
 
 # Variable in format string (format string vulnerability)
-printf "${user_input}"     # DANGEROUS: user can inject format specifiers
+printf "${user_input}" # DANGEROUS: user can inject format specifiers
 
 # Missing error redirection
-printf '%s\n' 'Error: something failed'  # Should go to STDERR
+printf '%s\n' 'Error: something failed' # Should go to STDERR
 ```
 
 **Reasoning:**
@@ -1060,7 +1057,7 @@ err "Failed to connect to database"
 
 ```sh
 #!/usr/bin/env sh
-set -u  # Error on unset variables
+set -u # Error on unset variables
 
 # Explicit error handling
 if ! mkdir -p "${output_dir}"; then
@@ -1087,21 +1084,21 @@ cleanup() {
 trap cleanup EXIT
 
 # Handle pipeline failures explicitly (POSIX-compliant way)
-if ! grep 'pattern' file.txt | sort > output.txt; then
+if ! grep 'pattern' file.txt | sort >output.txt; then
   # Note: This only checks if 'sort' succeeded
   # For the grep exit status, use a temporary variable or file
   :
 fi
 
 # More reliable pipeline error handling
-grep 'pattern' file.txt > temp.txt
+grep 'pattern' file.txt >temp.txt
 grep_status="$?"
 if [ "${grep_status}" -gt 1 ]; then
   # grep returns 1 for "no matches", 2+ for errors
   printf '%s\n' 'grep failed' >&2
   exit 1
 fi
-sort temp.txt > output.txt || exit 1
+sort temp.txt >output.txt || exit 1
 ```
 
 **Reasoning:**
@@ -1133,10 +1130,10 @@ sort temp.txt > output.txt || exit 1
 
     ```bash
     #!/usr/bin/env bash
-    set -e           # Exit on error
-    set -u           # Error on unset variables
-    set -o pipefail  # Include failing pipeline stages in the exit status
-    shopt -s inherit_errexit  # Preserve set -e in command substitutions (Bash 4.4+)
+    set -e                   # Exit on error
+    set -u                   # Error on unset variables
+    set -o pipefail          # Include failing pipeline stages in the exit status
+    shopt -s inherit_errexit # Preserve set -e in command substitutions (Bash 4.4+)
     ```
 
     `inherit_errexit` is Bash-specific and requires Bash 4.4 or newer.
@@ -1320,7 +1317,7 @@ get_config_dir() {
 
   # Also works with loops
   for file in ./*; do
-      process_file "${file}"
+    process_file "${file}"
   done
   ```
 
@@ -1350,21 +1347,21 @@ get_config_dir() {
 
 ```sh
 # Check if required command is available
-if ! command -v 'jq' > /dev/null 2>&1; then
+if ! command -v 'jq' >/dev/null 2>&1; then
   printf '%s: %s\n' 'Error' 'jq is required but not installed' >&2
   exit 1
 fi
 
 # Check multiple commands
 for cmd in 'curl' 'jq' 'openssl'; do
-  if ! command -v "${cmd}" > /dev/null 2>&1; then
+  if ! command -v "${cmd}" >/dev/null 2>&1; then
     printf '%s: "%s" is required but not installed.\n' 'Error' "${cmd}" >&2
     exit 1
   fi
 done
 
 # Check using check_cmd()/require_cmd() from shell-boilerplate.sh
-require_cmd 'curl' 'jq' 'openssl' # exits with an error message if any is missing
+require_cmd 'curl' 'jq' 'openssl'                 # exits with an error message if any is missing
 check_cmd 'jq' && printf '%s\n' 'jq is available' # returns 1 instead of exiting
 ```
 
@@ -1477,7 +1474,7 @@ awk '
   /^# --- BOILERPLATE START v/ { printf "%s", block; skip = 1 }
   /^# --- BOILERPLATE END v/ { skip = 0; next }
   !skip { print }
-' "${new}" "${target}" > "${tmp}"
+' "${new}" "${target}" >"${tmp}"
 
 cp "${target}" "${target}.bak"
 mv "${tmp}" "${target}"
