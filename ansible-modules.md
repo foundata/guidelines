@@ -146,25 +146,23 @@ The terms MUST, SHOULD, and other key words are used as defined in
   profiles. It lives in the README or in a page linked from it; the contract
   of a single module lives in that module's documentation.
 - **Architecture and rationale:** the developer-facing description of the
-  collection's current structure, execution boundaries and significant
-  technical decisions, with their rationale and links to supporting evidence.
-  By house convention `docs/architecture.md`, or the repository's existing
-  architecture documentation. Execution logs belong in test artifacts and
-  change history in Git. Public contracts remain in the README and module
-  documentation.
-  A design delivered before the collection exists uses the same structure
-  in `design.md` of its design directory; the record moves into
-  `docs/architecture.md` when the collection is created.
-  The record's **Scope** section carries the release scope: the context
-  (deployment paths in use, who operates the product, their first tasks),
-  deployment ownership per path, the administration tasks an operator
-  performs as ranked candidates, each mapped to the inventory objects it
-  needs and rated for value, risk class and evidence cost, with a status
-  (shipped in, excluded because, planned for), the cuts (the first two
-  resources for engine evidence, the first release for operator value,
-  later releases in order), and every exclusion with its guard decision.
-  The owner approves a cut in a commit of its own; issues are opened for
-  the next cut only and link back to the section.
+  collection's current structure, execution boundaries and significant technical
+  decisions, with their rationale and links to supporting evidence. By house
+  convention `docs/architecture.md`, or the repository's existing architecture
+  documentation. Execution logs belong in test artifacts and change history in
+  Git. Public contracts remain in the README and module documentation. A design
+  delivered before the collection exists uses the same structure in `design.md`
+  of its design directory; the record moves into `docs/architecture.md` when the
+  collection is created. The record's **Scope** section carries the release
+  scope: the context (deployment paths in use, who operates the product, their
+  first tasks), deployment ownership per path, the administration tasks an
+  operator performs as ranked candidates, each mapped to the inventory objects
+  it needs and rated for value, risk class and evidence cost, with a status
+  (planned for, qualified, shipped in, blocked by, excluded because), the cuts
+  (the first two resources for engine evidence, the first release for operator
+  value, later releases in order), and every exclusion with its guard decision.
+  The owner approves a cut in a commit of its own; issues are opened for the
+  next cut only and link back to the section.
 
 
 ## Scope and precedence<a id="scope-precedence"></a>
