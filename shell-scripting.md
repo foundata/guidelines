@@ -1461,8 +1461,8 @@ if ! curl --fail --silent --show-error --location --output "${new}" "${url}"; th
   exit 1
 fi
 
-exec_bit=0
-[ -x "${target}" ] && exec_bit=1
+exec_bit='0'
+[ -x "${target}" ] && exec_bit='1'
 
 awk '
   NR == FNR {
@@ -1478,7 +1478,7 @@ awk '
 
 cp "${target}" "${target}.bak"
 mv "${tmp}" "${target}"
-[ "${exec_bit}" = 1 ] && chmod +x "${target}"
+[ "${exec_bit}" = '1' ] && chmod +x "${target}"
 
 printf '%s: updated %s (backup: %s.bak)\n' "$(basename "${0}")" "${target}" "${target}"
 ```

@@ -5,7 +5,7 @@
 # SPDX-FileCopyrightText: 2026, foundata GmbH (https://foundata.com)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# --- BOILERPLATE START v1.1.2 ---
+# --- BOILERPLATE START v1.1.3 ---
 # Consistent environment for predictable tool and shell behavior
 export PATH="${PATH:-/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin}"
 if command -v locale >/dev/null 2>&1; then
@@ -159,11 +159,11 @@ ${_TRAP_STACK}}"
 #   0 if all commands exist.
 #   1 if any missing (or exit 1 if -r is set)
 check_cmd() {
-  local required=0
-  [ "${1}" = "-r" ] && required=1 && shift
+  local required='0'
+  [ "${1}" = "-r" ] && required='1' && shift
   for cmd; do
     command -v "${cmd}" >/dev/null 2>&1 && continue
-    [ "${required}" = 1 ] || return 1
+    [ "${required}" = '1' ] || return 1
     msg -e "Required command not found: ${cmd}"
     exit 1
   done
@@ -192,7 +192,7 @@ ensure() {
 
 # Convenience wrappers (see the used functions for documentation)
 require_cmd() { check_cmd -r "$@"; }
-# --- BOILERPLATE END v1.1.2 ---
+# --- BOILERPLATE END v1.1.3 ---
 
 ###### FIXME Optional but often useful boilerplate follows.
 
