@@ -84,10 +84,11 @@ The terms MUST, SHOULD, and other key words are used as defined in
 
 **You SHOULD:**
 
-- Choose the intended resources from the interface inventory before
-  implementing the first one. Track planned resources and release scope in
-  issues or milestones; before the repository has a tracker, list them in the
-  architecture record and open the issues at publication.
+- Choose the first two resources for the engine evidence they yield and
+  every further resource for operator value, from the Scope section of the
+  architecture record, which the owner approves before implementation
+  starts and which says where a release stops. Rank administration tasks,
+  not inventory objects; a module per endpoint is the inventory copied.
 - Keep a product collection module-only: modules, module utilities and
   documentation fragments. Add action, filter or test plugins only for work a
   module cannot do (see
@@ -148,12 +149,22 @@ The terms MUST, SHOULD, and other key words are used as defined in
   collection's current structure, execution boundaries and significant
   technical decisions, with their rationale and links to supporting evidence.
   By house convention `docs/architecture.md`, or the repository's existing
-  architecture documentation. Planned work belongs in issues, execution logs
-  in test artifacts and change history in Git. Public contracts remain in the
-  README and module documentation.
+  architecture documentation. Execution logs belong in test artifacts and
+  change history in Git. Public contracts remain in the README and module
+  documentation.
   A design delivered before the collection exists uses the same structure
   in `design.md` of its design directory; the record moves into
   `docs/architecture.md` when the collection is created.
+  The record's **Scope** section carries the release scope: the context
+  (deployment paths in use, who operates the product, their first tasks),
+  deployment ownership per path, the administration tasks an operator
+  performs as ranked candidates, each mapped to the inventory objects it
+  needs and rated for value, risk class and evidence cost, with a status
+  (shipped in, excluded because, planned for), the cuts (the first two
+  resources for engine evidence, the first release for operator value,
+  later releases in order), and every exclusion with its guard decision.
+  The owner approves a cut in a commit of its own; issues are opened for
+  the next cut only and link back to the section.
 
 
 ## Scope and precedence<a id="scope-precedence"></a>
