@@ -472,7 +472,11 @@ select = [
   "C4",  # flake8-comprehensions
   "UP",  # pyupgrade
   "RUF", # Ruff-specific rules
+  "W505", # comments and docstrings longer than max-doc-length
 ]
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 88
 
 [tool.ruff.format]
 docstring-code-format = true
@@ -512,8 +516,10 @@ tests or framework-specific code.
 ### Additional Ruff rule categories<a id="additional-ruff-rule-categories"></a>
 
 The configured `E4`, `E7`, `E9`, `F`, `I`, `B`, `C4`, `UP` and `RUF` categories
-form the mandatory baseline. They provide focused correctness checks, import
-sorting and modernization without broadly duplicating Ruff's formatter or mypy.
+and the `W505` rule form the mandatory baseline. They provide focused
+correctness checks, import sorting and modernization without broadly
+duplicating Ruff's formatter or mypy; `W505` covers the comments and docstrings
+the formatter leaves alone.
 
 Projects SHOULD evaluate and enable the following categories when their
 diagnostics fit the codebase:
@@ -549,7 +555,9 @@ The following categories and rules are intentionally not part of the baseline:
 - `ANN` duplicates much of the more accurate checking already performed by mypy
   in strict mode.
 - `E501` can reject lines that Ruff's formatter deliberately leaves long because
-  formatting is best-effort around the configured line length.
+  formatting is best-effort around the configured line length. `W505` checks
+  only comments and docstrings, which the formatter never reflows, so it does
+  not reintroduce that conflict.
 - `Q` duplicates the formatter's quote handling, and several `Q` rules conflict
   with the formatter.
 - The complete `S` category can be noisy, especially `S101` because pytest uses
@@ -630,6 +638,8 @@ nine-module ratchet, then cleared
 - Follow [PEP 8](https://peps.python.org/pep-0008/) where Ruff does not define
   the formatting.
 - Use Ruff's default line length of 88 characters.
+- Wrap comments and docstrings at the line length; the formatter does not
+  reflow them.
 - Use double quotes for strings and triple double quotes (`"""`) for docstrings,
   as produced by the configured formatter.
 - Put imports at the top of a module, after the module docstring and future
