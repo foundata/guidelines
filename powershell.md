@@ -1063,29 +1063,60 @@ before `Invoke-ScriptAnalyzer` and `Invoke-Formatter` are available.
       }
   }
 
+  # Rules the formatter cannot apply but the guide requires.
+  $analyzerRules = $formatterSettings['Rules'] + @{
+      PSAvoidLongLines = @{
+          Enable            = $true
+          MaximumLineLength = 119
+      }
+
+      PSAvoidSemicolonsAsLineTerminators = @{
+          Enable = $true
+      }
+  }
+
   $analyzerSettings = @{
+      # Information includes PSAvoidUsingPositionalParameters.
       Severity = @(
           'Error'
           'Warning'
+          'Information'
       )
 
       ExcludeRules = @(
+          # Checked in its own pass below.
+          'PSUseCorrectCasing'
           # Add explicit exceptions here, if any.
       )
 
-      Rules = $formatterSettings['Rules']
+      Rules = $analyzerRules
   }
 
-  $analyzerParameters = @{
-      Path     = '.'
-      Recurse  = $true
-      Settings = $analyzerSettings
+  # PSUseCorrectCasing gets a pass of its own: in PSScriptAnalyzer 1.25 it fails
+  # now and then with a NullReferenceException while other rules analyze the
+  # same file in parallel.
+  $casingSettings = @{
+      IncludeRules = @(
+          'PSUseCorrectCasing'
+      )
+
+      Rules = @{
+          PSUseCorrectCasing = $analyzerRules['PSUseCorrectCasing']
+      }
   }
-  Invoke-ScriptAnalyzer @analyzerParameters
+
+  foreach ($settings in $analyzerSettings, $casingSettings) {
+      $analyzerParameters = @{
+          Path     = '.'
+          Recurse  = $true
+          Settings = $settings
+      }
+      Invoke-ScriptAnalyzer @analyzerParameters
+  }
   ```
 
-- Fix all errors and warnings reported by `PSScriptAnalyzer`. If a warning must
-  be suppressed, suppress it narrowly and include a justification. Example:
+- Fix all findings reported by `PSScriptAnalyzer`. If a finding must be
+  suppressed, suppress it narrowly and include a justification. Example:
 
   ```powershell
   [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
