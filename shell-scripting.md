@@ -563,6 +563,20 @@ printf '%s\n' "The word for today is "\""Foo"\" # ...the same
   local bar='baz'
   ```
 
+  Capturing `$?` is the exception: `local status="$?"` keeps the status,
+  because `$?` is expanded before `local` runs. Assign it in the first
+  statement of the function or `trap` handler, before any other command
+  replaces it:
+
+  ```sh
+  cleanup() {
+    local status="$?"
+    rm -f -- "${tmp_file}"
+    exit "${status}"
+  }
+  trap cleanup EXIT
+  ```
+
 **You SHOULD:**
 
 - Use `readonly` for constants and configuration values.
