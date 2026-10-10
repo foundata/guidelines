@@ -116,12 +116,29 @@ plain text.
   Set-StrictMode -Version Latest
   ```
 
+- Put `Set-StrictMode` directly after the `param` block in scripts that have
+  one:
+
+  ```powershell
+  #Requires -Version 5.1
+
+  # Install and configure the example service.
+  [CmdletBinding()]
+  param (
+      [Parameter(Mandatory = $true)]
+      [string] $ServiceName
+  )
+
+  Set-StrictMode -Version Latest
+  ```
+
 **You SHOULD:**
 
 - Add additional `#Requires` statements only when the dependency is a hard
   runtime requirement.
 - Add a file-level comment explaining the script's purpose after the
-  requirements and strict-mode declaration.
+  requirements and strict-mode declaration, or before the attributes and the
+  `param` block in scripts that have one.
 
 **You MUST NOT:**
 
@@ -152,6 +169,17 @@ Set-StrictMode -Version Latest
 # Bad for scripts that should also run on PowerShell 7+.
 ```
 
+```powershell
+#Requires -Version 5.1
+Set-StrictMode -Version Latest
+
+# Bad: after a statement, param is no longer the script's parameter block.
+param (
+    [Parameter(Mandatory = $true)]
+    [string] $ServiceName
+)
+```
+
 **Reasoning:**
 
 - [`#Requires`](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_requires)
@@ -163,6 +191,10 @@ Set-StrictMode -Version Latest
 - [`Set-StrictMode`](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/set-strictmode)
   catches many common scripting mistakes, such as references to uninitialized
   variables and invalid property references.
+- PowerShell treats `param` as the script's parameter block only when no
+  statement precedes it; comments, `#Requires` and attributes such as
+  `[CmdletBinding()]` may. After `Set-StrictMode`, the script fails at the
+  first reference to a parameter, because the parameter was never set.
 
 
 ## Indentation and line length<a id="indentation-and-line-length"></a>
