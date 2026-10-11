@@ -1410,11 +1410,13 @@ try:
             raise ProductApiError(
                 "Unsupported response content encoding", category="response", code="content_encoding"
             )
-        length = response.headers.get("Content-Length")
-        declared = int(length) if length is not None and length.strip().isdecimal() else None
+        length = response.headers.get("Content-Length", "").strip()
+        declared = int(length) if length.isdecimal() else None
         if declared is not None and declared > MAX_BODY_BYTES:
             raise ProductApiError(
-                "Response exceeds the size limit", category="response", code="body_too_large"
+                "Response exceeds the size limit",
+                category="response",
+                code="body_too_large",
             )
         while True:
             if time.monotonic() >= deadline:
@@ -1436,7 +1438,9 @@ try:
             chunks.append(chunk)
         if declared is not None and size != declared:
             raise ProductApiError(
-                "Incomplete HTTP response body", category="transport", code="http_protocol"
+                "Incomplete HTTP response body",
+                category="transport",
+                code="http_protocol",
             )
 except HTTPError as error:
     status = error.code
