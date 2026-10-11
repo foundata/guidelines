@@ -1805,7 +1805,7 @@ module.exit_json(
 - name: "Verify the declared settings in the loaded rule"
   ansible.builtin.assert:
     that:
-      - "__opnsense_loaded_matches | length == 1"
+      - "__opnsense_loaded_matches | ansible.builtin.length == 1"
       - "__opnsense_loaded_matches[0]['settings']['action'] == 'pass'"
       - "__opnsense_loaded_matches[0]['settings']['destination_port'] == '443'"
     fail_msg: >-
@@ -1814,7 +1814,8 @@ module.exit_json(
   vars:
     __opnsense_loaded_matches: >-
       {{ __opnsense_active_rules['rules']
-         | selectattr('name', 'equalto', 'allow-https') | list }}
+         | ansible.builtin.selectattr('name', 'ansible.builtin.equalto', 'allow-https')
+         | ansible.builtin.list }}
 ```
 
 Compare every declared field using the resource module's normalization rules,
@@ -1837,7 +1838,7 @@ module.exit_json(changed=True, msg="Firewall rules are now active")
 - name: "Apply firewall changes"
   foundata.opnsense.firewall_rule_apply:
   when:
-    - __rule_result is changed
+    - __rule_result is ansible.builtin.changed
 ```
 
 **Reasoning:**
