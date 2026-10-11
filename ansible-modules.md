@@ -786,11 +786,15 @@ def verify(persisted: dict | None) -> dict:
     """Return the persisted resource after checking every managed field."""
     if persisted is None:
         raise ProductApiError(
-            "Missing after the write", category="verification", code="missing_after_write"
+            "Missing after the write",
+            category="verification",
+            code="missing_after_write",
         )
     if any(persisted.get(key, MISSING) != value for key, value in desired.items()):
         raise ProductApiError(
-            "Write accepted but not persisted", category="verification", code="not_persisted"
+            "Write accepted but not persisted",
+            category="verification",
+            code="not_persisted",
         )
     return persisted
 
@@ -810,7 +814,9 @@ try:
         before, after = {}, desired
     else:
         delta = {
-            key: value for key, value in desired.items() if current.get(key, MISSING) != value
+            key: value
+            for key, value in desired.items()
+            if current.get(key, MISSING) != value
         }
         changed = bool(delta)
         before = {key: current[key] for key in delta if key in current}
@@ -819,7 +825,8 @@ try:
     result = {
         "changed": changed,
         "rule": (
-            None if state == "absent"
+            None
+            if state == "absent"
             else public_view({**(current or {}), **desired, "name": name})
         ),
         "changed_fields": (
@@ -828,7 +835,9 @@ try:
         "verified": "predicted" if module.check_mode and changed else "observed",
     }
     if module._diff and changed:
-        public_before = {key: before[key] for key in PUBLIC_DIFF_FIELDS if key in before}
+        public_before = {
+            key: before[key] for key in PUBLIC_DIFF_FIELDS if key in before
+        }
         public_after = {key: after[key] for key in PUBLIC_DIFF_FIELDS if key in after}
         if public_before or public_after:
             result["diff"] = {"before": public_before, "after": public_after}
@@ -842,7 +851,9 @@ try:
         operation = "verify"
         if client.find(name) is not None:
             raise ProductApiError(
-                "Resource remains after deletion", category="verification", code="still_present"
+                "Resource remains after deletion",
+                category="verification",
+                code="still_present",
             )
     elif current is None:
         operation = "create"
@@ -854,7 +865,9 @@ try:
             persisted = client.find(name)
             if persisted is None:
                 raise ProductApiError(
-                    "Creation outcome is unknown", category="verification", code="create_unknown"
+                    "Creation outcome is unknown",
+                    category="verification",
+                    code="create_unknown",
                 ) from None
         else:
             operation = "verify"
@@ -1084,8 +1097,14 @@ class UnboundHostOverride(Resource):
     """A composite identity and listing rows that belong to another resource."""
 
     endpoint = "unbound/settings"
-    identity = ("hostname", "domain", "rr")  # no declared uniqueness; more than one match is refused
-    exclude_rows = (("isAlias", True),)  # listing rows that are not objects of this resource
+    identity = (
+        "hostname",
+        "domain",
+        "rr",
+    )  # no declared uniqueness; more than one match is refused
+    exclude_rows = (
+        ("isAlias", True),
+    )  # listing rows that are not objects of this resource
 ```
 
 ```python
@@ -1383,7 +1402,9 @@ from ansible.module_utils.urls import SSLValidationError, open_url
 deadline = time.monotonic() + self.deadline_seconds
 remaining = deadline - time.monotonic()
 if remaining <= 0:
-    raise TransportTimeout("Request budget exhausted", category="timeout", code="deadline_exceeded")
+    raise TransportTimeout(
+        "Request budget exhausted", category="timeout", code="deadline_exceeded"
+    )
 
 chunks: list[bytes] = []
 size = 0
@@ -1406,9 +1427,14 @@ try:
         http_agent=USER_AGENT,
     )
     with response:
-        if response.headers.get("Content-Encoding", "identity").strip().lower() != "identity":
+        if (
+            response.headers.get("Content-Encoding", "identity").strip().lower()
+            != "identity"
+        ):
             raise ProductApiError(
-                "Unsupported response content encoding", category="response", code="content_encoding"
+                "Unsupported response content encoding",
+                category="response",
+                code="content_encoding",
             )
         length = response.headers.get("Content-Length", "").strip()
         declared = int(length) if length.isdecimal() else None
@@ -1421,19 +1447,25 @@ try:
         while True:
             if time.monotonic() >= deadline:
                 raise TransportTimeout(
-                    "Request budget exhausted", category="timeout", code="deadline_exceeded"
+                    "Request budget exhausted",
+                    category="timeout",
+                    code="deadline_exceeded",
                 )
             chunk = response.read1(min(65536, MAX_BODY_BYTES + 1 - size))
             if time.monotonic() >= deadline:
                 raise TransportTimeout(
-                    "Request budget exhausted", category="timeout", code="deadline_exceeded"
+                    "Request budget exhausted",
+                    category="timeout",
+                    code="deadline_exceeded",
                 )
             if not chunk:
                 break
             size += len(chunk)
             if size > MAX_BODY_BYTES:
                 raise ProductApiError(
-                    "Response exceeds the size limit", category="response", code="body_too_large"
+                    "Response exceeds the size limit",
+                    category="response",
+                    code="body_too_large",
                 )
             chunks.append(chunk)
         if declared is not None and size != declared:
@@ -1478,7 +1510,9 @@ except OSError:
     ) from None
 except HTTPException:
     raise ProductApiError(
-        "Invalid or incomplete HTTP response", category="transport", code="http_protocol"
+        "Invalid or incomplete HTTP response",
+        category="transport",
+        code="http_protocol",
     ) from None
 raw = b"".join(chunks)
 
@@ -1495,9 +1529,13 @@ except json.JSONDecodeError:
         "Invalid JSON response", category="response", code="invalid_json"
     ) from None
 if not isinstance(payload, dict):
-    raise ProductApiError("Expected a response object", category="response", code="response_type")
+    raise ProductApiError(
+        "Expected a response object", category="response", code="response_type"
+    )
 if payload.get("result") == "failed":
-    raise ProductApiError("Validation failed", category="product", code="validation_failed")
+    raise ProductApiError(
+        "Validation failed", category="product", code="validation_failed"
+    )
 ```
 
 **Bad examples:**
@@ -1710,17 +1748,29 @@ try:
     # A wrapper status says the command was stopped, not that the deadline
     # fired; the module's own observer decides expiry.
     if rc in (124, 137, -signal.SIGKILL):
-        fail_unknown("Reconciliation was stopped before it reported", "transport", "command_stopped")
+        fail_unknown(
+            "Reconciliation was stopped before it reported",
+            "transport",
+            "command_stopped",
+        )
     if len(stdout) > MAX_OUTPUT_BYTES or len(stderr) > MAX_OUTPUT_BYTES:
-        fail_unknown("Reconciliation output exceeds the limit", "response", "output_too_large")
+        fail_unknown(
+            "Reconciliation output exceeds the limit", "response", "output_too_large"
+        )
     if rc != 0:
-        fail_unknown("Reconciliation failed", "product", parse_product_cli_error(stderr).code)
+        fail_unknown(
+            "Reconciliation failed", "product", parse_product_cli_error(stderr).code
+        )
     lines = stdout.decode("utf-8").strip().splitlines()
     if not lines:
-        fail_unknown("Reconciliation returned no report", "response", "invalid_command_result")
+        fail_unknown(
+            "Reconciliation returned no report", "response", "invalid_command_result"
+        )
     report = json.loads(lines[-1])
     if not isinstance(report, dict) or type(report.get("changed")) is not bool:
-        fail_unknown("Invalid reconciliation report", "response", "invalid_command_result")
+        fail_unknown(
+            "Invalid reconciliation report", "response", "invalid_command_result"
+        )
 except (FileNotFoundError, PermissionError):
     module.fail_json(
         msg="Reconciliation could not start; check the executable and permissions",
@@ -1735,7 +1785,9 @@ except (FileNotFoundError, PermissionError):
 except OSError:
     fail_unknown("Reconciliation could not be completed", "transport", "command_io")
 except ValueError:
-    fail_unknown("Undecodable reconciliation report", "response", "invalid_command_result")
+    fail_unknown(
+        "Undecodable reconciliation report", "response", "invalid_command_result"
+    )
 ```
 
 Validate the remaining report fields against the product schema and verify
