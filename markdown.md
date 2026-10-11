@@ -785,9 +785,13 @@ rumdl fmt --config .rumdl.toml --deny-config-warnings .
 rumdl check --config .rumdl.toml --deny-config-warnings .
 ```
 
+<!--REUSE-IgnoreStart-->
 ```toml
 # rumdl config implementing foundata's guideline. Details, reasoning:
 # https://foundata.com/en/guidelines/markdown/
+#
+# SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 [global]
 extend-enable = [
@@ -844,6 +848,12 @@ levels = [1, 2]
 [MD082]
 allow-parent-headings = true
 ```
+<!--REUSE-IgnoreEnd-->
+
+Copy the file verbatim, including its
+[license comment header](./licensing-apply.md#license-comment-headers). Only the
+`SPDX-License-Identifier` value follows the repository's license, so a check
+that compares a copy with this block ignores that value.
 
 The same settings as command-line options, for a run without the file:
 
