@@ -701,9 +701,10 @@ After a successful run, the declared state holds.
     after deletion.
   - `changed_fields`: the managed options that differed before the write,
     empty for creation and deletion.
-  - `verified`: `predicted` in check mode; otherwise `observed` after a
-    read-back or an unchanged run, and `unverifiable` where the product
-    exposes no state, which the resource documents.
+  - `verified`: `predicted` where check mode skips a write the run would
+    make; otherwise `observed` after a read-back or a run that changes
+    nothing, in either mode, and `unverifiable` where the product exposes no
+    state, which the resource documents.
   - `diff` only when requested, see
     [Check mode and diff mode](#check-diff-mode).
 - Return from an operational module `changed` (`true` only when it acted),
@@ -802,7 +803,7 @@ try:
         "changed_fields": (
             sorted(delta) if state == "present" and current is not None else []
         ),
-        "verified": "predicted" if module.check_mode else "observed",
+        "verified": "predicted" if module.check_mode and changed else "observed",
     }
     if module._diff and changed:
         public_before = {key: before[key] for key in PUBLIC_DIFF_FIELDS if key in before}
@@ -887,6 +888,9 @@ except TransportTimeout:
 - Callers assert on `verified`, so it is one of three words. A boolean cannot
   say why a state is unverified, and three builds from the same guide
   returned a string, a boolean and a mapping under that name.
+- `verified` names the evidence behind the returned state. A check-mode run
+  that changes nothing reads the same state as a normal run, so both report
+  `observed`; the caller learns the mode from `ansible_check_mode`.
 - `changed: true` on a failure covers a confirmed and a possible write alike.
   `outcome` tells them apart, so a caller knows whether to reconcile first.
 
@@ -1116,7 +1120,7 @@ result = {
     "changed": bool(delta),
     "rule": public_view({**(current or {}), **desired, "name": name}),
     "changed_fields": sorted(delta) if current is not None else [],
-    "verified": "predicted" if module.check_mode else "observed",
+    "verified": "predicted" if module.check_mode and delta else "observed",
 }
 if module._diff:
     visible = sorted(PUBLIC_DIFF_FIELDS.intersection(delta))
@@ -2188,8 +2192,9 @@ changed_fields:
   sample: [destination_port]
 verified:
   description: >-
-    V(predicted) in check mode; otherwise V(observed) after a read-back or an
-    unchanged run, and V(unverifiable) where the product exposes no state.
+    V(predicted) where check mode skips a write; otherwise V(observed) after
+    a read-back or a run that changes nothing, and V(unverifiable) where the
+    product exposes no state.
   returned: always
   type: str
   sample: observed
