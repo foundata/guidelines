@@ -504,6 +504,9 @@ membership against the fragment; review covers names.
 
 **Good examples:**
 
+The collection's public error schema declares the `dependency` category with
+the `missing_library` code, see [Convergence and results](#convergence-results).
+
 ```python
 import traceback
 from urllib.error import HTTPError
@@ -522,7 +525,16 @@ else:
 def main() -> None:
     module = AnsibleModule(argument_spec={}, supports_check_mode=True)
     if SDK_IMPORT_ERROR:
-        module.fail_json(msg=missing_required_lib("somesdk"), exception=SDK_IMPORT_ERROR)
+        module.fail_json(
+            msg=missing_required_lib("somesdk"),
+            exception=SDK_IMPORT_ERROR,
+            operation="import",
+            error_category="dependency",
+            error_code="missing_library",
+            http_status=None,
+            changed=False,
+            outcome="unchanged",
+        )
 ```
 
 **Bad examples:**
@@ -691,7 +703,7 @@ After a successful run, the declared state holds.
   read-back. Report confirmed changes with `changed: true`. Report possible
   writes with `changed: true` and `outcome: unknown` until reconciled. Use
   `changed: false` only when no change occurred.
-- Return these keys from a resource module, and no generic `resource` key, no
+- Return these keys from a successful run of a resource module, with no
   separate prediction key and no free text in `verified`:
   - `changed`.
   - The normalized public resource under its singular product key (`alias`,
@@ -712,12 +724,17 @@ After a successful run, the declared state holds.
   `verified` with the same three values, and `verification`, a mapping per
   named object with `in_sync`, `drift` or `unverifiable`, where the module
   compares named objects.
-- Return from every failure, besides `msg`: `changed`; `outcome`;
-  `operation`, the step that failed; the identity under its option names,
-  where the module has one; and `error_category`, `error_code` and
-  `http_status` from the collection's public error schema, with
+- Return from every expected failure that the collection's code reports
+  after argument parsing succeeded, besides `msg`: `changed`; `outcome`;
+  `operation`, the step that failed; each non-secret identity component under
+  its option name, once it passes the public error schema's validator; and
+  `error_category`, `error_code` and `http_status` from that schema, with
   `http_status` `null` where no HTTP status applies. Further keys come from
-  the same schema.
+  the same schema, and a generic `resource` key is not one of them. Failures
+  of argument parsing, of loading the payload and on the controller keep
+  Ansible's own result schema.
+- Make the public error schema's identity validators accept every valid
+  identity of each resource, so that a failure never drops a valid identity.
 - Set `outcome` to one of three values; `changed` is `false` with the first
   and `true` with the others:
   - `unchanged`: no write started, or the product refused it and a read-back
@@ -728,6 +745,8 @@ After a successful run, the declared state holds.
 **You MUST NOT:**
 
 - Write to standard output or install a `logging` handler in payload code.
+- Return a generic `resource` key, on success or on failure. The singular
+  product key and the identity options name the object.
 - Use a key Ansible interprets, such as `failed`, `msg`, `rc`, `invocation`,
   `ansible_facts`, `warnings`, `deprecations`, `results` or `skipped`, with a
   meaning other than its
@@ -893,6 +912,13 @@ except TransportTimeout:
   `observed`; the caller learns the mode from `ansible_check_mode`.
 - `changed: true` on a failure covers a confirmed and a possible write alike.
   `outcome` tells them apart, so a caller knows whether to reconcile first.
+- Ansible reports an invalid argument, a payload that fails to load and a
+  controller error before or outside the collection's code, with its own
+  keys. Wrapping that handling only to add product keys would replace a
+  framework contract.
+- The error schema publishes only values its validators accept, so an
+  identity they reject stays out of the result. A validator narrower than the
+  valid identities would drop the identity a caller needs to find the object.
 
 **Enforcement:** unit tests over a fake transport that holds state and counts
 writes, a repeated real run, timeout and concurrency cases, and an
@@ -2672,9 +2698,11 @@ item marked not applicable.
 - [ ] **Convergence:** no redundant reads, write the difference, read back,
   recover by identity after a timeout
   ([Convergence and results](#convergence-results)).
-- [ ] **Results:** resource key, `changed_fields` and `verified` as defined;
-  failures carry `changed`, `outcome`, `operation`, the identity and the
-  error schema's keys ([Convergence and results](#convergence-results)).
+- [ ] **Results:** resource key, `changed_fields` and `verified` as defined on
+  success; expected failures after argument parsing carry `changed`,
+  `outcome`, `operation`, each identity component the error schema validates
+  and the schema's keys; validators accept every valid identity; no generic
+  `resource` key ([Convergence and results](#convergence-results)).
 - [ ] **Performance:** no per-item searches, pagination complete, activation
   batched; a list-capable module validates everything first and reports per
   item ([Performance](#performance)).
