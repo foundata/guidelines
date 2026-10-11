@@ -64,7 +64,11 @@ The terms MUST, SHOULD, and other key words are used as defined in
 
 - Build 1:1 wrapper modules or roles around upstream functionality. Facades are
   legitimate only when they compose several primitives under one opinionated
-  contract (n:1 — e.g., a `user` role that also manages SSH authorized keys).
+  contract (n:1, for example a `user` role that also manages SSH authorized
+  keys). The module guide's
+  [When to write a module](./ansible-modules.md#when-to-write-a-module) states
+  the exception for product operations without a resource shape, such as an
+  activation.
 
 **You SHOULD:**
 
