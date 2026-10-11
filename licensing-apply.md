@@ -318,6 +318,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
   [regions that REUSE ignores](https://reuse.readthedocs.io/en/latest/usage.html#ignoring-parts-of-a-file)
   and out of documentation blocks such as PowerShell comment-based help, PHPDoc
   or docstrings.
+- Keep the tags out of regions a tool regenerates. A `.gitignore` carries them
+  in the header the [gitignore guide](./git-ignore.md#gitignore-file-default)
+  puts above the generated templates.
 - Templates carry the header in the template language's comment, such as
   `{# … #}` in Jinja or `{{/* … */}}` in Go templates, so rendered output does
   not inherit it. A skeleton template whose output becomes a file of the new
