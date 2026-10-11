@@ -1863,10 +1863,14 @@ module initializes a product.
   difference or on an explicit `activate: always`, verify afterwards, and
   outside check mode report `changed` only when it activated. In check mode,
   `changed` and `activated` predict a planned activation, see
-  [Convergence and results](#convergence-results). An activation whose
-  reply is lost reports `outcome: unknown`, also with `activate: always`
-  when the state was already in sync, because nothing proves the activation
-  ran. Where the active state is not observable, document that the module
+  [Convergence and results](#convergence-results). After an activation
+  whose reply is lost, whether by a timeout, a dropped connection or an
+  undecodable reply, read the active state again: the observed resolution
+  of the drift the activation was run for is `verified: observed` and
+  success; a remaining difference or an unreadable state is
+  `outcome: unknown`. With `activate: always` on a state that was already in
+  sync nothing proves the activation ran, so it reports `outcome: unknown`.
+  Where the active state is not observable, document that the module
   reports a change on every run and exclude it from idempotence checks
   explicitly.
 - Wait for a bounded completion where the product exposes job status, and never
