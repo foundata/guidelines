@@ -2560,10 +2560,18 @@ tuned lanes and skips:
 ```toml
 # antsibull-nox.toml, excerpt as collection_modules renders it
 [sessions.license_check]
-# The per-file check ignores REUSE.toml and misreads the license sentence in
-# README.md. Every file the licensing guide exempts from headers would need an
-# ignore entry. "reuse lint" still checks the licensing.
-run_license_check = false
+# The per-file check reads the license tags of every file but not REUSE.toml,
+# so it skips the files the licensing guide exempts from headers: the
+# generated changelog and the fragments. It also misreads the license sentence
+# in README.md; "reuse lint" still checks that file.
+run_license_check = true
+license_check_extra_ignore_paths = [
+  "CHANGELOG.rst",
+  "README.md",
+  "changelogs/changelog.yaml",
+  "changelogs/fragments/*",
+  "changelogs/fragments/archive/*",
+]
 
 [sessions.ansible_test_sanity]
 include_devel = true
