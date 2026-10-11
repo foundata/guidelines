@@ -75,21 +75,28 @@ narrowest applicable rule takes precedence.
 Use the following as the default `.gitattributes` of any unspecific Git
 repository:
 
+<!--REUSE-IgnoreStart-->
 ```gitattributes
-# Attributes for this repository, see https://git-scm.com/docs/gitattributes
+# Attributes implementing foundata's guideline. Details, reasoning:
+# https://foundata.com/en/guidelines/git-attributes/
+#
+# SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 # Store every text file with LF in the repository and write LF into the
 # working tree on every platform, regardless of a contributor's local
-# core.autocrlf or core.eol setting. Files Git detects as binary are left
-# untouched.
+# core.autocrlf or core.eol setting. Binaries are left untouched.
 * text=auto eol=lf
 
 ### Repository-specific exceptions
 
-# [... none right now ...]
+# none right now
 ```
+<!--REUSE-IgnoreEnd-->
 
-Add exceptions below the marked heading, with a comment naming what requires
+The header links this guide and carries the
+[license comment header](./licensing-apply.md#license-comment-headers). Add
+exceptions below the marked heading, with a comment naming what requires
 them. The rest of this guide describes the exceptions that come up in practice.
 
 
