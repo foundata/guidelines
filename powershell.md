@@ -107,11 +107,16 @@ plain text.
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
+<!--REUSE-IgnoreStart-->
 **You MUST:**
 
-- Use the following default script header:
+- Use the following default script header after the
+  [license comment header](./licensing-apply.md#license-comment-headers):
 
   ```powershell
+  # SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+  # SPDX-License-Identifier: GPL-3.0-or-later
+
   #Requires -Version 5.1
   Set-StrictMode -Version Latest
   ```
@@ -120,6 +125,9 @@ plain text.
   one:
 
   ```powershell
+  # SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+  # SPDX-License-Identifier: GPL-3.0-or-later
+
   #Requires -Version 5.1
 
   # Install and configure the example service.
@@ -148,11 +156,15 @@ plain text.
 **Good examples:**
 
 ```powershell
+# SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 #Requires -Version 5.1
 Set-StrictMode -Version Latest
 
 # Install and configure the example service.
 ```
+<!--REUSE-IgnoreEnd-->
 
 **Bad examples:**
 
