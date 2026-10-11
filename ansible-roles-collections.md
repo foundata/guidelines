@@ -18,6 +18,7 @@ The terms MUST, SHOULD, and other key words are used as defined in
 
 - [Scoping (collections and roles)](#scoping)
 - [Deployment roles](#deployment-roles)
+- [Workflow roles](#workflow-roles)
 - [Role argument specifications](#roles)
 - [Author information](#author-information)
 
@@ -185,6 +186,28 @@ through modules. These rules add to [Scoping](#scoping).
   of every setting change.
 - Supporting two product generations does not make their data compatible in
   both directions. A migrated database does not move back with the image.
+
+
+## Workflow roles<a id="workflow-roles"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+A workflow role, named `config`, sequences the modules of a collection that
+manages a product. These rules add to [Scoping](#scoping).
+
+**You MUST:**
+
+- Activate through the collection's activation module on every run, not only
+  after a change, and verify the effective state the role promises, as the
+  module guide's
+  [Activation, operations and bootstrap](./ansible-modules.md#activation-bootstrap)
+  section shows.
+
+**Reasoning:**
+
+- A change-triggered activation never runs when an earlier run left saved
+  work unapplied, and a saved setting proves nothing about the running
+  product.
 
 
 ## Role argument specifications<a id="roles"></a>

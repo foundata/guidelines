@@ -1808,7 +1808,7 @@ module initializes a product.
 **Good examples:**
 
 ```python
-# The module states what it verified; the workflow probes the effect.
+# The module states what it verified; the workflow role (`config`) probes the effect.
 module.exit_json(
     changed=True,
     activated=True,
@@ -1817,7 +1817,7 @@ module.exit_json(
 ```
 
 ```yaml
-# The shipped workflow runs the probe on every execution, not only on change.
+# The workflow role runs the probe on every execution, not only on change.
 - name: "Activate the saved firewall rules the appliance has not loaded"
   foundata.opnsense.firewall_rule_apply:
     activate: "auto"  # loaded versus saved; also clears activation left pending by a failed run
@@ -1849,7 +1849,8 @@ Compare every declared field using the resource module's normalization rules,
 or verify the expected active revision. For deletion, assert absence. Finding
 the right name alone does not verify an update.
 
-Where the product exposes no loaded state, the workflow probes behavior
+Where the product exposes no loaded state, the
+[workflow role](./ansible-roles-collections.md#workflow-roles) probes behavior
 instead, as the Molecule scenario does with a query through the firewall,
 and the documentation names what stays unverified.
 
@@ -1879,9 +1880,9 @@ module.exit_json(changed=True, msg="Firewall rules are now active")
   documents the policy in the wrong place.
 - A client-side rescue cannot repair a severed management path.
 
-**Enforcement:** state-machine unit tests for operational modules and bootstrap,
-workflow tests including the pending-state case, and recovery evidence from a
-real target.
+**Enforcement:** state-machine unit tests for operational modules and
+bootstrap, workflow role tests including the pending-state case, and recovery
+evidence from a real target.
 
 
 ## Info and facts modules<a id="info-facts-modules"></a>
