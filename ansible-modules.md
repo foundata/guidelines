@@ -649,6 +649,38 @@ After a successful run, the declared state holds.
   read-back. Report confirmed changes with `changed: true`. Report possible
   writes with `changed: true` and `outcome: unknown` until reconciled. Use
   `changed: false` only when no change occurred.
+- Return these keys from a resource module, and no generic `resource` key, no
+  separate prediction key and no free text in `verified`:
+  - `changed`.
+  - The normalized public resource under its singular product key (`alias`,
+    `organization`), with the field meanings and types of the `_info` module,
+    without secrets and unstable internals. Product-assigned identifiers live
+    inside it and are omitted for a creation in check mode; the key is `null`
+    after deletion.
+  - `changed_fields`: the managed options that differed before the write,
+    empty for creation and deletion.
+  - `verified`: `predicted` in check mode; otherwise `observed` after a
+    read-back or an unchanged run, and `unverifiable` where the product
+    exposes no state, which the resource documents.
+  - `diff` only when requested, see
+    [Check mode and diff mode](#check-diff-mode).
+- Return from an operational module `changed` (`true` only when it acted),
+  `activated` (what happened, or would happen in check mode), `verified` with
+  the same three values, and `verification`, a mapping per named object with
+  `in_sync`, `drift` or `unverifiable`, where the module compares named
+  objects.
+- Return from every failure, besides `msg`: `changed`; `outcome`;
+  `operation`, the step that failed; the identity under its option names,
+  where the module has one; and `error_category`, `error_code` and
+  `http_status` from the collection's public error schema, with
+  `http_status` `null` where no HTTP status applies. Further keys come from
+  the same schema.
+- Set `outcome` to one of three values; `changed` is `false` with the first
+  and `true` with the others:
+  - `unchanged`: no write started, or the product refused it and a read-back
+    shows the state as before.
+  - `unknown`: a write started and its effect is not established.
+  - `changed`: a write took effect, and a later step failed.
 
 **You MUST NOT:**
 
@@ -661,29 +693,6 @@ After a successful run, the declared state holds.
 - Retry a creation because the response was lost.
 - Sort a list whose order is significant, or treat missing data as an empty
   resource.
-
-**You SHOULD:**
-
-- Return these keys from a resource module, and no generic `resource` key, no
-  separate prediction key and no free text in `verified`:
-  - `changed`.
-  - The normalized public resource under its singular product key (`alias`,
-    `organization`), with the field meanings and types of the `_info` module,
-    without secrets and unstable internals. Product-assigned identifiers live
-    inside it and are omitted for a creation in check mode; the key is `null`
-    after deletion.
-  - `changed_fields`: the managed options that differed before the write,
-    empty for creation and deletion.
-  - `verified`: `observed` after a read-back or an unchanged run, `predicted`
-    in check mode, `unverifiable` where the product exposes no state, which
-    the resource documents.
-  - `diff` only when requested, see
-    [Check mode and diff mode](#check-diff-mode).
-- Return from an operational module `changed` (`true` only when it acted),
-  `activated` (what happened, or would happen in check mode), `verified` with
-  the same three values, and `verification`, a mapping per named object with
-  `in_sync`, `drift` or `unverifiable`, where the module compares named
-  objects.
 
 **Good examples:**
 
@@ -698,32 +707,25 @@ return an unknown outcome and reconcile on a later invocation.
 
 This excerpt returns reconciliation metadata. `current` and `desired` are
 normalized and schema-validated; the public diff fields contain only
-non-secret scalar values. Argument, ownership and eligibility checks precede
-the excerpt.
+non-secret scalar values. `public_view` keeps the allowlisted public fields.
+Argument, ownership and eligibility checks precede the excerpt.
 
 ```python
 MISSING = object()
 PUBLIC_DIFF_FIELDS = frozenset({"enabled", "action", "destination_port"})
 
 
-def verify(persisted: dict | None, changed: bool) -> None:
-    """Verify managed fields while preserving the mutation status."""
+def verify(persisted: dict | None) -> dict:
+    """Return the persisted resource after checking every managed field."""
     if persisted is None:
-        module.fail_json(
-            msg=f"{name!r} is missing after the write",
-            changed=changed,
-            exception=None,
+        raise ProductApiError(
+            "Missing after the write", category="verification", code="missing_after_write"
         )
-    mismatch = sorted(
-        key for key, value in desired.items() if persisted.get(key, MISSING) != value
-    )
-    if mismatch:
-        module.fail_json(
-            msg=f"Write accepted but not persisted: {', '.join(mismatch)}",
-            changed=changed,
-            persisted_fields=sorted(set(desired) - set(mismatch)),
-            exception=None,
+    if any(persisted.get(key, MISSING) != value for key, value in desired.items()):
+        raise ProductApiError(
+            "Write accepted but not persisted", category="verification", code="not_persisted"
         )
+    return persisted
 
 
 state = module.params["state"]
@@ -747,9 +749,17 @@ try:
         before = {key: current[key] for key in delta if key in current}
         after = delta
 
-    result = {"changed": changed, "name": name}
-    if state == "present" and current is not None:
-        result["changed_fields"] = sorted(delta)
+    result = {
+        "changed": changed,
+        "rule": (
+            None if state == "absent"
+            else public_view({**(current or {}), **desired, "name": name})
+        ),
+        "changed_fields": (
+            sorted(delta) if state == "present" and current is not None else []
+        ),
+        "verified": "predicted" if module.check_mode else "observed",
+    }
     if module._diff and changed:
         public_before = {key: before[key] for key in PUBLIC_DIFF_FIELDS if key in before}
         public_after = {key: after[key] for key in PUBLIC_DIFF_FIELDS if key in after}
@@ -782,12 +792,12 @@ try:
         else:
             operation = "verify"
             persisted = client.find(name)
-        verify(persisted, changed=True)
+        result["rule"] = public_view(verify(persisted))
     else:
         operation = "update"
         client.update(current["id"], delta)
         operation = "verify"
-        verify(client.find(name), changed=True)
+        result["rule"] = public_view(verify(client.find(name)))
     module.exit_json(**result)
 except ProductApiError as error:
     module.fail_json(
@@ -833,6 +843,8 @@ except TransportTimeout:
 - Callers assert on `verified`, so it is one of three words. A boolean cannot
   say why a state is unverified, and three builds from the same guide
   returned a string, a boolean and a mapping under that name.
+- `changed: true` on a failure covers a confirmed and a possible write alike.
+  `outcome` tells them apart, so a caller knows whether to reconcile first.
 
 **Enforcement:** unit tests over a fake transport that holds state and counts
 writes, a repeated real run, timeout and concurrency cases, and an
@@ -1054,16 +1066,21 @@ resource names in the engine that returns nothing.
 ```python
 # These schema-validated fields contain only public scalar values.
 PUBLIC_DIFF_FIELDS = frozenset({"enabled", "action", "destination_port"})
-result = {"changed": bool(diff), "name": name}
+result = {
+    "changed": bool(delta),
+    "rule": public_view({**(current or {}), **desired, "name": name}),
+    "changed_fields": sorted(delta) if current is not None else [],
+    "verified": "predicted" if module.check_mode else "observed",
+}
 if module._diff:
-    visible = sorted(PUBLIC_DIFF_FIELDS.intersection(diff))
+    visible = sorted(PUBLIC_DIFF_FIELDS.intersection(delta))
     if visible:
         before = current or {}
         result["diff"] = {
             "before": {key: before[key] for key in visible if key in before},
             "after": {key: desired[key] for key in visible},
         }
-if module.check_mode or not diff:
+if module.check_mode or not delta:
     module.exit_json(**result)
 ```
 
@@ -1154,8 +1171,13 @@ the declared support attributes.
 except ProductApiError as error:
     module.fail_json(
         msg="Alias update was rejected by the appliance",
-        error_code=error.code,  # allowlisted, product-defined
-        resource=name,  # non-secret identity
+        operation=operation,
+        name=name,  # non-secret identity under its option name
+        error_category=error.category,  # allowlisted, product-defined
+        error_code=error.code,
+        http_status=error.status,
+        changed=write_attempted,
+        outcome="unknown" if write_attempted else "unchanged",
         exception=None,  # never attach the active exception's text
     )
 ```
@@ -1519,8 +1541,8 @@ This profile uses a qualified GNU `timeout` and a command with bounded output.
 The command reserves statuses 124 and 137 for the wrapper. The module has
 already handled check mode and validated the declaration before this write.
 Its product utility supplies `parse_product_cli_error`, which accepts any byte
-input and returns a known code and a locally defined summary. Malformed or
-unknown output gets fixed fallbacks. The parser performs no I/O, raises no
+input and returns a known code from the public error schema. Malformed or
+unknown output gets a fixed fallback. The parser performs no I/O, raises no
 operational exceptions and never echoes raw text or unchecked extracted values.
 
 ```python
@@ -1543,14 +1565,16 @@ argv = [
 ]
 
 
-def fail_unknown(message: str, **details: object) -> None:
+def fail_unknown(message: str, category: str, code: str) -> None:
     module.fail_json(
         msg=message,
         operation="reconcile",
+        error_category=category,
+        error_code=code,
+        http_status=None,
         changed=True,
         outcome="unknown",
         exception=None,
-        **details,
     )
 
 
@@ -1568,32 +1592,32 @@ try:
     # A wrapper status says the command was stopped, not that the deadline
     # fired; the module's own observer decides expiry.
     if rc in (124, 137, -signal.SIGKILL):
-        fail_unknown("Reconciliation was stopped before it reported", rc=rc)
+        fail_unknown("Reconciliation was stopped before it reported", "transport", "command_stopped")
     if len(stdout) > MAX_OUTPUT_BYTES or len(stderr) > MAX_OUTPUT_BYTES:
-        fail_unknown("Reconciliation produced more output than expected", rc=rc)
+        fail_unknown("Reconciliation output exceeds the limit", "response", "output_too_large")
     if rc != 0:
-        diagnostic = parse_product_cli_error(stderr)
-        fail_unknown(
-            "Reconciliation failed",
-            rc=rc,
-            error_code=diagnostic.code,
-            error_reason=diagnostic.safe_summary,
-        )
+        fail_unknown("Reconciliation failed", "product", parse_product_cli_error(stderr).code)
     lines = stdout.decode("utf-8").strip().splitlines()
     if not lines:
-        fail_unknown("Reconciliation returned no report")
+        fail_unknown("Reconciliation returned no report", "response", "invalid_command_result")
     report = json.loads(lines[-1])
     if not isinstance(report, dict) or type(report.get("changed")) is not bool:
-        fail_unknown("Reconciliation returned an invalid report")
+        fail_unknown("Invalid reconciliation report", "response", "invalid_command_result")
 except (FileNotFoundError, PermissionError):
     module.fail_json(
         msg="Reconciliation could not start; check the executable and permissions",
+        operation="reconcile",
+        error_category="transport",
+        error_code="command_start",
+        http_status=None,
         changed=False,
         outcome="unchanged",
         exception=None,
     )
-except (OSError, ValueError):
-    fail_unknown("Reconciliation could not be completed or its report decoded")
+except OSError:
+    fail_unknown("Reconciliation could not be completed", "transport", "command_io")
+except ValueError:
+    fail_unknown("Undecodable reconciliation report", "response", "invalid_command_result")
 ```
 
 Validate the remaining report fields against the product schema and verify
@@ -2088,14 +2112,14 @@ extends_documentation_fragment:
 """
 ```
 
-For a module that exposes a read-back snapshot, document its return separately
-from any check-mode prediction:
+Document the resource key once; `verified` tells a read-back from a
+prediction:
 
 ```python
 RETURN = r"""
 rule:
-  description: Normalized public state read from the appliance.
-  returned: On success with O(state=present), outside check mode.
+  description: Normalized public state of the rule.
+  returned: always; V(null) after deletion; without product-assigned identifiers for a creation in check mode.
   type: dict
   contains:
     name:
@@ -2106,6 +2130,21 @@ rule:
       description: Configured packet action.
       type: str
       sample: pass
+changed_fields:
+  description: >-
+    Managed options that differed before the write; empty for creation
+    and deletion.
+  returned: always
+  type: list
+  elements: str
+  sample: [destination_port]
+verified:
+  description: >-
+    V(predicted) in check mode; otherwise V(observed) after a read-back or an
+    unchanged run, and V(unverifiable) where the product exposes no state.
+  returned: always
+  type: str
+  sample: observed
 """
 ```
 
@@ -2502,8 +2541,11 @@ item marked not applicable.
   missing dictionary keys distinct from null; no defaults on mutable fields
   ([Arguments and ownership](#arguments-ownership)).
 - [ ] **Convergence:** no redundant reads, write the difference, read back,
-  recover by identity after a timeout; failures carry `changed` and an unknown
-  marker ([Convergence and results](#convergence-results)).
+  recover by identity after a timeout
+  ([Convergence and results](#convergence-results)).
+- [ ] **Results:** resource key, `changed_fields` and `verified` as defined;
+  failures carry `changed`, `outcome`, `operation`, the identity and the
+  error schema's keys ([Convergence and results](#convergence-results)).
 - [ ] **Performance:** no per-item searches, pagination complete, activation
   batched; a list-capable module validates everything first and reports per
   item ([Performance](#performance)).
