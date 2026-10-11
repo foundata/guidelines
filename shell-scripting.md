@@ -1,5 +1,10 @@
 # Shell scripting style guide
 
+<!--
+SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 This document defines the style for writing portable
 [POSIX](https://pubs.opengroup.org/onlinepubs/9799919799/) shell scripts. It
 aims to produce scripts that work across different shells

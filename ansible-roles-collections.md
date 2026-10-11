@@ -1,5 +1,10 @@
 # Ansible roles and collections
 
+<!--
+SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 This guide defines how to organize Ansible roles and collections and describe
 role parameters. It covers collection boundaries, naming, dependencies,
 deployment roles and role argument specifications.

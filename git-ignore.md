@@ -1,5 +1,10 @@
 # Git: `gitignore` configuration
 
+<!--
+SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 The `gitignore` config is used to specify intentionally untracked files. There
 are [several places](https://git-scm.com/docs/gitignore#_synopsis) to define it.
 A `.gitignore` file is the usual, easily accessible per-repository option which

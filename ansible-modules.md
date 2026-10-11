@@ -1,5 +1,10 @@
 # Ansible module development guide
 
+<!--
+SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 This guide covers developing and reviewing Ansible modules, module utilities,
 documentation fragments, action plugins, filter plugins and test plugins.
 It follows Ansible practice, with general Python rules where applicable.

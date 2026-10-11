@@ -1,5 +1,10 @@
 # OCI container image build and release guide
 
+<!--
+SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 This guide defines how foundata builds and publishes Linux
 [OCI container images](https://github.com/opencontainers/image-spec) from
 [Containerfiles](https://github.com/containers/common/blob/main/docs/Containerfile.5.md).

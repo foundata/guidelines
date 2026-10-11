@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+# SPDX-License-Identifier: CC-BY-SA-4.0
 """Check, assign and list the stable requirement identifiers of a guide.
 
 A normative statement is a top-level list item that either contains an RFC 2119

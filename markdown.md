@@ -1,5 +1,10 @@
 # Markdown style guide
 
+<!--
+SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 This document defines the style for writing technical documentation in Markdown.
 It aims to keep source files easy to read, search and review while producing
 predictable output on the renderers used by foundata projects.

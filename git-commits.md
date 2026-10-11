@@ -1,5 +1,10 @@
 # Git: commit messages
 
+<!--
+SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 MUST, SHOULD and other key words are used as defined in
 [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119) and
 [RFC 8174](https://datatracker.ietf.org/doc/html/rfc8174).

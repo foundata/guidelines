@@ -1,4 +1,10 @@
 # Licensing guide: how to choose a license
+
+<!--
+SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 <!--REUSE-IgnoreStart-->
 
 

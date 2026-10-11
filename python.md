@@ -1,5 +1,10 @@
 # Python style guide
 
+<!--
+SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 This document defines the style for writing Python applications, libraries and
 scripts. It aims to produce code that is readable, maintainable, testable and
 compatible with the supported Python versions.

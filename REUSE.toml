@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+# SPDX-License-Identifier: CC-BY-SA-4.0
+
 version = 1
 SPDX-PackageName = "foundata: guidelines, conventions, standards and related documents"
 SPDX-PackageDownloadLocation = "https://github.com/foundata/guidelines/"

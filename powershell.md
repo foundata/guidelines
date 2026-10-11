@@ -1,5 +1,10 @@
 # PowerShell style guide
 
+<!--
+SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 This document defines the style for writing PowerShell scripts and modules. It
 aims to produce scripts that are compatible with Windows PowerShell 5.1 and
 PowerShell 7+, while being readable, maintainable, and suitable for automation.

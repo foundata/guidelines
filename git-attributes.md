@@ -1,5 +1,10 @@
 # Git: `gitattributes` configuration
 
+<!--
+SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 The `gitattributes` config assigns attributes to paths. It decides which bytes
 Git writes into the working tree, which bytes `git archive` writes into a
 release artifact, and how Git diffs and merges a file. A `.gitattributes` file

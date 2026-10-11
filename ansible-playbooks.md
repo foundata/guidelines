@@ -1,5 +1,10 @@
 # Ansible playbook guidelines
 
+<!--
+SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 This document defines the style for writing Ansible playbooks, addressing the
 lack of a consistent and comprehensive code style and usage in both
 [Red Hat's guidelines](https://github.com/redhat-cop/automation-good-practices/blob/main/coding_style/README.adoc#ansible-guidelines)

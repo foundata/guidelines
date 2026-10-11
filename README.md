@@ -1,5 +1,10 @@
 # foundata: guidelines, conventions, standards and related documents
 
+<!--
+SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 This repository collects recommendations and rules
 [foundata](https://foundata.com/) is using to create creative work (which
 includes source code) or doing operations. What makes sense to share in public

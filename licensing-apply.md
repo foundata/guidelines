@@ -1,5 +1,10 @@
 # Licensing guide: how to apply licenses
 
+<!--
+SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 This document explains how to apply one or more licenses to your project after
 [choosing](./licensing-choose.md) them.
 [foundata](https://foundata.com/)'s projects typically follow the most recent

@@ -1,5 +1,10 @@
 # Go style guide
 
+<!--
+SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 This document defines the style for writing Go applications, commands and
 libraries. It aims to produce code that is readable, maintainable, testable and
 compatible with the supported Go versions and target platforms. The language is

@@ -1,5 +1,10 @@
 # Licensing guide: how to change a license, re-licensing projects
 
+<!--
+SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+SPDX-License-Identifier: CC-BY-SA-4.0
+-->
+
 To re-license a project (i.e., place it under a different or additional
 license), all contributors generally need to agree, as we do not use
 [Contributor License Agreements (CLAs)](https://en.wikipedia.org/wiki/Contributor_License_Agreement).
