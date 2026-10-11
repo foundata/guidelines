@@ -17,6 +17,15 @@ The terms MUST, SHOULD, and other key words are used as defined in
 [RFC 2119](https://datatracker.ietf.org/doc/html/rfc2119) and
 [RFC 8174](https://datatracker.ietf.org/doc/html/rfc8174).
 
+Before the first module, read Terms, When to write a module, Supported
+runtimes, Naming and layout, Payload and dependency boundaries, Arguments and
+ownership, Convergence and results, Check mode and diff mode, Secrets and
+errors, the transport section your product uses, Module documentation and
+Testing. The other sections are reference for the step that needs them:
+Resource engine with the second resource, Activation when the product
+separates saving from applying, Compatibility and releases before the first
+release, Checks and tooling when a session changes.
+
 
 ## Table of contents
 
@@ -1504,21 +1513,22 @@ separately.
   (exclusive creation, owner and mode checked) and passes the path to the
   documented native import, removing the file on success, failure and
   interruption; qualify that cleanup like any other.
-- Qualify each locator's deadline mechanism and descendant cleanup.
-  Declare the implementation and executable path as prerequisites; a
-  conventional executable name is no proof of its implementation, so record
-  the version output at qualification and select an implementation-specific
-  path where a distribution provides one. For a container or wrapper
-  locator, host process-group cleanup does not reach the target: qualify a
-  target-side watchdog prepared from the remaining budget of the same
-  deadline, inspect the target for survivors after expiry, and exclude
-  commands that detach unless a session or cgroup mechanism is qualified.
-  Use the operation's remaining
-  monotonic budget and state which observer owns the expiry flag; a
-  status-only wrapper that backs it up fires later, with its margin and its
-  cleanup grace documented, and a command status alone is never observed
-  expiry. Record the cleanup scope (process group, cgroup, container
-  session), how survivors are detected and which escapes remain.
+- Qualify each locator's deadline mechanism and descendant cleanup. Declare
+  the implementation and executable path as prerequisites; a conventional
+  executable name is no proof of its implementation, so record the version
+  output at qualification and select an implementation-specific path where a
+  distribution provides one. Record the cleanup scope (process group,
+  cgroup, container session), how survivors are detected and which escapes
+  remain.
+- Qualify a target-side watchdog for a container or wrapper locator,
+  prepared from the remaining budget of the same deadline; host
+  process-group cleanup does not reach the target. Inspect the target for
+  survivors after expiry, and exclude commands that detach unless a session
+  or cgroup mechanism is qualified.
+- Use the operation's remaining monotonic budget and state which observer
+  owns the expiry flag. A status-only wrapper that backs it up fires later,
+  with its margin and its cleanup grace documented; a command status alone is
+  never observed expiry.
 - Give the `timeout` wrapper command a duration above zero. Round a remaining
   budget up, never down to zero.
 - Request bytes with `encoding=None` and check both streams' sizes before
