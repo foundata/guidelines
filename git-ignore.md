@@ -15,6 +15,7 @@ is easily shared among all developers as part of the repository itself.
 
 - [Default starting point for a repository's `.gitignore`](#gitignore-file-default)
   - [Reasoning](#gitignore-file-default-reasoning)
+  - [The macOS `Icon` entry](#gitignore-macos-icon)
 - [Repository-specific files to ignore](#gitignore-repository-specific)
 - [Ecosystem-specific `.gitignore` additions](#gitignore-ecosystem-specific)
   - [Ansible](#type-ansible)
@@ -54,7 +55,8 @@ carries the
 
 Keep the header outside the generated region. Regenerating the templates
 replaces everything from the `# Created by` line to the `# End of` line, and a
-fresh render can only be compared with an unmodified region.
+fresh render can only be compared with an unmodified region. The
+[macOS `Icon` entry](#gitignore-macos-icon) is the one change allowed inside it.
 
 
 ### Reasoning<a id="gitignore-file-default-reasoning"></a>
@@ -81,6 +83,52 @@ components by default:
 - [Vim](https://www.vim.org/)
 - [Microsoft Visual Studio Code](https://code.visualstudio.com/)
 - [JetBrains Toolset (complete suite / all IDEs)](https://www.jetbrains.com/products)
+
+
+### The macOS `Icon` entry<a id="gitignore-macos-icon"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+Finder stores a folder's custom icon in a file named `Icon` followed by a
+carriage return. Toptal's macOS template matches it with two literal carriage
+returns, shown here as `\r`:
+
+```text
+# Icon must end with two \r
+Icon\r\r
+```
+
+Replace these two lines with the following ones, in every `.gitignore` and in
+every template that renders one:
+
+```text
+# Finder icon metadata ends with a carriage return, matched by the wildcard.
+Icon?
+```
+
+Keep the blank line that follows them and change nothing else in the generated
+region. Apply the same replacement to a fresh render before comparing it with a
+repository's file. A plain `Icon` line below the upstream comment is the same
+entry with its carriage returns lost and gets the same replacement.
+
+The upstream form breaks in three ways:
+
+- ansible-test's `line-endings` sanity test fails on any carriage return in a
+  text file, and it treats a `.gitignore` as text.
+- `ansible-galaxy` renders `.j2` templates through Jinja, which turns each
+  literal carriage return into a line feed. The result is a plain `Icon` entry
+  followed by a blank line. It matches a file named `Icon`, not the one Finder
+  writes.
+- Under `* text=auto`, Git classifies a file with lone carriage returns as
+  binary, so the
+  [default attributes](./git-attributes.md#gitattributes-file-default) do not
+  normalize it, and `git diff --check` reports the entry as trailing
+  whitespace.
+
+The trade-off: `?` matches exactly one character, so `Icon?` also ignores any
+other five-character name starting with `Icon`, such as `Icons`. Re-include
+such a file with a negated pattern like `!Icons` in the
+[repository-specific section](#gitignore-repository-specific).
 
 
 ## How to add repository-specific files to ignore<a id="gitignore-repository-specific"></a>
