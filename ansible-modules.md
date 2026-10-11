@@ -129,6 +129,12 @@ The terms MUST, SHOULD, and other key words are used as defined in
   execution host: container, users, executable. A **locator profile** is the set
   of locator forms a collection supports for one product, each with the fields
   it accepts.
+- **File-only integration target:** an `ansible-test integration` target that
+  runs the shipped modules against a fake product server or local command
+  fixtures. It never qualifies a product series.
+- **Installed-artifact acceptance:** the test layer that builds the release
+  artifact, installs it in a separate environment per ansible-core series and
+  runs the claimed product operations against the real product.
 - **Product series:** a product's release line, such as OPNsense 26.7. A
   collection declares its support in series.
 - **Supported series:** the product series a collection release is tested
@@ -444,8 +450,9 @@ membership against the fragment; review covers names.
 - Guard an optional third-party import and report a missing dependency through
   `missing_required_lib` before any operation. Document where the dependency
   must be installed.
-- Test the built and installed collection, including a module run on an
-  execution host, not only an import on the controller.
+- Test the built and installed collection through the installed-artifact
+  acceptance of [Testing](#testing), which runs a module on an execution
+  host, not only an import on the controller.
 
 **You MUST NOT:**
 
@@ -843,7 +850,7 @@ except TransportTimeout:
 
 **Enforcement:** unit tests over a fake transport that holds state and counts
 writes, a repeated real run, timeout and concurrency cases, and an
-effective-behavior probe in the integration scenario.
+effective-behavior probe in the Molecule scenario.
 
 
 ## Performance<a id="performance"></a>
@@ -933,7 +940,7 @@ effective-behavior probe in the integration scenario.
   [Arguments and ownership](#arguments-ownership) while removing the loop.
 
 **Enforcement:** request counts in unit tests, review, and duration
-observations from integration tests.
+observations from the installed-artifact acceptance.
 
 
 ## Resource engine<a id="resource-engine"></a>
@@ -1432,8 +1439,8 @@ module.exit_json(changed=True)
 **Enforcement:** unit tests over a fake opener covering certificate handling,
 redirects, authentication, application status, schema, size and time limits,
 exceptions during opening and reading, plus slow-body tests for the budget,
-header and chunk-framing tests for its documented limits, and integration
-tests for the real API semantics.
+header and chunk-framing tests for its documented limits, and the
+installed-artifact acceptance for the real API semantics.
 
 
 ## Command-line execution<a id="cli-execution"></a>
@@ -1793,7 +1800,7 @@ module.exit_json(
       - "__opnsense_loaded_matches[0]['settings']['action'] == 'pass'"
       - "__opnsense_loaded_matches[0]['settings']['destination_port'] == '443'"
     fail_msg: >-
-      The loaded rule does not match the declaration. The integration
+      The loaded rule does not match the declaration. The Molecule
       scenario also probes traffic through the firewall.
   vars:
     __opnsense_loaded_matches: >-
@@ -1806,7 +1813,7 @@ or verify the expected active revision. For deletion, assert absence. Finding
 the right name alone does not verify an update.
 
 Where the product exposes no loaded state, the workflow probes behavior
-instead, as the integration scenario does with a query through the firewall,
+instead, as the Molecule scenario does with a query through the firewall,
 and the documentation names what stays unverified.
 
 **Bad examples:**
@@ -2182,6 +2189,7 @@ tests, the documentation and yamllint sessions of
 | Sanity                             | Does the collection meet the framework's requirements on every supported version? |
 | Unit tests with a fake transport   | Does the logic converge, fail and recover correctly? |
 | `ansible-test integration` targets | Does the shipped module load, parse arguments and return results on this ansible-core version? |
+| Installed-artifact acceptance      | Does the built release, installed per series, perform the claimed product operations against the real product? |
 | Molecule                           | Does the product behave as promised on a real target? |
 
 **You MUST:**
@@ -2302,7 +2310,8 @@ product collection, product series.
 - Run both checks before every change, including command-line paths and
   operational modules. Keep version and capability discovery read-only and
   free of side effects.
-- Declare a series supported only after the integration tests pass on it.
+- Declare a product series supported only after the installed-artifact
+  acceptance passes on it.
   Test each new release of a supported series.
 - Qualify a recovery feature such as a rollback by its observed effect.
 - Keep adapters in `module_utils/<family>/`, one per product series only where
