@@ -393,6 +393,10 @@ and repository tooling. Only the following files carry none:
   `changelogs/changelog.yaml` written by antsibull-changelog, lock files and
   [build artifacts](https://reuse.software/tutorial/#build-artifacts).
   [Files listed in a `.gitignore` are excluded automatically](https://reuse.software/faq/#exclude-file).
+- Changelog fragments of antsibull-changelog below `changelogs/fragments/`,
+  including their archive. They are short-lived input for the generated
+  changelog, and a header in every fragment adds noise without protecting
+  anything.
 - Files whose exact content matters: test fixtures, expected output, marker
   files a tool reads such as `py.typed`, and files that are empty by design such
   as `.gitkeep`.
