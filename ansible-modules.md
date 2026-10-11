@@ -1171,8 +1171,9 @@ if module.check_mode or not changed:
 ```yaml
 attributes:
   check_mode:
-    description: Predicts changes from a read; a creation cannot predict the assigned identity.
+    description: Predicts changes from a read.
     support: partial
+    details: A creation cannot predict the identifier the product assigns.
   diff_mode:
     description: Returns the managed fields that would change, without secret values.
     support: full
