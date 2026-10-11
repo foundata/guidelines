@@ -1301,7 +1301,8 @@ logging, which `no_log` does not control.
   Document the budget's DNS, header, chunk-framing and decompression limits.
 - Compare the received size with a declared `Content-Length` and treat a
   shorter body as a protocol failure. `read1` reports a closed connection as
-  the end of the body.
+  the end of the body. A response to `HEAD` and a 304 declare the length of a
+  representation they do not carry; they have no body to compare.
 - Check the application-level status as well as the HTTP status.
 - Classify retry safety per operation, and restrict an automatic retry after an
   ambiguous write to a verified idempotency or reconciliation mechanism.
@@ -1324,9 +1325,12 @@ logging, which `no_log` does not control.
 
 **Good examples:**
 
-This example requests uncompressed JSON and rejects other content encodings.
-Collections that support compression need tests for their decoded reader's
-size and timing behavior. The domain exceptions follow the interface in
+This example reads a response that carries a JSON body. It requests
+uncompressed JSON and rejects other content encodings. It refuses a declared
+length above the size limit before the first read, and a body whose size
+differs from the declared length after the last. Collections that support
+compression need tests for their decoded reader's size and timing behavior.
+The domain exceptions follow the interface in
 [Convergence and results](#convergence-results).
 
 ```python
@@ -1371,6 +1375,12 @@ try:
             raise ProductApiError(
                 "Unsupported response content encoding", category="response", code="content_encoding"
             )
+        length = response.headers.get("Content-Length")
+        declared = int(length) if length is not None and length.strip().isdecimal() else None
+        if declared is not None and declared > MAX_BODY_BYTES:
+            raise ProductApiError(
+                "Response exceeds the size limit", category="response", code="body_too_large"
+            )
         while True:
             if time.monotonic() >= deadline:
                 raise TransportTimeout(
@@ -1389,6 +1399,10 @@ try:
                     "Response exceeds the size limit", category="response", code="body_too_large"
                 )
             chunks.append(chunk)
+        if declared is not None and size != declared:
+            raise ProductApiError(
+                "Incomplete HTTP response body", category="transport", code="http_protocol"
+            )
 except HTTPError as error:
     status = error.code
     error.close()  # the error object carries a response body
