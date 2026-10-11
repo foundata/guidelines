@@ -2,7 +2,7 @@
 # https://foundata.com/en/guidelines/markdown/
 #
 # SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Identifier: CC-BY-SA-4.0
 
 [global]
 extend-enable = [
