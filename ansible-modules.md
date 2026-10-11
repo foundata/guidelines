@@ -440,6 +440,7 @@ Control-node defaults as of September 2026:
 action_groups:
   api:
     - firewall_alias
+    - firewall_alias_apply
     - firewall_rule_apply
     - firewall_rule
     - firewall_rules
@@ -1043,7 +1044,7 @@ class FirewallAlias(Resource):
         "password": str,
     }
     secret_fields = frozenset({"password"})
-    activation = "firewall_rule_apply"
+    activation = "firewall_alias_apply"
 
 
 class UnboundHostOverride(Resource):
