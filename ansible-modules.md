@@ -259,12 +259,7 @@ payload interpreter on the execution host selected by the task.
   floor, wherever the module usually runs.
 - Document execution host requirements for Python, Python packages and
   command-line tools in the README and in the affected plugin documentation.
-- Run sanity, unit and file-only integration tests on every ansible-core series
-  `requires_ansible` admits, plus the development branch.
-- Run payload unit tests on the lowest declared Python. Run live product tests
-  at least on the lowest and highest admitted ansible-core series, through
-  the built artifact installed in a separate environment per series, with
-  verbose module paths proving which copy ran.
+- Test on the matrix of [Testing](#testing); it follows `requires_ansible`.
 - Document delegation for remote API modules. For command-line modules,
   document both the module's user and the application identity.
 
@@ -2192,8 +2187,16 @@ tests, the documentation and yamllint sessions of
 **You MUST:**
 
 - Run sanity, unit tests and the file-only integration targets on every
-  admitted ansible-core version, plus the development branch. Run payload unit
-  tests on the lowest declared Python.
+  admitted ansible-core series and the development branch. Run payload unit
+  tests on the lowest declared Python and on the newest Python of each series.
+- Run the Molecule scenarios on the newest released admitted series.
+- Run the installed-artifact acceptance on the lowest and the newest released
+  admitted series, and on further series only where the support contract
+  requires it. Install the built artifact in a separate environment per
+  series, prove with verbose module paths which copy ran, and qualify the
+  claimed product operations, builds and locator profiles against the real
+  product, with cleanup. Keep destructive and network tests opt-in and
+  limited to test-owned fixtures.
 - Exercise the real argument specification and JSON exit and failure paths;
   do not replace `AnsibleModule` with a fake in every test. Feed arguments by
   setting `basic._ANSIBLE_ARGS` to the JSON bytes of
@@ -2227,10 +2230,6 @@ tests, the documentation and yamllint sessions of
   that every module runs a real task against state on every admitted
   ansible-core version. The fake is test material and imitates only what the
   targets exercise.
-- Qualify claimed product operations, builds and locator profiles with real
-  integration tests and cleanup on at least the lowest and highest admitted
-  ansible-core versions. Keep destructive and network tests opt-in and limited
-  to test-owned fixtures.
 - Keep Molecule for deployment, bootstrap, activation and effective behavior,
   and share assertion task files with integration targets instead of
   maintaining two convergence suites.
@@ -2377,13 +2376,10 @@ changelog lint, and the build and import check.
 
 - Use [`antsibull-nox`](https://docs.ansible.com/projects/antsibull-nox/) with
   `noxfile.py` and `antsibull-nox.toml` in the collection root.
-- Run the full sanity suite on every admitted ansible-core version and the
-  development branch. Never reduce it to a single test.
-- Run the unit tests of modules and module utilities on the lowest declared
-  Python. Set the units session's `core_python_versions`; a direct run for the
-  default floor is `ansible-test units --docker --python 3.9`.
-- Run the file-only integration targets on every admitted ansible-core
-  version.
+- Implement the matrix of [Testing](#testing) in `antsibull-nox` sessions.
+  Never reduce sanity to a single test. Set the units session's
+  `core_python_versions`; a direct run for the default floor is
+  `ansible-test units --docker --python 3.9`.
 - Format and lint Python with Ruff, including import sorting. Lint YAML and
   documentation blocks with yamllint. Type-check with mypy against the newest
   ansible-core.
@@ -2490,11 +2486,7 @@ nox -s ansible-test-integration  # file-only integration targets
 nox -s molecule                  # the default scenario; arguments after -- go to Molecule
 ```
 
-Run the file-only lanes on every admitted series and the development
-branch, the Molecule session on the newest admitted series, and the
-installed-artifact acceptance of [Supported runtimes](#supported-runtimes)
-on the lowest and the newest admitted released core; add a live series only
-where the support contract requires it.
+These sessions implement the matrix of [Testing](#testing).
 
 Check `nox --list` and the generated CI matrix against the declared core and
 Python support. Select sessions by name; `antsibull-nox` registers tags for
@@ -2577,9 +2569,8 @@ item marked not applicable.
   collection contract stated where consumers read; architecture and rationale
   current, with planned work in issues and supporting evidence linked
   ([Module documentation](#module-documentation)).
-- [ ] **Tests:** every layer on every admitted ansible-core version, payload
-  units on the floor; product claims backed by integration evidence
-  ([Testing](#testing)).
+- [ ] **Tests:** every lane of the matrix passes; product claims rest on the
+  installed-artifact acceptance ([Testing](#testing)).
 - [ ] **Release:** unsupported series warn, excluded operations fail before
   changes; deprecations declarative;
   changelog fragment present
