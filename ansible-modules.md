@@ -2226,6 +2226,7 @@ resource options, attributes, `EXAMPLES`, `RETURN` and the implementation.
 from __future__ import annotations
 
 DOCUMENTATION = r"""
+---
 module: firewall_rule
 short_description: Manage one OPNsense firewall rule through the API
 description:
@@ -2245,6 +2246,7 @@ prediction:
 
 ```python
 RETURN = r"""
+---
 rule:
   description: Normalized public state of the rule.
   returned: always; V(null) after deletion; without product-assigned identifiers for a creation in check mode.
@@ -2604,8 +2606,9 @@ missing from the mapping runs on every Python it supports.
 ansible-core from the GitHub archive of the series' stable branch; they run,
 and they test a moving target. The development branch drops Python versions
 ahead of the releases, 3.9 since 2.23, so its lanes name the branch's own
-floor and do not raise the collection's. `DOCUMENTATION` strings
-start with `---` when the house `.yamllint` requires a document start.
+floor and do not raise the collection's. The house `.yamllint` requires a
+document start, and the plugin yamllint check reads the `DOCUMENTATION`,
+`EXAMPLES` and `RETURN` strings, so each of them starts with `---`.
 
 ```toml
 # ruff.toml
