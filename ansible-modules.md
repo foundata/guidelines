@@ -2079,14 +2079,19 @@ module-first collection.
 
 **You MUST:**
 
-- Start every module with exactly `#!/usr/bin/python`, followed within the
-  first twenty lines by the upstream license line that starts with
-  `# GNU General Public License v3.0+`, as in the example below, which the
+- Start every module with exactly `#!/usr/bin/python`, followed by the
+  [license comment header](./licensing-apply.md#license-comment-headers) with
+  the upstream license line that starts with
+  `# GNU General Public License v3.0+` between its two tags, as in the example
+  below. The upstream
+  [module format](https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html)
+  asks for a copyright line before the license declaration, and the
   [`validate-modules` sanity test](https://docs.ansible.com/projects/ansible/latest/community/collection_contributors/collection_requirements.html#ci-testing)
-  requires. `REUSE.toml` states the licensing, so the header carries no SPDX
-  lines. The GNU line is ecosystem practice and takes precedence over the
-  licensing guide's rule against links in headers. Keep the file
-  non-executable. Other plugin and module utility files have no shebang.
+  requires the GNU line within the first twenty lines. The GNU line is
+  ecosystem practice and takes precedence over the licensing guide's rule
+  against links in headers. Keep the file non-executable. Other plugin and
+  module utility files have no shebang and start with the license comment
+  header.
 - Order the rest as the upstream
   [module format](https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html)
   requires: `from __future__ import annotations`, raw-string `DOCUMENTATION`,
@@ -2144,9 +2149,12 @@ module-first collection.
 These are documentation excerpts, not a complete module. The first omits
 resource options, attributes, `EXAMPLES`, `RETURN` and the implementation.
 
+<!--REUSE-IgnoreStart-->
 ```python
 #!/usr/bin/python
+# SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
 # GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 from __future__ import annotations
 
@@ -2163,6 +2171,7 @@ extends_documentation_fragment:
   - foundata.opnsense.api
 """
 ```
+<!--REUSE-IgnoreEnd-->
 
 Document the resource key once; `verified` tells a read-back from a
 prediction:
@@ -2474,9 +2483,9 @@ tuned lanes and skips:
 ```toml
 # antsibull-nox.toml, excerpt as collection_modules renders it
 [sessions.license_check]
-# REUSE.toml states the licensing and "reuse lint" checks it. Files carry no
-# SPDX lines, which this per-file check requires; modules carry only the GNU
-# line that validate-modules requires.
+# The per-file check ignores REUSE.toml and misreads the license sentence in
+# README.md. Every file the licensing guide exempts from headers would need an
+# ignore entry. "reuse lint" still checks the licensing.
 run_license_check = false
 
 [sessions.ansible_test_sanity]
