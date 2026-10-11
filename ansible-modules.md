@@ -349,10 +349,6 @@ payload interpreter on the execution host selected by the task.
 - Correct a declared minimum that the content never satisfied in a bugfix
   release; raise a minimum that worked in a breaking release.
 
-**You SHOULD:**
-
-- Keep product collections module-only.
-
 **Reasoning:**
 
 - Raising the minimum removes supported control-node platforms and requires a
@@ -575,8 +571,7 @@ missing-dependency path, and the build and import check of
   and name the ownership conflict.
 - Validate open dictionaries with a product-owned schema, including
   `type: "raw"` input.
-- Use `present` and `absent` when existence is the question, and put reads in a
-  separate `_info` module.
+- Use `present` and `absent` when existence is the question.
 
 **You MUST NOT:**
 
@@ -1199,7 +1194,6 @@ the declared support attributes.
 - Return an untrusted response body or a traceback because it was truncated.
 - Echo raw `stderr`, `str(error)` or a product exception's message into results,
   warnings or logs.
-- Pass a secret as a command-line argument.
 - Pass parameter values or product responses to `module.log`.
 - Swallow a failure and return success.
 
@@ -1521,11 +1515,9 @@ separately.
   status-only wrapper that backs it up fires later, with its margin and its
   cleanup grace documented, and a command status alone is never observed
   expiry. Record the cleanup scope (process group, cgroup, container
-  session), how survivors are detected and which escapes remain; a
-  process-group qualification excludes commands that detach.
+  session), how survivors are detected and which escapes remain.
 - Give `timeout` a duration above zero. Round a remaining budget up, never
   down to zero.
-- Report interrupted writes as unknown and reconcile before retrying.
 - Request bytes with `encoding=None` and check both streams' sizes before
   decoding or parsing. Never put raw output in a message.
 - Use a reviewed supervisor in a module utility where output is untrusted or
@@ -1891,10 +1883,8 @@ real target.
 
 **You MUST:**
 
-- Name an info module `<resource>_info`, support check mode, and return
-  `changed: false`.
-- Reserve `_facts` for intentional `ansible_facts` population and return the
-  collected values under that key.
+- Support check mode and return `changed: false`.
+- Return the values a `_facts` module collects under `ansible_facts`.
 - Keep a read free of managed product changes, token rotation, refresh actions
   and initialization. Document an unavoidable authentication or audit side
   effect and distinguish it from a resource change.
@@ -2006,8 +1996,6 @@ documentation lint, and review of the intended semantics.
   publication, and publish them at the same time. From then on, a public
   helper's signature, exceptions and defaults and a fragment's options are
   versioned interfaces.
-- Mark an internal utility with a leading underscore and say so in its
-  docstring.
 - Build a fresh argument specification, or deep-copy a nested one, before
   extending it.
 - Share documentation through fully qualified fragments and test the merged
