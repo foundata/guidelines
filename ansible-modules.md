@@ -67,7 +67,6 @@ The terms MUST, SHOULD, and other key words are used as defined in
 
 **A module is NOT RECOMMENDED for:**
 
-- A one-to-one wrapper around a single HTTP endpoint or command invocation.
 - Work already covered by a task file, an existing module or a template.
 - A handful of straightforward calls that
   [`ansible.builtin.uri`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/uri_module.html)
@@ -78,6 +77,12 @@ The terms MUST, SHOULD, and other key words are used as defined in
 
 **You MUST NOT:**
 
+- Build a one-to-one wrapper module around a single HTTP endpoint or command
+  invocation, as the
+  [roles guide's scoping rules](./ansible-roles-collections.md#scoping) also
+  forbid. A product operation that has no resource shape, such as activating
+  saved changes, exporting a backup or updating firmware, is an operational
+  module, not a wrapper.
 - Build a role that only forwards a list variable to a module in a loop. See
   the [scoping rules](./ansible-roles-collections.md#scoping).
 - Generate a module per upstream endpoint because a specification lists them.
