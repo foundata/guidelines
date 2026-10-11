@@ -20,8 +20,8 @@ The terms MUST, SHOULD, and other key words are used as defined in
 
 ## Table of contents
 
-- [When to write a module](#when-to-write-a-module)
 - [Terms](#terms)
+- [When to write a module](#when-to-write-a-module)
 - [Scope and precedence](#scope-precedence)
   - [Python style guide rules in plugin code](#python-rules)
 - [Supported runtimes](#supported-runtimes)
@@ -48,68 +48,6 @@ The terms MUST, SHOULD, and other key words are used as defined in
 - [Checks and tooling](#checks-tooling)
 - [Review checklist](#review-checklist)
 - [Author information](#author-information)
-
-
-## When to write a module<a id="when-to-write-a-module"></a>
-
-[*⇑ Back to TOC ⇑*](#table-of-contents)
-
-**A module is RECOMMENDED for:**
-
-- A coherent product resource with a stable identity: a firewall rule, a user,
-  a named settings family.
-- Repeated read, compare, write and read-back logic that would otherwise be
-  rebuilt in Jinja for every resource.
-- Operations that need check mode, a diff, sanitized errors or a retry that is
-  safe only with identity-based recovery.
-- An operation whose transport is awkward or unsafe from a task, such as one
-  that must send a secret outside the process arguments.
-
-**A module is NOT RECOMMENDED for:**
-
-- Work already covered by a task file, an existing module or a template.
-- A handful of straightforward calls that
-  [`ansible.builtin.uri`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/uri_module.html)
-  or a documented command already expresses, where no identity resolution,
-  normalization or recovery is involved.
-- Work that belongs to a role: sequencing several modules, rendering files on
-  the target, or orchestrating a lifecycle.
-
-**You MUST NOT:**
-
-- Build a one-to-one wrapper module around a single HTTP endpoint or command
-  invocation, as the
-  [roles guide's scoping rules](./ansible-roles-collections.md#scoping) also
-  forbid. A product operation that has no resource shape, such as activating
-  saved changes, exporting a backup or updating firmware, is an operational
-  module, not a wrapper.
-- Build a role that only forwards a list variable to a module in a loop. See
-  the [scoping rules](./ansible-roles-collections.md#scoping).
-- Generate a module per upstream endpoint because a specification lists them.
-
-**You SHOULD:**
-
-- Choose the first two resources for the engine evidence they yield and
-  every further resource for operator value, from the Scope section of the
-  architecture record, which the owner approves before implementation
-  starts and which says where a release stops. Rank administration tasks,
-  not inventory objects; a module per endpoint is the inventory copied.
-- Keep a product collection module-only: modules, module utilities and
-  documentation fragments. Add action, filter or test plugins only for work a
-  module cannot do (see
-  [Choosing the minimum ansible-core version](#minimum-core-version)).
-- Prefer composing a maintained upstream collection when its coverage,
-  ownership, errors, check mode and activation semantics genuinely fit.
-
-**Reasoning:**
-
-- An Ansible resource contract and an upstream endpoint are different things.
-  The endpoint describes a request; the module promises convergence, a
-  verifiable result and safe failure.
-- Every public module is a long-lived interface. The cost is not writing it, it
-  is keeping its promise across product releases.
-- A forwarding role duplicates the module's interface and can drift from it.
-  Sequencing, validation or recovery gives a role a separate purpose.
 
 
 ## Terms<a id="terms"></a>
@@ -141,6 +79,12 @@ The terms MUST, SHOULD, and other key words are used as defined in
 - **Installed-artifact acceptance:** the test layer that builds the release
   artifact, installs it in a separate environment per ansible-core series and
   runs the claimed product operations against the real product.
+- **Lane:** one `antsibull-nox` session for one ansible-core series and one
+  Python version.
+- **Qualification:** evidence from the real product or command-line
+  interface, on the stated ansible-core series, that a claimed operation,
+  build or locator behaves as documented. A fake server or a helper's own
+  tests never qualify.
 - **Product series:** a product's release line, such as OPNsense 26.7. A
   collection declares its support in series.
 - **Supported series:** the product series a collection release is tested
@@ -149,6 +93,19 @@ The terms MUST, SHOULD, and other key words are used as defined in
   target. An operation is ineligible only where it is known to be harmful or
   impossible there, for example on a defective build or without a required
   plugin. An ineligible operation fails before any change.
+- **Resource engine:** the module utility that implements the resource
+  lifecycle once per product, see [Resource engine](#resource-engine). A
+  **definition** describes one resource for it: identity, endpoints or
+  commands, managed fields, secret fields and the activation it needs.
+- **Public error schema:** the categories, codes and further result keys a
+  collection's failures may carry, allowlisted in its module utilities; see
+  [Convergence and results](#convergence-results).
+- **Utility collection:** a collection of product-independent mechanics, such
+  as transport, deadlines and safe failure, that product collections share;
+  see [Shared code](#shared-code).
+- **Workflow role:** a role that sequences the collection's modules, named
+  `config` by the
+  [roles guide's scoping rules](./ansible-roles-collections.md#scoping).
 - **Interface inventory:** a generated file per product series that lists the
   objects and fields of the product's configuration interface. It is
   development evidence; nothing reads it at runtime.
@@ -157,10 +114,11 @@ The terms MUST, SHOULD, and other key words are used as defined in
   the supported product series and ansible-core versions, and the locator
   profiles. It lives in the README or in a page linked from it; the contract
   of a single module lives in that module's documentation.
-- **Architecture and rationale:** the developer-facing description of the
-  collection's current structure, execution boundaries and significant technical
-  decisions, with their rationale and links to supporting evidence. By house
-  convention `docs/architecture.md`, or the repository's existing architecture
+- **Architecture and rationale** (the architecture record): the
+  developer-facing description of the collection's current structure,
+  execution boundaries and significant technical decisions, with their
+  rationale and links to supporting evidence. By house convention
+  `docs/architecture.md`, or the repository's existing architecture
   documentation. Execution logs belong in test artifacts and change history in
   Git. Public contracts remain in the README and module documentation. A design
   delivered before the collection exists uses the same structure in `design.md`
@@ -169,12 +127,82 @@ The terms MUST, SHOULD, and other key words are used as defined in
   scope: the context (deployment paths in use, who operates the product, their
   first tasks), deployment ownership per path, the administration tasks an
   operator performs as ranked candidates, each mapped to the inventory objects
-  it needs and rated for value, risk class and evidence cost, with a status
-  (planned for, qualified, shipped in, blocked by, excluded because), the cuts
-  (the first two resources for engine evidence, the first release for operator
-  value, later releases in order), and every exclusion with its guard decision.
-  The owner approves a cut in a commit of its own; issues are opened for the
-  next cut only and link back to the section.
+  it needs and rated for value, risk class (what a wrong run can damage: none,
+  the management connection, secrets, a global activation or data) and
+  evidence cost, with a status (planned for, qualified, shipped in, blocked by,
+  excluded because), the cuts (the first two resources for engine evidence,
+  the first release for operator value, later releases in order), and every
+  exclusion with its guard decision: the guard chosen against the excluded
+  task and the evidence that would lift it.
+
+
+## When to write a module<a id="when-to-write-a-module"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+**A module is RECOMMENDED for:**
+
+- A coherent product resource with a stable identity: a firewall rule, a user,
+  a named settings family.
+- Repeated read, compare, write and read-back logic that would otherwise be
+  rebuilt in Jinja for every resource.
+- Operations that need check mode, a diff, sanitized errors or a retry that is
+  safe only with identity-based recovery.
+- An operation whose transport is awkward or unsafe from a task, such as one
+  that must send a secret outside the process arguments.
+
+**A module is NOT RECOMMENDED for:**
+
+- Work already covered by a task file, an existing module or a template.
+- A handful of straightforward calls that
+  [`ansible.builtin.uri`](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/uri_module.html)
+  or a documented command already expresses, where no identity resolution,
+  normalization or recovery is involved.
+- Work that belongs to a role: sequencing several modules, rendering files on
+  the target, or orchestrating a lifecycle.
+
+**You MUST:**
+
+- Implement a cut of the Scope section only after the owner approved it in a
+  commit of its own whose subject starts with `scope: approve`, for the first
+  release `scope: approve the 1.0.0 cut`. After the approval, change only the
+  Status cells of the section until the next approval. Open issues for the
+  next cut only and link them to the section.
+
+**You MUST NOT:**
+
+- Build a one-to-one wrapper module around a single HTTP endpoint or command
+  invocation, as the
+  [roles guide's scoping rules](./ansible-roles-collections.md#scoping) also
+  forbid. A product operation that has no resource shape, such as activating
+  saved changes, exporting a backup or updating firmware, is an operational
+  module, not a wrapper.
+- Build a role that only forwards a list variable to a module in a loop. See
+  the [scoping rules](./ansible-roles-collections.md#scoping).
+- Generate a module per upstream endpoint because a specification lists them.
+
+**You SHOULD:**
+
+- Choose the first two resources for the engine evidence they yield and
+  every further resource for operator value, as ranked in the Scope section.
+  Rank administration tasks, not inventory objects; a module per endpoint is
+  the inventory copied.
+- Keep a product collection module-only: modules, module utilities and
+  documentation fragments. Add action, filter or test plugins only for work a
+  module cannot do (see
+  [Choosing the minimum ansible-core version](#minimum-core-version)).
+- Prefer composing a maintained upstream collection when its coverage,
+  ownership, errors, check mode and activation semantics genuinely fit.
+
+**Reasoning:**
+
+- An Ansible resource contract and an upstream endpoint are different things.
+  The endpoint describes a request; the module promises convergence, a
+  verifiable result and safe failure.
+- Every public module is a long-lived interface. The cost is not writing it, it
+  is keeping its promise across product releases.
+- A forwarding role duplicates the module's interface and can drift from it.
+  Sequencing, validation or recovery gives a role a separate purpose.
 
 
 ## Scope and precedence<a id="scope-precedence"></a>
@@ -202,7 +230,7 @@ The terms MUST, SHOULD, and other key words are used as defined in
 
   |                                                          Subject                                                           | Document |
   | -------------------------------------------------------------------------------------------------------------------------- | -------- |
-  | Current structure and decisions on ownership, resource semantics, locator profiles and compatibility, with their rationale | The collection's architecture documentation |
+  | Current structure and decisions on ownership, resource semantics, locator profiles and compatibility, with their rationale | The collection's architecture record |
   | The resulting collection contract, and each module's contract                                                              | README and module documentation |
   | Module and plugin implementation, checks and review                                                                        | This guide |
   | YAML, tasks, templates and variables                                                                                       | [Ansible playbook guidelines](./ansible-playbooks.md) |
@@ -262,7 +290,7 @@ payload interpreter on the execution host selected by the task.
 - Declare the minimum ansible-core version as `requires_ansible` in
   `meta/runtime.yml`.
 - Declare the payload Python floor in `tests/config.yml`, `>=3.9` unless the
-  architecture documentation justifies another floor:
+  architecture record justifies another floor:
 
   ```yaml
   modules:
@@ -316,7 +344,7 @@ payload interpreter on the execution host selected by the task.
 - Choose the minimum for the control nodes the collection serves, not the
   newest maintained series. Use `>=2.19` by default.
 - State the reason for the minimum next to `requires_ansible`: a link to
-  the architecture documentation where it exists, otherwise the skeleton's
+  the architecture record where it exists, otherwise the skeleton's
   anchors comment. Review it when a listed platform rebases.
 - Correct a declared minimum that the content never satisfied in a bugfix
   release; raise a minimum that worked in a breaking release.
@@ -368,7 +396,7 @@ Control-node defaults as of September 2026:
 - Use the singular for a module that manages one resource per invocation and
   the plural for one that manages a list of resources of one type:
   `firewall_rule` and `firewall_rules`.
-- Name a read-only module `<resource>_info`. Reserve the `_facts` suffix for
+- Name an info module `<resource>_info`. Reserve the `_facts` suffix for
   modules that deliberately populate `ansible_facts`.
 - Name an operational module after the scope it acts on and its verb:
   `firewall_rule_apply`, `firmware_update`, `system_reboot`. Where a product
@@ -1863,7 +1891,7 @@ real target.
 
 **You MUST:**
 
-- Name a read-only module `<resource>_info`, support check mode, and return
+- Name an info module `<resource>_info`, support check mode, and return
   `changed: false`.
 - Reserve `_facts` for intentional `ansible_facts` population and return the
   collected values under that key.
@@ -2078,7 +2106,7 @@ module-first collection.
   [Ansible playbook guidelines](./ansible-playbooks.md).
 - State the collection contract in the README or a linked page. Reuse existing
   documentation that covers it; do not create a redundant top-level document.
-- Keep architecture documentation about the current implementation and the
+- Keep the architecture record about the current implementation and the
   reasoning that still explains it. Link supporting evidence when it justifies
   a decision or support claim. Track planned work in issues, retain execution
   logs as test artifacts, and leave edit history in Git.
@@ -2356,8 +2384,8 @@ product collection, product series.
 
 **Reasoning:**
 
-- The compatibility check belongs in the shared client, before the request is
-  sent, so no module can forget it.
+- The compatibility check belongs in the product's client, before the
+  request is sent, so no module can forget it.
 - A module that refuses every untested series stops working on the day
   upstream releases, and most releases change nothing a module touches. The
   warning tells the operator about the risk, and the read-back after each
@@ -2461,9 +2489,9 @@ mypy_config = ".mypy.ini"
 [sessions.ansible_test_units]
 include_devel = true
 split_by_python_version = true
-# One session on the payload floor and one on the newest Python per lane; read
-# the newest from ansible-test's constants of that series, it moves (3.15 since
-# 2.22). A lane missing here runs on every Python that lane supports.
+# One session on the payload floor and one on the newest Python per series;
+# read the newest from ansible-test's constants of that series, it moves (3.15
+# since 2.22). A series missing here runs on every Python it supports.
 core_python_versions = { "2.19" = ["3.9", "3.13"], "2.20" = ["3.9", "3.14"], "2.21" = ["3.9", "3.14"], "2.22" = ["3.9", "3.15"], "devel" = ["3.10", "3.15"] }
 
 [sessions.ansible_test_integration_w_default_container]
@@ -2472,11 +2500,11 @@ core_python_versions = { "2.19" = ["3.9", "3.13"], "2.20" = ["3.9", "3.14"], "2.
 ```
 
 `antsibull-nox` knows ansible-core versions before they reach PyPI; set
-`max_version` to leave an unreleased lane out. Such a lane is installed from
-the GitHub archive of the series' stable branch; it runs, and it tests a
-moving target. The development branch drops
-Python versions ahead of the releases, 3.9 since 2.23, so its lane names the
-branch's own floor and does not raise the collection's. `DOCUMENTATION` strings
+`max_version` to leave an unreleased series out. Its lanes install
+ansible-core from the GitHub archive of the series' stable branch; they run,
+and they test a moving target. The development branch drops Python versions
+ahead of the releases, 3.9 since 2.23, so its lanes name the branch's own
+floor and do not raise the collection's. `DOCUMENTATION` strings
 start with `---` when the house `.yamllint` requires a document start.
 
 ```toml
