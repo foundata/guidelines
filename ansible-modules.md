@@ -1534,8 +1534,9 @@ separately.
   owns the expiry flag. A status-only wrapper that backs it up fires later,
   with its margin and its cleanup grace documented; a command status alone is
   never observed expiry.
-- Give the `timeout` wrapper command a duration above zero. Round a remaining
-  budget up, never down to zero.
+- Give the `timeout` wrapper command a duration above zero. Compute the
+  remaining budget once, fail before the launch when none remains, and round
+  it up, never down to zero.
 - Request bytes with `encoding=None` and check both streams' sizes before
   decoding or parsing. Never put raw output in a message.
 - Use a reviewed supervisor in a module utility where output is untrusted or
@@ -1588,6 +1589,9 @@ separately.
 This locator uses a qualified GNU `timeout` and a command with bounded output.
 The command reserves statuses 124 and 137 for the wrapper. The module has
 already handled check mode and validated the declaration before this write.
+An exhausted budget fails before the launch. Where an earlier step of the
+operation started a write, that failure keeps the step's `changed` and
+`outcome`.
 Its product utility supplies `parse_product_cli_error`, which accepts any byte
 input and returns a known code from the public error schema. Malformed or
 unknown output gets a fixed fallback. The parser performs no I/O, raises no
@@ -1601,8 +1605,20 @@ import time
 
 KILL_AFTER_SECONDS = 10
 MAX_OUTPUT_BYTES = 1024 * 1024
+remaining = deadline - time.monotonic()
+if remaining <= 0:
+    module.fail_json(
+        msg="Reconciliation budget exhausted before the command started",
+        operation="reconcile",
+        error_category="timeout",
+        error_code="deadline_exceeded",
+        http_status=None,
+        changed=False,
+        outcome="unchanged",
+        exception=None,
+    )
 # The wrapper backs up the module's own deadline observer and fires later.
-wrapper_seconds = math.ceil(deadline - time.monotonic()) + 1
+wrapper_seconds = math.ceil(remaining) + 1
 
 argv = [
     locator.timeout_path,
