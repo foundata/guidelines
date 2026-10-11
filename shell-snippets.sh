@@ -7,7 +7,7 @@
 #   external non-POSIX-commands like curl/wget)
 # - Functions may rely on other functions from shell-boilerplate.sh
 #
-# SPDX-FileCopyrightText: 2026, foundata GmbH (https://foundata.com)
+# SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 ################################################################################
