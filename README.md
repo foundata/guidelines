@@ -141,10 +141,8 @@ approach.
 ## Licensing, copyright<a id="licensing-copyright"></a>
 
 <!--REUSE-IgnoreStart-->
-<!-- rumdl-disable MD034 --><!-- should match SPDX-PackageSupplier -->
-Copyright (c) 2020, 2023-2026, [foundata GmbH](https://foundata.com/)
-(https://foundata.com)
-<!-- rumdl-enable MD034 -->
+<!-- should match SPDX-PackageSupplier -->
+Copyright (c) 2020, 2023-2026, foundata GmbH <https://foundata.com>
 
 This project is licensed under the
 [Creative Commons Attribution Share Alike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/deed)
