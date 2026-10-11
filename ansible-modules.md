@@ -216,7 +216,7 @@ The terms MUST, SHOULD, and other key words are used as defined in
      [sanity tests](https://docs.ansible.com/ansible/latest/dev_guide/testing_sanity.html),
      which a module cannot opt out of.
   2. Established Ansible ecosystem practice: the
-     [community collection requirements](https://docs.ansible.com/ansible/latest/community/collection_contributors/collection_requirements.html)
+     [community collection requirements](https://docs.ansible.com/projects/ansible/latest/community/collection_contributors/collection_requirements.html)
      and the tooling maintained collections use, described in
      [Checks and tooling](#checks-tooling).
   3. This guide.
@@ -324,9 +324,8 @@ payload interpreter on the execution host selected by the task.
   `plugins/module_utils/`. Controller-only utilities use the controller's
   supported Python versions; separate `module_utils` and `plugin_utils`
   sections do not configure them.
-- Without `tests/config.yml`, ansible-test assumes every Python version the
-  core supports, including Python 2.7 and 3.6 on ansible-core 2.16. Declaring a
-  Python 3 floor excludes Python 2 and its legacy boilerplate checks.
+- Without `tests/config.yml`, ansible-test tests every Python version the
+  core supports on targets, including versions below the payload floor.
 - Framework behavior changes between core versions, which is why sanity, unit
   and file-only integration tests cover every admitted series.
 - `from __future__ import annotations` postpones annotations only. On Python
@@ -1922,10 +1921,9 @@ own side effects.
   behavior, and module failures. Document actual async support.
 - Validate action-only inputs, clean up temporary files on every failure path,
   and sanitize data the action adds to the result.
-- Test a plugin that creates template strings or handles templated values on
-  both sides of ansible-core 2.19, or raise the collection's minimum version, as
-  described in
-  [Choosing the minimum ansible-core version](#minimum-core-version).
+- Where `requires_ansible` admits a core older than 2.19, test a plugin that
+  creates template strings or handles templated values on both sides of 2.19,
+  see [Choosing the minimum ansible-core version](#minimum-core-version).
 - Document the behavior in the paired module's documentation, and test both the
   module alone and the real task path.
 
@@ -1946,7 +1944,7 @@ own side effects.
 
 **Enforcement:** action unit tests with a fake loader, connection and module
 executor, plus real task tests covering delegation and check mode on every
-ansible-core version.
+admitted ansible-core series.
 
 
 ## Filter and test plugins<a id="filter-test-plugins"></a>
@@ -2058,7 +2056,7 @@ module-first collection.
 - Start every module with exactly `#!/usr/bin/python`, followed within the
   first twenty lines by the upstream license line that starts with
   `# GNU General Public License v3.0+`, as in the example below, which the
-  [`validate-modules` sanity test](https://docs.ansible.com/projects/ansible/devel/community/collection_contributors/collection_requirements.html#ci-testing)
+  [`validate-modules` sanity test](https://docs.ansible.com/projects/ansible/latest/community/collection_contributors/collection_requirements.html#ci-testing)
   requires. `REUSE.toml` states the licensing, so the header carries no SPDX
   lines. The GNU line is ecosystem practice and takes precedence over the
   licensing guide's rule against links in headers. Keep the file
@@ -2187,7 +2185,7 @@ description:
 **Reasoning:**
 
 - We aim to follow the
-  [Ansible community package collection requirements](https://docs.ansible.com/projects/ansible/devel/community/collection_contributors/collection_requirements.html),
+  [Ansible community package collection requirements](https://docs.ansible.com/projects/ansible/latest/community/collection_contributors/collection_requirements.html),
   including passing upstream sanity tests. The module format, GPLv3 header
   check (which checks the GNU sentence literally), documentation schemas and
   argument-spec checks are upstream rules.
@@ -2617,7 +2615,8 @@ item marked not applicable.
       ([Activation, operations and bootstrap](#activation-bootstrap)).
 - [ ] **Reads:** `_info` naming, check mode, no side effects
   ([Info and facts modules](#info-facts-modules)).
-- [ ] **Controller plugins:** justified; tested across ansible-core 2.19
+- [ ] **Controller plugins:** justified; templating tested on both sides of
+  2.19 where the minimum is older
   ([Action plugins](#action-plugins),
   [Filter and test plugins](#filter-test-plugins)).
 - [ ] **Sharing:** fresh specifications; fragments tested with each consumer;
@@ -2644,5 +2643,5 @@ This guide was written by [foundata](https://foundata.com/) to produce robust,
 readable and consistent Ansible modules and plugins. It builds on the
 [Ansible developer guide](https://docs.ansible.com/ansible/latest/dev_guide/)
 and the
-[Ansible community collection requirements](https://docs.ansible.com/ansible/latest/community/collection_contributors/collection_requirements.html),
+[Ansible community collection requirements](https://docs.ansible.com/projects/ansible/latest/community/collection_contributors/collection_requirements.html),
 which remain the authority for the framework's own rules.
