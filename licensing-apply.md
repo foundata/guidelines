@@ -109,7 +109,7 @@ Please use the following template as a starting point:
 version = 1
 SPDX-PackageName = "FIXME name of your project"
 SPDX-PackageDownloadLocation = "https://github.com/foundata/FIXME-your-project"
-SPDX-PackageSupplier = "foundata GmbH (https://foundata.com)"
+SPDX-PackageSupplier = "foundata GmbH <https://foundata.com>"
 SPDX-PackageComment = """
 This project may include calls to Application Programming Interfaces
 ("API calls"), as well as their respective specifications and code that
@@ -124,7 +124,7 @@ supersede any terms of these additional agreements.
 [[annotations]]
 path = "**"
 precedence = "closest"
-SPDX-FileCopyrightText = "foundata GmbH (https://foundata.com)"
+SPDX-FileCopyrightText = "foundata GmbH <https://foundata.com>"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 ```
 
@@ -135,6 +135,13 @@ wildcard ensures that all existing files are properly licensed by default, even
 without inline license comment headers or `.license` files. Refer to
 [the official documentation](https://reuse.software/spec-3.3/#reusetoml) for
 more information on the syntax and precedence.
+
+Write the holder's contact address in angle brackets, as the
+[REUSE specification](https://reuse.software/spec-3.3/#format-of-copyright-notices)
+recommends, and use the same string wherever the project names its copyright
+holder: in `REUSE.toml`, in the [`README.md`](#human-info) and in
+[license comment headers](#license-comment-headers). Markdown renderers turn
+the bracketed address into a link.
 <!--REUSE-IgnoreEnd-->
 
 
@@ -165,9 +172,8 @@ template to do so:
 ## Licensing, copyright
 
 <!--REUSE-IgnoreStart-->
-<!-- rumdl-disable MD034 --><!-- should match SPDX-PackageSupplier -->
-Copyright (c) YYYY, [foundata GmbH](https://foundata.com/) (https://foundata.com)
-<!-- rumdl-enable MD034 -->
+<!-- should match SPDX-PackageSupplier -->
+Copyright (c) YYYY, foundata GmbH <https://foundata.com>
 
 This project is licensed under the GNU General Public License v3.0 or later
 (SPDX-License-Identifier: `GPL-3.0-or-later`), see
@@ -187,8 +193,9 @@ an
 
 Replace `YYYY` with the year of the first release or
 [code contribution](https://reuse.readthedocs.io/en/latest/scripts.html#starting-point-of-the-codebase)
-and adapt the mentioned license, filenames and links as needed. The HTML
-comments prevent linting errors when e.g. listing
+and adapt the mentioned license, filenames and links as needed. The
+`REUSE-IgnoreStart` and `REUSE-IgnoreEnd` comments keep `reuse lint` from
+reading the license sentences as license information, e.g. when listing
 [multiple licenses](#human-info-multiple-licenses).
 
 Feel free to add additional author information not suitable for the
@@ -343,12 +350,14 @@ aware of:
     [do not define the order of precedence](https://github.com/fsfe/reuse-tool/issues/779).
     You *must* avoid conflicts, as the legal order of precedence is unclear when
     having the deprecated `.reuse/dep5` file in use.
-- `reuse spdx` adds two `LicenseInfoInFile` keys in the
+- `reuse spdx` writes the
   [SPDX software bill of materials (SBOM)](https://en.wikipedia.org/wiki/Software_Package_Data_Exchange)
-  even if the license is the same (at least up to program version 2.1.0). As of
-  2024-Q1, this and
-  [comparable toolset issues](https://github.com/fsfe/reuse-tool/issues/885)
-  propably get fixed soon.
+  in the outdated SPDX 2.1 tag-value format, which current SPDX tools such as
+  `spdx-tools` 0.8 no longer read, and it does not escape a literal `</text>` in
+  a copyright notice (at least up to program version 6.2.0). Both belong to the
+  open [reuse-tool issue #394](https://codeberg.org/fsfe/reuse-tool/issues/394).
+  Angle brackets around a contact address are no problem: the tag-value `<text>`
+  delimiters are not XML and need no escaping.
 
 
 ## Step 7: REUSE linting<a id="linting"></a>
