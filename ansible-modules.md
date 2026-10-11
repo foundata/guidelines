@@ -983,6 +983,19 @@ Most products expose their resources in one uniform way. A hand-written module
 per resource then repeats the same reading, comparing, writing and verifying,
 and every copy has to get the rules of this guide right again.
 
+**You MUST:**
+
+- Curate every definition. Decide identity, ownership, omission and deletion
+  per resource. A generated list of endpoints is no substitute.
+- Keep the engine in the product's collection. Share only transport and safety
+  mechanics across products, see [Shared code](#shared-code).
+- Write an irregular resource by hand on the same client instead of adding a
+  special case to the engine.
+- Make an engine reject an incomplete or ambiguous lookup, keep the predicted
+  state apart from the observed one, report partial progress when a later
+  step fails, check the outcome of an activation, and protect pending changes
+  of others.
+
 **You SHOULD:**
 
 - Implement the resource lifecycle once per product, as an engine in the
@@ -999,19 +1012,6 @@ and every copy has to get the rules of this guide right again.
   settings dictionary.
 - Generate the README's overview of resources from the definitions instead of
   keeping a list by hand.
-
-**You MUST:**
-
-- Curate every definition. Decide identity, ownership, omission and deletion
-  per resource. A generated list of endpoints is no substitute.
-- Keep the engine in the product's collection. Share only transport and safety
-  mechanics across products, see [Shared code](#shared-code).
-- Write an irregular resource by hand on the same client instead of adding a
-  special case to the engine.
-- Give the engine the duties no inspected community engine fulfils together:
-  reject an incomplete or ambiguous lookup, keep the predicted state apart
-  from the observed one, report partial progress when a later step fails,
-  check the outcome of an activation, and protect pending changes of others.
 
 **You MAY:**
 
@@ -1061,6 +1061,8 @@ def main() -> None:
 - The pattern is established. The community
   [OPNsense collection](https://github.com/O-X-L/ansible-opnsense) serves well
   over a hundred modules from one shared base.
+- No inspected community engine fulfills the five engine duties above
+  together, from rejecting an ambiguous lookup to protecting pending changes.
 - A special case inside the engine is paid for by every resource. A
   hand-written module keeps the exception in one place.
 
@@ -1752,6 +1754,9 @@ exec:
 - Use JSON on stdin and a final JSON report line for helpers the collection
   ships itself. Parse a native command-line interface in its own supported
   formats.
+
+**Enforcement:** unit tests that reject undeclared kinds and fields, identity
+probes per locator, and review of every `custom` use.
 
 
 ## Activation, operations and bootstrap<a id="activation-bootstrap"></a>
@@ -2613,8 +2618,8 @@ item marked not applicable.
   batched; a list-capable module validates everything first and reports per
   item ([Performance](#performance)).
 - [ ] **Engine:** a new resource is a definition on the product engine; a
-      hand-written resource module is justified
-      ([Resource engine](#resource-engine)).
+  hand-written resource module is justified
+  ([Resource engine](#resource-engine)).
 - [ ] **Check and diff:** zero writes in check mode; diff requested, bounded and
   sanitized ([Check mode and diff mode](#check-diff-mode)).
 - [ ] **Secrets:** `no_log` on nested inputs; `exception=None` in handlers;
@@ -2626,9 +2631,11 @@ item marked not applicable.
 - [ ] **Commands:** argument lists with expansion disabled, secrets on stdin,
   qualified deadline and cleanup, bounded output, both identities verified
   ([Command-line execution](#cli-execution)).
+- [ ] **Locator:** each locator declared and qualified; undeclared kinds and
+  fields rejected ([Execution locator](#execution-locator)).
 - [ ] **Operations:** accepted, completed and verified distinguished; pending
-      work handled; bootstrap state-aware
-      ([Activation, operations and bootstrap](#activation-bootstrap)).
+  work handled; bootstrap state-aware
+  ([Activation, operations and bootstrap](#activation-bootstrap)).
 - [ ] **Reads:** `_info` naming, check mode, no side effects
   ([Info and facts modules](#info-facts-modules)).
 - [ ] **Controller plugins:** justified; templating tested on both sides of
@@ -2644,9 +2651,9 @@ item marked not applicable.
 - [ ] **Tests:** every lane of the matrix passes; product claims rest on the
   installed-artifact acceptance ([Testing](#testing)).
 - [ ] **Release:** unsupported series warn, excluded operations fail before
-  changes; deprecations declarative;
-  changelog fragment present
-  ([Compatibility and releases](#compatibility-releases)).
+  changes; deprecations declarative; changelog fragment present; one product
+  series unless the README names a reason; writer-coordination policy
+  documented ([Compatibility and releases](#compatibility-releases)).
 - [ ] **Checks:** all `antsibull-nox` sessions pass; every ignore entry
   explained ([Checks and tooling](#checks-tooling)).
 
