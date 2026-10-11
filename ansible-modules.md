@@ -697,10 +697,10 @@ After a successful run, the declared state holds.
   - `diff` only when requested, see
     [Check mode and diff mode](#check-diff-mode).
 - Return from an operational module `changed` (`true` only when it acted),
-  `activated` (what happened, or would happen in check mode), `verified` with
-  the same three values, and `verification`, a mapping per named object with
-  `in_sync`, `drift` or `unverifiable`, where the module compares named
-  objects.
+  `activated` (a boolean: whether it activated, or would in check mode),
+  `verified` with the same three values, and `verification`, a mapping per
+  named object with `in_sync`, `drift` or `unverifiable`, where the module
+  compares named objects.
 - Return from every failure, besides `msg`: `changed`; `outcome`;
   `operation`, the step that failed; the identity under its option names,
   where the module has one; and `error_category`, `error_code` and
@@ -740,7 +740,9 @@ return an unknown outcome and reconcile on a later invocation.
 This excerpt returns reconciliation metadata. `current` and `desired` are
 normalized and schema-validated; the public diff fields contain only
 non-secret scalar values. `public_view` keeps the allowlisted public fields.
-Argument, ownership and eligibility checks precede the excerpt.
+Argument, ownership and eligibility checks precede the excerpt. Payload files
+start with `from __future__ import annotations`, see
+[Module documentation](#module-documentation).
 
 ```python
 MISSING = object()
@@ -1515,8 +1517,8 @@ separately.
   cleanup grace documented, and a command status alone is never observed
   expiry. Record the cleanup scope (process group, cgroup, container
   session), how survivors are detected and which escapes remain.
-- Give `timeout` a duration above zero. Round a remaining budget up, never
-  down to zero.
+- Give the `timeout` wrapper command a duration above zero. Round a remaining
+  budget up, never down to zero.
 - Request bytes with `encoding=None` and check both streams' sizes before
   decoding or parsing. Never put raw output in a message.
 - Use a reviewed supervisor in a module utility where output is untrusted or
@@ -1531,7 +1533,7 @@ separately.
   descendant that closes its pipes.
 - Validate the return code and the structure of the output before using a
   returned field. A non-zero exit is a result for the product's parser, like
-  an HTTP error response, never an exception of the transport.
+  an HTTP status the client classifies, never an exception of the transport.
 - Verify the module's user and the application identity separately before a
   write: resolve both to numeric IDs in their namespace, probe the
   application identity through the same locator prefix as the write with a
@@ -1578,11 +1580,12 @@ operational exceptions and never echoes raw text or unchecked extracted values.
 import json
 import math
 import signal
+import time
 
 KILL_AFTER_SECONDS = 10
 MAX_OUTPUT_BYTES = 1024 * 1024
 # The wrapper backs up the module's own deadline observer and fires later.
-wrapper_seconds = math.ceil(deadline.remaining()) + 1
+wrapper_seconds = math.ceil(deadline - time.monotonic()) + 1
 
 argv = [
     locator.timeout_path,
@@ -2014,8 +2017,11 @@ documentation lint, and review of the intended semantics.
 
 **Good examples:**
 
+Payload files start with `from __future__ import annotations`, see
+[Module documentation](#module-documentation).
+
 ```python
-def build_spec(extra: dict | None = None) -> dict:
+def base_spec(extra: dict | None = None) -> dict:
     """Return a fresh specification; callers may extend the copy safely."""
     spec = copy.deepcopy(_BASE_SPEC)
     if extra:
