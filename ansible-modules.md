@@ -126,9 +126,10 @@ The terms MUST, SHOULD, and other key words are used as defined in
   as. It can differ from the module's own user, for example inside a container.
 - **Execution locator:** the `exec` option of a command-line module. It tells
   the module how to reach the product's command-line interface from the
-  execution host: container, users, executable. A **locator profile** is the set
-  of locator forms a collection supports for one product, each with the fields
-  it accepts.
+  execution host: container, users, executable. A **locator** is one form it
+  takes: a `kind` with the fields it accepts, its host-side and target-side
+  prerequisites, and its qualified deadline and cleanup mechanism. A **locator
+  profile** is the set of locators a collection supports for one product.
 - **File-only integration target:** an `ansible-test integration` target that
   runs the shipped modules against a fake product server or local command
   fixtures. It never qualifies a product series.
@@ -1447,14 +1448,14 @@ installed-artifact acceptance for the real API semantics.
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
-Command-line modules reach the product's CLI through a qualified locator
-profile: on the execution host, or inside a container or behind a wrapper
-that the host reaches. A profile lists its host-side and its target-side
-prerequisites separately.
+Command-line modules reach the product's CLI through a qualified locator: on
+the execution host, or inside a container or behind a wrapper that the host
+reaches. A locator lists its host-side and its target-side prerequisites
+separately.
 
 **You MUST:**
 
-- Keep deployment-specific invocations in a declared locator profile, see
+- Keep deployment-specific invocations in a declared locator, see
   [Execution locator](#execution-locator).
 - Run subprocesses through `module.run_command` with an argument list,
   `use_unsafe_shell=False`, `expand_user_and_vars=False`, explicit option
@@ -1471,7 +1472,7 @@ prerequisites separately.
   (exclusive creation, owner and mode checked) and passes the path to the
   documented native import, removing the file on success, failure and
   interruption; qualify that cleanup like any other.
-- Qualify each locator profile's deadline mechanism and descendant cleanup.
+- Qualify each locator's deadline mechanism and descendant cleanup.
   Declare the implementation and executable path as prerequisites; a
   conventional executable name is no proof of its implementation, so record
   the version output at qualification and select an implementation-specific
@@ -1513,7 +1514,7 @@ prerequisites separately.
 - Reject unsupported non-null locator options after argument parsing. Shared
   mechanics enforce the declared field set; product code validates values,
   conflicts and prefix grammar.
-- Keep the inherited and supplied environment within the locator profile's
+- Keep the inherited and supplied environment within the locator's
   documented policy. Validate the environment the child will actually
   receive: `os.environ`, plus the module-level `run_command_environ_update`,
   plus the per-call update, after core's `PYTHONPATH` rewrite. Document
@@ -1539,7 +1540,7 @@ prerequisites separately.
 
 **Good examples:**
 
-This profile uses a qualified GNU `timeout` and a command with bounded output.
+This locator uses a qualified GNU `timeout` and a command with bounded output.
 The command reserves statuses 124 and 137 for the wrapper. The module has
 already handled check mode and validated the declaration before this write.
 Its product utility supplies `parse_product_cli_error`, which accepts any byte
@@ -1558,11 +1559,11 @@ MAX_OUTPUT_BYTES = 1024 * 1024
 wrapper_seconds = math.ceil(deadline.remaining()) + 1
 
 argv = [
-    profile.timeout_path,
+    locator.timeout_path,
     "-k",
     str(KILL_AFTER_SECONDS),
     str(wrapper_seconds),
-    *locator_argv(profile),
+    *locator_argv(locator),
     RECONCILE_SOURCE,
 ]
 
@@ -1584,13 +1585,13 @@ try:
     rc, stdout, stderr = module.run_command(
         argv,
         data=json.dumps({"settings": desired}),
-        environ_update=profile.environment,
+        environ_update=locator.environment,
         use_unsafe_shell=False,
         expand_user_and_vars=False,
         encoding=None,
         handle_exceptions=False,  # preserve mutation status in the outer handler
     )
-    # GNU profile only; BusyBox may return 143/137 or negative signal numbers.
+    # GNU timeout only; BusyBox may return 143/137 or negative signal numbers.
     # A wrapper status says the command was stopped, not that the deadline
     # fired; the module's own observer decides expiry.
     if rc in (124, 137, -signal.SIGKILL):
@@ -1682,14 +1683,14 @@ incomplete stdin write, a hanging child, a flooding child, a descendant that
 keeps stdin open and one that survives a successful exit, expiry with a
 colliding status, the pylint sanity test, and qualification against the real
 command-line interface. A shared helper's local tests qualify its mechanics,
-never a product's locator profile.
+never a product's locator.
 
 ### Execution locator<a id="execution-locator"></a>
 
 The `exec` option tells a command-line module how to reach the product's
-command-line interface. A collection's locator profile names the kinds and
-fields it supports for a product and rejects everything else. API modules have
-no locator.
+command-line interface. A collection's locator profile names the locators it
+supports for a product, each a kind with its fields, and rejects everything
+else. API modules have no locator.
 
 ```yaml
 exec:
@@ -1714,7 +1715,8 @@ exec:
   say nothing about the identity inside a container, and container UID 0 is a
   different identity from host root.
 - Treat `custom` as a facility the caller is trusted with. It runs only the
-  prefixes a product profile validates and does not confine them.
+  prefixes the product's `custom` locator validates and does not confine
+  them.
 - Keep the product-specific end of the command line in the product's module
   utilities, including its option grammar; `--` is the wrapper's boundary,
   not a universal insertion.
@@ -2202,7 +2204,7 @@ tests, the documentation and yamllint sessions of
   admitted series, and on further series only where the support contract
   requires it. Install the built artifact in a separate environment per
   series, prove with verbose module paths which copy ran, and qualify the
-  claimed product operations, builds and locator profiles against the real
+  claimed product operations, builds and locators against the real
   product, with cleanup. Keep destructive and network tests opt-in and
   limited to test-owned fixtures.
 - Exercise the real argument specification and JSON exit and failure paths;
