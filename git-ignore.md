@@ -89,7 +89,7 @@ Add repository-specific excludes below the end of the Toptal templates:
 
 ### Repository-specific files
 
-[... # none right now ...]
+# none right now
 ```
 
 Use this section
