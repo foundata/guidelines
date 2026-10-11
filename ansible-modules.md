@@ -719,11 +719,14 @@ After a successful run, the declared state holds.
     state, which the resource documents.
   - `diff` only when requested, see
     [Check mode and diff mode](#check-diff-mode).
-- Return from an operational module `changed` (`true` only when it acted),
-  `activated` (a boolean: whether it activated, or would in check mode),
-  `verified` with the same three values, and `verification`, a mapping per
-  named object with `in_sync`, `drift` or `unverifiable`, where the module
-  compares named objects.
+- Return from an operational module `changed`, `true` when it acted or, in
+  check mode, when it would act, and `verified` with the same three values.
+  An activation module also returns `activated`, a boolean: whether it
+  activated or, in check mode, would activate. A module that compares named
+  objects also returns `verification`, a mapping per named object with
+  `in_sync`, `drift` or `unverifiable`. Other operational modules, such as a
+  firmware update, a reboot or a backup, return their operation's own result
+  keys and document them in `RETURN`.
 - Return from every expected failure that the collection's code reports
   after argument parsing succeeded, besides `msg`: `changed`; `outcome`;
   `operation`, the step that failed; each non-secret identity component under
@@ -1853,10 +1856,12 @@ module initializes a product.
 - Where the product exposes the active state, make activation converge:
   compare the active state with the saved state, activate only on a
   difference or on an explicit `activate: always`, verify afterwards, and
-  report `changed` only when it activated. An activation whose reply is
-  lost reports `outcome: unknown`, also with `activate: always` when the
-  state was already in sync, because nothing proves the activation ran.
-  Where the active state is not observable, document that the module
+  outside check mode report `changed` only when it activated. In check mode,
+  `changed` and `activated` predict a planned activation, see
+  [Convergence and results](#convergence-results). An activation whose
+  reply is lost reports `outcome: unknown`, also with `activate: always`
+  when the state was already in sync, because nothing proves the activation
+  ran. Where the active state is not observable, document that the module
   reports a change on every run and exclude it from idempotence checks
   explicitly.
 - Wait for a bounded completion where the product exposes job status, and never
