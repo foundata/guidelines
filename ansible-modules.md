@@ -2435,13 +2435,14 @@ changelog lint, and the build and import check.
 
 **Good examples:**
 
-The module-only skeletons ship these sessions in `antsibull-nox.toml`; a
-collection rendered from the role skeleton merges them into its existing
-sections instead of appending a second copy, and a collection that already
-carries them keeps its tuned lanes and skips:
+The `collection_modules` and `collection_modules_grid` skeletons ship these
+sessions in `antsibull-nox.toml`; a collection rendered from
+`collection_default` merges them into its existing sections instead of
+appending a second copy, and a collection that already carries them keeps its
+tuned lanes and skips:
 
 ```toml
-# antsibull-nox.toml, as the module-only skeletons render it
+# antsibull-nox.toml, excerpt as collection_modules renders it
 [sessions.license_check]
 # REUSE.toml states the licensing and "reuse lint" checks it. Files carry no
 # SPDX lines, which this per-file check requires; modules carry only the GNU
@@ -2456,34 +2457,41 @@ include_devel = true
 skip_tests = ["changelog", "no-smart-quotes"]
 
 [sessions.lint]
-run_isort = false              # Ruff sorts imports
-run_black = false              # Ruff formats
+# Also the Python of the integration targets, such as the fake product.
+extra_code_files = ["tests/integration"]
+run_isort = false
+run_black = false
 run_ruff_format = true
 run_ruff_autofix = true
 ruff_autofix_select = ["I"]
 run_ruff_check = true
-run_flake8 = false             # Ruff covers it
-run_pylint = false             # sanity runs pylint with ansible-core's rules
+run_flake8 = false
+run_pylint = false
 run_yamllint = true
-# Plugin documentation blocks follow the repository's YAML rules too; the
-# default applies yamllint's 80-column rules to DOCUMENTATION and EXAMPLES.
 yamllint_config_plugins = ".yamllint"
 yamllint_config_plugins_examples = ".yamllint"
 run_mypy = true
 mypy_config = ".mypy.ini"
 
+# max_version can omit the next series: antsibull-nox knows it before PyPI
+# publishes it and installs its lanes from the stable GitHub branch.
 [sessions.ansible_test_units]
 include_devel = true
 split_by_python_version = true
-# One session on the payload floor and one on the newest Python per series;
-# read the newest from ansible-test's constants of that series, it moves (3.15
-# since 2.22). A series missing here runs on every Python it supports.
 core_python_versions = { "2.19" = ["3.9", "3.13"], "2.20" = ["3.9", "3.14"], "2.21" = ["3.9", "3.14"], "2.22" = ["3.9", "3.15"], "devel" = ["3.10", "3.15"] }
 
 [sessions.ansible_test_integration_w_default_container]
 include_devel = true
 core_python_versions = { "2.19" = ["3.9", "3.13"], "2.20" = ["3.9", "3.14"], "2.21" = ["3.9", "3.14"], "2.22" = ["3.9", "3.15"], "devel" = ["3.10", "3.15"] }
 ```
+
+Ruff replaces isort, Black and flake8; sanity runs pylint. The two
+`yamllint_config_plugins` settings apply the repository's `.yamllint` to
+plugin documentation blocks; the default applies yamllint's 80-column rules to
+`DOCUMENTATION` and `EXAMPLES`. `core_python_versions` names one lane on the
+payload floor and one on the newest Python per series; read the newest from
+ansible-test's constants of that series, it moves (3.15 since 2.22). A series
+missing from the mapping runs on every Python it supports.
 
 `antsibull-nox` knows ansible-core versions before they reach PyPI; set
 `max_version` to leave an unreleased series out. Its lanes install
