@@ -2396,8 +2396,14 @@ changelog lint, and the build and import check.
 - Format and lint Python with Ruff, including import sorting. Lint YAML and
   documentation blocks with yamllint. Type-check with mypy against the newest
   ansible-core.
+- Run `ansible-lint --strict` with the house configuration on integration
+  targets, Molecule scenarios and any roles or playbooks, and validate the
+  changelog with `antsibull-changelog`, as the
+  [playbook guide's Linting section](./ansible-playbooks.md#linting)
+  requires. Check Markdown as the [Markdown guide](./markdown.md) describes.
 - Explain every sanity ignore entry with the affected ansible-core version, the
-  reason and the condition under which it can be removed.
+  reason and the condition under which it can be removed, and every skipped
+  sanity test with its reason beside `skip_tests`.
 
 **You MUST NOT:**
 
@@ -2416,6 +2422,19 @@ carries them keeps its tuned lanes and skips:
 
 ```toml
 # antsibull-nox.toml, as the module-only skeletons render it
+[sessions.license_check]
+# REUSE.toml states the licensing and "reuse lint" checks it. Files carry no
+# SPDX lines, which this per-file check requires; modules carry only the GNU
+# line that validate-modules requires.
+run_license_check = false
+
+[sessions.ansible_test_sanity]
+include_devel = true
+# changelog: changelogs/fragments also holds the fragment template and the
+# archive, which this test rejects. Use "antsibull-changelog lint" instead.
+# no-smart-quotes: the license text in LICENSES/ uses typographic quotes.
+skip_tests = ["changelog", "no-smart-quotes"]
+
 [sessions.lint]
 run_isort = false              # Ruff sorts imports
 run_black = false              # Ruff formats
@@ -2489,10 +2508,13 @@ warn_unreachable = True
 follow_untyped_imports = True
 ```
 
-Run the `ansible-test` meta sessions and the Molecule scenarios separately:
+The module-only skeletons define the `ansible-lint`, `markdown`, `changelog`
+and `molecule` sessions in `noxfile.py`. Run the `ansible-test` meta
+sessions and the Molecule scenarios separately:
 
 ```sh
-nox                            # lint, docs, licenses, extra checks, build and import
+nox                              # lint, docs, licenses, extra checks, build and import,
+                                 # ansible-lint, Markdown and changelog
 nox -s ansible-test-sanity       # every admitted ansible-core version
 nox -s ansible-test-units        # includes the payload Python floor
 nox -s ansible-test-integration  # file-only integration targets
