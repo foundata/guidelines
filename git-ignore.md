@@ -29,6 +29,28 @@ of any unspecific git repository:
 
 <https://www.toptal.com/developers/gitignore/api/git,vim,linux,macos,windows,jetbrains+all,visualstudiocode>
 
+Put a short header above the generated templates. It links this guide and
+carries the
+[license comment header](./licensing-apply.md#license-comment-headers):
+
+<!--REUSE-IgnoreStart-->
+```text
+# Ignore config implementing foundata's guideline. Details, reasoning:
+# https://foundata.com/en/guidelines/git-ignore/
+#
+# SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Created by https://www.toptal.com/developers/gitignore/api/git,vim,linux,macos,windows,jetbrains+all,visualstudiocode
+# Edit at https://www.toptal.com/developers/gitignore?templates=git,vim,linux,macos,windows,jetbrains+all,visualstudiocode
+[...]
+```
+<!--REUSE-IgnoreEnd-->
+
+Keep the header outside the generated region. Regenerating the templates
+replaces everything from the `# Created by` line to the `# End of` line, and a
+fresh render can only be compared with an unmodified region.
+
 
 ### Reasoning<a id="gitignore-file-default-reasoning"></a>
 
