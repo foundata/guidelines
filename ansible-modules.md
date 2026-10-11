@@ -448,9 +448,9 @@ plugins/modules/api_call.py                 # a dispatcher, not a resource
 
 **Reasoning:**
 
-- Module and option names are public interfaces; changing them requires a
-  redirect and deprecation cycle. The fully qualified module name already
-  carries the namespace.
+- Module and option names are public interfaces; after the first release,
+  changing them requires a redirect and deprecation cycle. The fully qualified
+  module name already carries the namespace.
 - The `_info` convention lets a reader, a linter and an automated review tell a
   read from a write without opening the file.
 - Ansible merges a group's `module_defaults` into the arguments of every member
@@ -1996,7 +1996,8 @@ documentation lint, and review of the intended semantics.
 - Change a shared helper and its consumers together until their first
   publication, and publish them at the same time. From then on, a public
   helper's signature, exceptions and defaults and a fragment's options are
-  versioned interfaces.
+  versioned interfaces, see
+  [Compatibility and releases](#compatibility-releases).
 - Build a fresh argument specification, or deep-copy a nested one, before
   extending it.
 - Share documentation through fully qualified fragments and test the merged
@@ -2010,8 +2011,6 @@ documentation lint, and review of the intended semantics.
 **You MUST NOT:**
 
 - Publish a shared helper that has one consumer. Move it into that consumer.
-- Add deprecations, compatibility shims or migration notes for an interface
-  that was never published.
 - Add a runtime dependency to a dependency-free utility collection to satisfy a
   style rule, such as a typing backport for a decorator.
 
@@ -2315,9 +2314,10 @@ product collection, product series.
 
 **You MUST:**
 
-- Preserve public arguments, results, identities, fragments and helper
-  interfaces under the compatibility policy. Record behavioral changes, removed
-  support, migrations and deprecations in changelog fragments.
+- From the first release on, preserve public arguments, results,
+  identities, fragments and helper interfaces under the compatibility policy.
+  Record behavioral changes, removed support, migrations and deprecations in
+  changelog fragments.
 - Deprecate declaratively where Ansible supports it: `removed_in_version` with
   `removed_from_collection` and `deprecated_aliases` in the argument
   specification, and `plugin_routing` in `meta/runtime.yml` for whole modules,
@@ -2357,6 +2357,8 @@ product collection, product series.
 
 **You MUST NOT:**
 
+- Add deprecations, compatibility shims or migration notes for an interface
+  that was never published.
 - Add a public `api_version` option unless upstream offers selectable, named
   API versions whose semantics require a consumer choice. Never let the option
   bypass eligibility checks.
