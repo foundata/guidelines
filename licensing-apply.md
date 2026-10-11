@@ -16,7 +16,9 @@ version of the [REUSE specification](https://reuse.software/spec/)
   - [Multiple licenses](#machine-readable-file-multiple-licenses)
 - [Step 5: Add licensing and copyright information in the `README.md`](#human-info)
   - [Multiple licenses](#human-info-multiple-licenses)
-- [Step 6: Add license comment headers (optional, recommended)](#license-comment-headers)
+- [Step 6: Add license comment headers](#license-comment-headers)
+  - [Placement](#license-comment-headers-placement)
+  - [Scope](#license-comment-headers-scope)
   - [Reasoning](#license-comment-headers-reasoning)
   - [Issues](#license-comment-headers-issues)
 - [Step 7: REUSE linting](#linting)
@@ -258,56 +260,148 @@ is also a good real-world example.
 <!--REUSE-IgnoreEnd-->
 
 
-## Step 6: Add license comment headers (optional, recommended)<a id="license-comment-headers"></a>
+## Step 6: Add license comment headers<a id="license-comment-headers"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
 <!--REUSE-IgnoreStart-->
-While having a [proper copyright file with wildcard](#machine-readable-file)
-beside an [updated README](#human-info) is compliant and convenient, it is
-recommended to add license comment headers. Please use the following template if
-so:
+The [copyright file](#machine-readable-file) covers every file of a project.
+In addition, add a license comment header to every file in
+[scope](#license-comment-headers-scope), so a file keeps its licensing
+information when it is copied out of the repository. Use the following
+template:
 
 ```text
+SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
 SPDX-License-Identifier: GPL-3.0-or-later
-SPDX-FileCopyrightText: foundata GmbH (https://foundata.com)
 ```
 
-Replace `GPL-3.0-or-later` with your
-[SPDX license identifier](https://spdx.org/licenses/) as needed. Use `OR` to
-[declare multiple licenses for the file at the same time](https://reuse.software/faq/#multi-licensing)
-(e.g. `SPDX-License-Identifier: GPL-3.0-or-later OR Apache-2.0 OR MIT`).
-
-For binaries, images and other uncommentable files, put the comment into a
-accompanying `<filename>.license` textfile (e.g. `foo.jpg.license` for
-`foo.jpg`). However, we usually do not use this as long as the binary file is
-not somehow outstanding as we think `.license` files are clumsy and clutter the
-repo.
-
-**Consider license comment headers at least for the following files:**
-
-- **Files which are intended to be used stand-alone** without context and
-  repository. This is usually the case for helper scripts or projects like
-  [`pve_backup_usb.sh`](https://github.com/foundata/proxmox-pve-backup-usb/blob/main/pve_backup_usb.sh).
-- **Files where header comments are common and not annoying**. Common sense
-  applies: usual source code files with existing header comments are quite easy,
-  but Markdown files are intended to be often read directly and a inline header
-  comment is unusual and would disturb readability.
-
-**Never add a license notice for the following files** as this would disturb
-readability, maintainability or common tooling:
-
-- [build artifacts](https://reuse.software/tutorial/#build-artifacts) and
-  comparable files usually listed in a project's `.gitignore` (side note:
-  [files listed in a `.gitignore` get automatically excluded](https://reuse.software/faq/#exclude-file)
-  by the reuse-toolset)
-- tooling helper files and directories like `.gitignore`, `.github` or
-  `.ansible-lint`
-- repository bureaucracy files like changelogs, `SECURITY`, `README.md`,
-  `CONTRIBUTING.md` and the text files below the `LICENSES` directory
-- third-party components as thy should not be edited (simply list their license
-  in the [copyright file](#machine-readable-file))
+- Keep both lines adjacent and in this order. Do not add a year or a link to a
+  license text.
+- Use the holder and the license expression of the `REUSE.toml` annotation that
+  covers the file. With `precedence = "closest"`, a header takes precedence over
+  `REUSE.toml`, so a deviating header silently changes the file's licensing
+  information.
+- Use `OR` to
+  [declare multiple licenses for the file at the same time](https://reuse.software/faq/#multi-licensing)
+  (e.g. `SPDX-License-Identifier: GPL-3.0-or-later OR Apache-2.0 OR MIT`).
+- Where the ecosystem a repository follows prescribes header lines, their
+  content, position or order, its rules take precedence for the affected files.
+  Add the tags as far as the ecosystem allows. The
+  [Ansible module header](./ansible-modules.md#module-documentation) is an
+  example.
+- Files derived from third-party code keep the upstream copyright lines
+  unchanged and first. Add foundata's own `SPDX-FileCopyrightText` line below
+  them when foundata's changes are substantial original work. For minor
+  changes such as renames, splits or fixes, add
+  `SPDX-FileContributor: foundata GmbH <https://foundata.com>` instead.
 <!--REUSE-IgnoreEnd-->
+
+
+### Placement<a id="license-comment-headers-placement"></a>
+
+<!--REUSE-IgnoreStart-->
+- Write each tag on its own line with the format's line comment marker, such as
+  `#` or `//`. Formats without a line comment use one block comment that holds
+  both lines, such as `/* … */` in CSS or `<!-- … -->` in Markdown and XML.
+- The tags end the file's leading header comment. When a description precedes
+  them, separate it by one empty comment line. Without a description, the tags
+  form the header comment on their own.
+- Only lines the format requires at the very beginning precede the header
+  comment: a shebang, `<?php`, an XML declaration, a Python encoding declaration
+  or front matter.
+- In Markdown, the title takes the role of the description: put the comment
+  block directly after the `# Title` line, separated by one empty line. In a
+  file without a title heading, put it after the front matter, or at the top if
+  there is none.
+- Keep the tags outside
+  [regions that REUSE ignores](https://reuse.readthedocs.io/en/latest/usage.html#ignoring-parts-of-a-file)
+  and out of documentation blocks such as PowerShell comment-based help, PHPDoc
+  or docstrings.
+- Templates carry the header in the template language's comment, such as
+  `{# … #}` in Jinja or `{{/* … */}}` in Go templates, so rendered output does
+  not inherit it. A skeleton template whose output becomes a file of the new
+  project writes the header in the output's syntax instead.
+
+Examples:
+
+```sh
+#!/usr/bin/env sh
+#
+# Mirror local backups to encrypted external drives.
+#
+# SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+```
+
+```yaml
+# Main entry point for the role.
+#
+# SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+---
+```
+
+```python
+# SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""Command-line entry point."""
+```
+
+```markdown
+# Project title
+
+<!--
+SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+SPDX-License-Identifier: GPL-3.0-or-later
+-->
+
+Introduction of the project.
+```
+
+```markdown
+---
+title: "Posts"
+---
+
+<!--
+SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+SPDX-License-Identifier: GPL-3.0-or-later
+-->
+
+Content of the page.
+```
+
+```jinja
+{#
+SPDX-FileCopyrightText: foundata GmbH <https://foundata.com>
+SPDX-License-Identifier: GPL-3.0-or-later
+#}
+{{ ansible_managed | comment }}
+```
+<!--REUSE-IgnoreEnd-->
+
+
+### Scope<a id="license-comment-headers-scope"></a>
+
+Add the header to every tracked file, including documentation, configuration
+and repository tooling. Only the following files carry none:
+
+- License texts: `LICENSES/`, `LICENSE` and `COPYING`.
+- Generated and regenerated files, such as `CHANGELOG.rst` and
+  `changelogs/changelog.yaml` written by antsibull-changelog, lock files and
+  [build artifacts](https://reuse.software/tutorial/#build-artifacts).
+  [Files listed in a `.gitignore` are excluded automatically](https://reuse.software/faq/#exclude-file).
+- Files whose exact content matters: test fixtures, expected output, marker
+  files a tool reads such as `py.typed`, and files that are empty by design such
+  as `.gitkeep`.
+- Formats without comments, such as JSON, images and PDFs. The
+  [copyright file](#machine-readable-file) covers them, with a dedicated
+  annotation where a file needs different information. We do not use
+  `<filename>.license` files, as they clutter the repository.
+- Third-party components. They keep their own notices and are listed with their
+  license in the [copyright file](#machine-readable-file).
 
 
 ### Reasoning<a id="license-comment-headers-reasoning"></a>
@@ -335,6 +429,12 @@ can understand. This should also be legally more robust than a simple year in an
 easily changed file if somebody claims some kind of prior art. We therefore
 maintain the year and links to license texts only at central places like a
 project's [`README.md`](#human-info).
+
+The tag order follows the examples of the REUSE specification and the output of
+`reuse annotate`, and matches the order in `REUSE.toml` and the `README.md`.
+Headers go on every file that can carry one instead of on selected files,
+because a rule that needs a judgement per file can neither be checked nor kept
+uniform across repositories.
 
 
 ### Issues<a id="license-comment-headers-issues"></a>
