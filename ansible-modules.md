@@ -1113,14 +1113,19 @@ resource names in the engine that returns nothing.
 
 **Good examples:**
 
+This excerpt covers `state: present`. `delta` holds the managed fields that
+differ; a missing rule needs a creation even when `delta` is empty. `changed`
+holds that plan and decides `verified` and the early exit.
+
 ```python
 # These schema-validated fields contain only public scalar values.
 PUBLIC_DIFF_FIELDS = frozenset({"enabled", "action", "destination_port"})
+changed = current is None or bool(delta)
 result = {
-    "changed": bool(delta),
+    "changed": changed,
     "rule": public_view({**(current or {}), **desired, "name": name}),
     "changed_fields": sorted(delta) if current is not None else [],
-    "verified": "predicted" if module.check_mode and delta else "observed",
+    "verified": "predicted" if module.check_mode and changed else "observed",
 }
 if module._diff:
     visible = sorted(PUBLIC_DIFF_FIELDS.intersection(delta))
@@ -1130,7 +1135,7 @@ if module._diff:
             "before": {key: before[key] for key in visible if key in before},
             "after": {key: desired[key] for key in visible},
         }
-if module.check_mode or not delta:
+if module.check_mode or not changed:
     module.exit_json(**result)
 ```
 
