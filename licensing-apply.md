@@ -551,6 +551,7 @@ maintainance effort.
 Please simply add each year with a release or updates separated by comma. You
 can use a timespan (`year1-year2`) for multiple subsequent years.
 
+<!--REUSE-IgnoreStart-->
 Example: The first release and copyright statement was `Copyright (c) 2013`.
 There were realeases or updates in several but not all years afterwards:
 
@@ -560,6 +561,7 @@ There were realeases or updates in several but not all years afterwards:
 - `2020` → `Copyright (c) 2013, 2015, 2018-2020`.
 - `2021` → `Copyright (c) 2013, 2015, 2018-2021`.
 - `2023` → `Copyright (c) 2013, 2015, 2018-2021, 2023`.
+<!--REUSE-IgnoreEnd-->
 
 
 ### Why does the license detection of GitHub and others not work?<a id="broken-repo-hoster-license-detection"></a>
