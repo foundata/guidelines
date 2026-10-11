@@ -187,7 +187,9 @@ The terms MUST, SHOULD, and other key words are used as defined in
      and the tooling maintained collections use, described in
      [Checks and tooling](#checks-tooling).
   3. This guide.
-  4. The [Python style guide](./python.md), where a rule makes sense
+  4. The [licensing guide](./licensing-apply.md), for license notices and
+     `REUSE.toml`.
+  5. The [Python style guide](./python.md), where a rule makes sense
      for plugin code. The table in
      [Python style guide rules in plugin code](#python-rules) states
      which rules apply.
@@ -2031,12 +2033,14 @@ module-first collection.
 
 **You MUST:**
 
-- Start every module with exactly `#!/usr/bin/python`, followed by the license
-  lines of the [licensing guide](./licensing-apply.md) and the sentence
-  `GNU General Public License v3.0+`, which the
+- Start every module with exactly `#!/usr/bin/python`, followed within the
+  first twenty lines by the upstream license line that starts with
+  `# GNU General Public License v3.0+`, as in the example below, which the
   [`validate-modules` sanity test](https://docs.ansible.com/projects/ansible/devel/community/collection_contributors/collection_requirements.html#ci-testing)
-  requires within the first twenty lines. Keep the file non-executable. Other
-  plugin and module utility files have no shebang.
+  requires. `REUSE.toml` states the licensing, so the header carries no SPDX
+  lines. The GNU line is ecosystem practice and takes precedence over the
+  licensing guide's rule against links in headers. Keep the file
+  non-executable. Other plugin and module utility files have no shebang.
 - Order the rest as the upstream
   [module format](https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html)
   requires: `from __future__ import annotations`, raw-string `DOCUMENTATION`,
@@ -2096,8 +2100,6 @@ resource options, attributes, `EXAMPLES`, `RETURN` and the implementation.
 
 ```python
 #!/usr/bin/python
-# SPDX-License-Identifier: GPL-3.0-or-later
-# SPDX-FileCopyrightText: foundata GmbH (https://foundata.com)
 # GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import annotations
