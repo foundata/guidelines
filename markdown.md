@@ -682,7 +682,9 @@ $ git diff --check
 - Avoid raw HTML when standard Markdown expresses the same structure.
 - Limit raw HTML in portable documents to small, documented exceptions such as
   explicit `<a id="..."></a>` anchors.
-- Use HTML comments only for maintenance instructions that belong in the source.
+- Use HTML comments only for maintenance instructions that belong in the source
+  and for the
+  [license comment header](./licensing-apply.md#license-comment-headers-placement).
 
 **You MUST NOT:**
 
