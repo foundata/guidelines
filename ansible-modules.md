@@ -2165,7 +2165,9 @@ documentation lint, and review of the intended semantics.
 
 **You MUST NOT:**
 
-- Publish a shared helper that has one consumer. Move it into that consumer.
+- Publish a shared helper before at least one product consumer passed its
+  installed-artifact acceptance with it. Record in the utility's design record
+  the second consumer each helper still waits for.
 - Add a runtime dependency to a dependency-free utility collection to satisfy a
   style rule, such as a typing backport for a decorator.
 
@@ -2193,7 +2195,9 @@ _BASE_SPEC["validate_certs"] = {"type": "bool", "default": False}
 **Reasoning:**
 
 - Two consumers are the smallest evidence that an interface is general rather
-  than one product's shape with a generic name.
+  than one product's shape with a generic name. Until the second arrives, one
+  acceptance-tested consumer keeps the interface honest, and the design record
+  names who is expected next.
 - An unpublished interface has no outside consumer to protect. Versioning it
   while its shape is still being found costs effort and prevents nothing.
 - Editing a shared argument specification in place changes it for every
