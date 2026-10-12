@@ -2820,7 +2820,9 @@ item marked not applicable.
   ([Action plugins](#action-plugins),
   [Filter and test plugins](#filter-test-plugins)).
 - [ ] **Sharing:** fresh specifications; fragments tested with each consumer;
-  no published helper with a single consumer ([Shared code](#shared-code)).
+  every published helper has at least one product consumer that passed
+  installed-artifact acceptance, and its design record names any second
+  consumer still awaited.
 - [ ] **Documentation:** header, markup, returns and limits accurate; the
   collection contract stated where consumers read; architecture and rationale
   current, with planned work in issues and supporting evidence linked
