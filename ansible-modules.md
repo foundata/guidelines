@@ -128,26 +128,16 @@ release, Checks and tooling when a session changes.
   the supported product series and ansible-core versions, and the locator
   profiles. It lives in the README or in a page linked from it; the contract
   of a single module lives in that module's documentation.
-- **Architecture and rationale** (the architecture record): the
-  developer-facing description of the collection's current structure,
-  execution boundaries and significant technical decisions, with their
-  rationale and links to supporting evidence. By house convention
-  `docs/architecture.md`, or the repository's existing architecture
-  documentation. Execution logs belong in test artifacts and change history in
-  Git. Public contracts remain in the README and module documentation. A design
-  delivered before the collection exists uses the same structure in `design.md`
-  of its design directory; the record moves into `docs/architecture.md` when the
-  collection is created. The record's **Scope** section carries the release
-  scope: the context (deployment paths in use, who operates the product, their
-  first tasks), deployment ownership per path, the administration tasks an
-  operator performs as ranked candidates, each mapped to the inventory objects
-  it needs and rated for value, risk class (what a wrong run can damage: none,
-  the management connection, secrets, a global activation or data) and
-  evidence cost, with a status (planned for, qualified, shipped in, blocked by,
-  excluded because), the cuts (the first two resources for engine evidence,
-  the first release for operator value, later releases in order), and every
-  exclusion with its guard decision: the guard chosen against the excluded
-  task and the evidence that would lift it.
+- **Rationale placement:** a collection has no separate architecture
+  document. Each explanation lives where its reader works. What the
+  collection manages and what the caller prepares is in the README. Which
+  files come from the skeleton unchanged and which the product owns is in
+  `DEVELOPMENT.md`. The rule a module utility enforces, and why, is in that
+  file's docstring, with a comment at the line where a competent developer
+  would plausibly choose otherwise. The reason for a floor, a test lane or an
+  archive exclusion is a comment beside that setting. The release plan, dated
+  evidence and open questions are development material kept outside the
+  collection and never named or linked from a published file.
 
 
 ## When to write a module<a id="when-to-write-a-module"></a>
@@ -177,11 +167,10 @@ release, Checks and tooling when a session changes.
 
 **You MUST:**
 
-- Implement a cut of the Scope section only after the owner approved it in a
-  commit of its own whose subject starts with `scope: approve`, for the first
-  release `scope: approve the 1.0.0 cut`. After the approval, change only the
-  Status cells of the section until the next approval. Open issues for the
-  next cut only and link them to the section.
+- Implement the tasks the owner's plan names for the release, in its order,
+  and nothing beyond it. A task the evidence blocks is reported with that
+  evidence; it is never dropped or replaced silently, and the cut is never
+  widened because a further resource is easy.
 
 **You MUST NOT:**
 
@@ -197,10 +186,10 @@ release, Checks and tooling when a session changes.
 
 **You SHOULD:**
 
-- Choose the first two resources for the engine evidence they yield and
-  every further resource for operator value, as ranked in the Scope section.
-  Rank administration tasks, not inventory objects; a module per endpoint is
-  the inventory copied.
+- Choose resources by the administration tasks operators perform, in the
+  order the owner's plan gives; the first resource should also exercise every
+  engine operation against the lab. Rank administration tasks, not inventory
+  objects; a module per endpoint is the inventory copied.
 - Keep a product collection module-only: modules, module utilities and
   documentation fragments. Add action, filter or test plugins only for work a
   module cannot do (see
@@ -242,13 +231,14 @@ release, Checks and tooling when a session changes.
      which rules apply.
 - Apply each document to its own subject:
 
-  |                                                          Subject                                                           | Document |
-  | -------------------------------------------------------------------------------------------------------------------------- | -------- |
-  | Current structure and decisions on ownership, resource semantics, locator profiles and compatibility, with their rationale | The collection's architecture record |
-  | The resulting collection contract, and each module's contract                                                              | README and module documentation |
-  | Module and plugin implementation, checks and review                                                                        | This guide |
-  | YAML, tasks, templates and variables                                                                                       | [Ansible playbook guidelines](./ansible-playbooks.md) |
-  | Collection boundaries and role argument specifications                                                                     | [Ansible roles and collections guide](./ansible-roles-collections.md) |
+  |                                 Subject                                  | Document |
+  | ------------------------------------------------------------------------ | -------- |
+  | Why a module utility enforces a rule, and which alternative was rejected | That file's docstring and comments |
+  | Which files the skeleton owns unchanged and which the product owns       | `DEVELOPMENT.md` |
+  | The resulting collection contract, and each module's contract            | README and module documentation |
+  | Module and plugin implementation, checks and review                      | This guide |
+  | YAML, tasks, templates and variables                                     | [Ansible playbook guidelines](./ansible-playbooks.md) |
+  | Collection boundaries and role argument specifications                   | [Ansible roles and collections guide](./ansible-roles-collections.md) |
 
 - Propose a contract or architecture change for review when a required operation
   cannot satisfy both the product contract and the framework. Do not invent an
@@ -303,8 +293,8 @@ payload interpreter on the execution host selected by the task.
 
 - Declare the minimum ansible-core version as `requires_ansible` in
   `meta/runtime.yml`.
-- Declare the payload Python floor in `tests/config.yml`, `>=3.9` unless the
-  architecture record justifies another floor:
+- Declare the payload Python floor in `tests/config.yml`, `>=3.9` unless a
+  comment beside the declaration justifies another floor:
 
   ```yaml
   modules:
@@ -356,9 +346,9 @@ payload interpreter on the execution host selected by the task.
 
 - Choose the minimum for the control nodes the collection serves, not the
   newest maintained series. Use `>=2.19` by default.
-- State the reason for the minimum next to `requires_ansible`: a link to
-  the architecture record where it exists, otherwise the skeleton's
-  anchors comment. Review it when a listed platform rebases.
+- State the reason for the minimum in a comment next to `requires_ansible`;
+  the skeleton's anchors comment is the default. Review it when a listed
+  platform rebases.
 - Correct a declared minimum that the content never satisfied in a bugfix
   release; raise a minimum that worked in a breaking release.
 
@@ -2166,8 +2156,8 @@ documentation lint, and review of the intended semantics.
 **You MUST NOT:**
 
 - Publish a shared helper before at least one product consumer passed its
-  installed-artifact acceptance with it. Record in the utility's design record
-  the second consumer each helper still waits for.
+  installed-artifact acceptance with it. Name in the utility's
+  `DEVELOPMENT.md` the second consumer each helper still waits for.
 - Add a runtime dependency to a dependency-free utility collection to satisfy a
   style rule, such as a typing backport for a decorator.
 
@@ -2196,7 +2186,7 @@ _BASE_SPEC["validate_certs"] = {"type": "bool", "default": False}
 
 - Two consumers are the smallest evidence that an interface is general rather
   than one product's shape with a generic name. Until the second arrives, one
-  acceptance-tested consumer keeps the interface honest, and the design record
+  acceptance-tested consumer keeps the interface honest, and `DEVELOPMENT.md`
   names who is expected next.
 - An unpublished interface has no outside consumer to protect. Versioning it
   while its shape is still being found costs effort and prevents nothing.
@@ -2261,10 +2251,12 @@ module-first collection.
   [Ansible playbook guidelines](./ansible-playbooks.md).
 - State the collection contract in the README or a linked page. Reuse existing
   documentation that covers it; do not create a redundant top-level document.
-- Keep the architecture record about the current implementation and the
-  reasoning that still explains it. Link supporting evidence when it justifies
-  a decision or support claim. Track planned work in issues, retain execution
-  logs as test artifacts, and leave edit history in Git.
+- Keep rationale beside what it explains and about the current
+  implementation: a module utility's docstring states the rule it enforces and
+  why, a comment marks the line where another choice was plausible, and
+  `DEVELOPMENT.md` names the skeleton-owned files. Retain execution logs as
+  test artifacts and leave edit history in Git; neither belongs in
+  documentation.
 
 **You MUST NOT:**
 
@@ -2821,11 +2813,11 @@ item marked not applicable.
   [Filter and test plugins](#filter-test-plugins)).
 - [ ] **Sharing:** fresh specifications; fragments tested with each consumer;
   every published helper has at least one product consumer that passed
-  installed-artifact acceptance, and its design record names any second
+  installed-artifact acceptance, and its `DEVELOPMENT.md` names any second
   consumer still awaited.
 - [ ] **Documentation:** header, markup, returns and limits accurate; the
-  collection contract stated where consumers read; architecture and rationale
-  current, with planned work in issues and supporting evidence linked
+  collection contract stated where consumers read; rationale current beside
+  the code it explains and `DEVELOPMENT.md` naming the skeleton-owned files
   ([Module documentation](#module-documentation)).
 - [ ] **Tests:** every lane of the matrix passes; product claims rest on the
   installed-artifact acceptance ([Testing](#testing)).
