@@ -204,10 +204,15 @@ The terms MUST, SHOULD, and other key words are used as defined in
 
 - Use two spaces to represent sub-maps when indenting.
 - Especially indent list contents beyond the list definition.
+- Write sequences in block style, one item per line, never as flow sequences
+  such as `["a", "b"]`. This holds for tasks, module documentation examples
+  and README examples alike.
 
 **Reasoning:**
 
 Following the indentation rules produces consistent code that is easy to read.
+Block sequences give one line per item, so a diff shows exactly which item
+changed.
 
 **Good examples:**
 
