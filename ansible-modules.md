@@ -2138,8 +2138,10 @@ documentation lint, and review of the intended semantics.
 
 - Keep product parsers, adapters, schemas, normalization and fixtures in the
   product's own collection. Share only product-independent mechanics.
-- Change a shared helper and its consumers together until their first
-  publication, and publish them at the same time. From then on, a public
+- Change a shared helper and its consumers together until the helper's first
+  publication. Publish the helper once at least one product consumer passed
+  its installed-artifact acceptance with the archive to be published;
+  consumers may follow in later releases of their own. From then on, a public
   helper's signature, exceptions and defaults and a fragment's options are
   versioned interfaces, see
   [Compatibility and releases](#compatibility-releases).
