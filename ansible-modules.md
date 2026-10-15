@@ -2401,6 +2401,11 @@ tests, the documentation and yamllint sessions of
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
+Follow the shared
+[collection CI requirements](./ansible-roles-collections.md#collection-ci).
+For community package inclusion, those matrix requirements take precedence
+over the reduced Molecule and installed-artifact acceptance coverage below.
+
 |               Layer                | Question it answers |
 | ---------------------------------- | ------------------- |
 | Sanity                             | Does the collection meet the framework's requirements on every supported version? |
@@ -2623,6 +2628,10 @@ changelog lint, and the build and import check.
 - Explain every sanity ignore entry with the affected ansible-core version, the
   reason and the condition under which it can be removed, and every skipped
   sanity test with its reason beside `skip_tests`.
+- Apply upstream's
+  [sanity suppression restrictions](https://docs.ansible.com/projects/ansible/devel/community/collection_contributors/collection_requirements.html#ci-testing),
+  including prohibited validations and restricted exceptions. An explanatory
+  comment does not authorize an otherwise prohibited suppression.
 
 **You MUST NOT:**
 

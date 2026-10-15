@@ -2247,6 +2247,10 @@ printf 'Changes applied\n'
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
+Roles, playbooks and test scenarios shipped in a collection MUST also follow
+the collection's [CI](./ansible-roles-collections.md#collection-ci) and
+[release requirements](./ansible-roles-collections.md#collection-releases).
+
 **You MUST:**
 
 - Keep `.ansible-lint` in the project root, using the baseline below and

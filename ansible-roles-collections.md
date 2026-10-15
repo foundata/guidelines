@@ -7,7 +7,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 This guide defines how to organize Ansible roles and collections and describe
 role parameters. It covers collection boundaries, naming, dependencies,
-runtime layout, releases, deployment roles and role argument specifications.
+runtime layout, CI, releases, deployment roles and role argument specifications.
 
 For task, playbook and template authoring, follow the
 [Ansible playbook guidelines](./ansible-playbooks.md). For modules and
@@ -24,6 +24,7 @@ The terms MUST, SHOULD, and other key words are used as defined in
 - [Applicability](#applicability)
 - [Scoping (collections and roles)](#scoping)
 - [Collection runtime](#collection-runtime)
+- [Collection CI](#collection-ci)
 - [Collection releases](#collection-releases)
 - [Deployment roles](#deployment-roles)
 - [Workflow roles](#workflow-roles)
@@ -187,6 +188,20 @@ foundata.zammad.install   # names a phase; a second deployment path cannot be to
   [directory requirements](https://docs.ansible.com/projects/ansible/devel/community/collection_contributors/collection_requirements.html#other-directories).
 
 
+## Collection CI<a id="collection-ci"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+**You MUST:**
+
+- Run CI on every pull request and at least weekly. Review scheduled
+  failures.
+- For community package inclusion, run every configured CI check across the
+  [required core matrix](https://docs.ansible.com/projects/ansible/devel/community/collection_contributors/collection_requirements.html#ci-testing),
+  including supported EOL versions, and test `devel` or `milestone` at least
+  weekly.
+
+
 ## Collection releases<a id="collection-releases"></a>
 
 [*⇑ Back to TOC ⇑*](#table-of-contents)
@@ -205,6 +220,7 @@ foundata.zammad.install   # names a phase; a second deployment path cannot be to
   [format supported by `antsibull-changelog`](https://docs.ansible.com/projects/antsibull-changelog/changelog.yaml-format/),
   and validate both fragments and generated release data as described in the
   playbook guide's [Linting section](./ansible-playbooks.md#linting).
+- Require passing `ansible-test sanity` tests on the release commit.
 
 
 ## Deployment roles<a id="deployment-roles"></a>
