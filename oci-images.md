@@ -221,7 +221,10 @@ documentation identifies the coverage of the selected ConClear release.
 
 ### Retired requirement identifiers<a id="retired-requirement-identifiers"></a>
 
-No identifiers are retired.
+- `IG0305`: Replaced by `IG0435` to permit a recorded latest-available database
+  when upstream publication is delayed.
+- `IG0423`: Replaced by `IG0436` to apply the fresh-or-confirmed-latest policy
+  at the original qualification start.
 
 
 ## Release workflow<a id="release-workflow"></a>
@@ -1766,21 +1769,33 @@ Trivy is the standard scanner.
   defines the procedure. `IG0303`<a id="ig0303"></a>
 - Use exactly one scanner stack as the authoritative release gate.
   `IG0304`<a id="ig0304"></a>
-- Cache the vulnerability database between runs, record the database version or
-  timestamp with each scan result, and refresh a stale or corrupted cache
-  instead of trusting it. `IG0305`<a id="ig0305"></a>
-- ConClear MUST define a finite qualification window beginning with selection
-  of a fresh common database snapshot. Distributed workers MUST use that exact
-  snapshot within the original window. Qualification completion, assembly,
-  publication and promotion MUST reject expired approval, including on resume.
-  The deadline MUST be recorded with the evidence and MUST NOT outlive pin
-  freshness, permitted pin divergence or applied vulnerability exceptions.
-  Expiry requires renewed qualification; it does not invalidate historical
-  evidence. Rescans MUST assess the unchanged released subject with a fresh
-  database. `IG0423`<a id="ig0423"></a>
+- Cache scanner databases between runs and record each component's version,
+  update time, next-update time and content digest with scan evidence. A
+  component MUST either be within its published freshness interval or be the
+  latest available upstream release confirmed by a successful refresh no more
+  than 24 hours before the original qualification start or new rescan. The
+  exception MUST retain the confirmation time, bind it to the exact snapshot
+  digest, and reject corrupt data, future timestamps and failed refreshes as
+  proof of currency. A new invocation MUST refresh an overdue component rather
+  than rely on an earlier invocation's exception. `IG0435`<a id="ig0435"></a>
+- ConClear MUST define a finite qualification window beginning with selection of
+  a common database snapshot satisfying the fresh-or-confirmed-latest policy.
+  Distributed workers MUST use that exact snapshot within the original window.
+  Qualification completion, assembly, publication and promotion MUST reject
+  expired approval, including on resume. The deadline MUST be recorded with the
+  evidence and MUST NOT outlive pin freshness, permitted pin divergence or
+  applied vulnerability exceptions. Expiry requires renewed qualification; it
+  does not invalidate historical evidence. Rescans MUST assess the unchanged
+  released subject with a database satisfying the same selection policy.
+  `IG0436`<a id="ig0436"></a>
+- Java database age MUST affect qualification only when the subject's SBOM
+  inventories Java artifacts. An overdue Java database MUST require explicit
+  maintainer acceptance in addition to successful latest-upstream confirmation;
+  ConClear MUST record the acceptance, actual age and artifact count as a
+  warning, not describe the database as fresh. `IG0437`<a id="ig0437"></a>
 
 Control: ConClear checks evidence age at release authorization boundaries. The
-current qualification maximum is 24 hours from the original fresh database
+current qualification maximum is 24 hours from the original eligible database
 selection; `freshness.QUALIFICATION_WINDOW` defines it in code. Earlier pin
 freshness, pin-divergence or applied-exception deadlines shorten it. The start
 and effective expiry are recorded with the qualification and signed release
@@ -1788,15 +1803,25 @@ verification. Clocks on the participating hosts are an external responsibility.
 
 |                    Boundary                    | Freshness decision |
 | ---------------------------------------------- | ------------------ |
-| New qualification                              | Both Trivy database components are fresh at the original start: updated by then and not yet at their next-update time. |
+| New qualification                              | Vulnerability data is fresh at the original start or a successful refresh confirms that the overdue snapshot is the latest upstream release. Java data follows the same rule when Java artifacts are present, with explicit acceptance for an overdue index. |
 | Later worker                                   | The exact pinned snapshot and original start are reused within the same window; pinning never silently substitutes a database. |
 | Completion through promotion, including resume | The recorded window remains current. A delayed phase cannot renew approval. |
 | Historical inspection                          | Age does not invalidate what the evidence records about the past release. |
-| New rescan                                     | The original signed release evidence is verified and a fresh database supplies the new vulnerability assessment. |
+| New rescan                                     | The original signed release evidence is verified and a newly selected fresh-or-confirmed-latest database supplies the new vulnerability assessment. |
 
 The configured candidate lifetime, currently at most seven days, is a separate
 deadline and does not extend qualification approval. A previously passing scan
 also says nothing about advisories published since that scan.
+
+"Latest available" means the newest snapshot returned by the trusted publisher,
+not merely the newest file in a local cache. A local download timestamp is not
+proof. A successful refresh into an empty staging directory provides that
+confirmation; `upstreamCheckedAt` is included in the immutable snapshot identity
+and scan evidence. An upstream outage does not establish a new exception.
+Already accepted workers can finish within their original qualification window
+using the pinned snapshot and confirmation. Fixable high-severity findings still
+reject the release: this exception addresses publisher delay, not vulnerability
+findings.
 
 **You SHOULD:**
 
@@ -1856,10 +1881,12 @@ trivy sbom \
 
 An SBOM rescan matches vulnerabilities against the retained package inventory.
 It does not repeat the image filesystem's secret and configuration scans; see
-[Rescans and remediation](#rescans-and-remediation) for the scope rules.
-The direct Trivy command above is a diagnostic. ConClear's authoritative rescan
-also verifies registry evidence and currently retrieves the released image
-graph even for SBOM-only vulnerability matching; it is not an offline command.
+[Rescans and remediation](#rescans-and-remediation) for the scope rules. The
+direct Trivy command above is a diagnostic. ConClear's authoritative rescan also
+verifies registry evidence and retrieves digest-checked manifests and
+configuration for SBOM-only vulnerability matching, without downloading image
+layers. Full-image rescans retrieve the layers once and reuse local platform
+views. Neither path is an offline command.
 
 
 ### Rescans and remediation<a id="rescans-and-remediation"></a>
