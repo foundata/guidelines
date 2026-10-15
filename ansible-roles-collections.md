@@ -7,7 +7,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 This guide defines how to organize Ansible roles and collections and describe
 role parameters. It covers collection boundaries, naming, dependencies,
-deployment roles and role argument specifications.
+runtime layout, releases, deployment roles and role argument specifications.
 
 For task, playbook and template authoring, follow the
 [Ansible playbook guidelines](./ansible-playbooks.md). For modules and
@@ -21,11 +21,32 @@ The terms MUST, SHOULD, and other key words are used as defined in
 
 ## Table of contents
 
+- [Applicability](#applicability)
 - [Scoping (collections and roles)](#scoping)
+- [Collection runtime](#collection-runtime)
+- [Collection releases](#collection-releases)
 - [Deployment roles](#deployment-roles)
 - [Workflow roles](#workflow-roles)
 - [Role argument specifications](#roles)
 - [Author information](#author-information)
+
+
+## Applicability<a id="applicability"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+These guidelines apply to all foundata Ansible collections. Collections
+intended for inclusion in the Ansible community package MUST additionally
+satisfy its
+[collection requirements](https://docs.ansible.com/projects/ansible/devel/community/collection_contributors/collection_requirements.html).
+Where those requirements demand broader compatibility or testing, they take
+precedence over our defaults.
+
+Before requesting inclusion, review the complete upstream policy, including
+metadata, communication, repository infrastructure, licensing, contribution
+agreements, release artifacts and content migrations. Record the supporting
+evidence in the inclusion application. Repeat the relevant review when these
+arrangements change.
 
 
 ## Scoping (collections and roles)<a id="scoping"></a>
@@ -151,6 +172,39 @@ foundata.zammad.install   # names a phase; a second deployment path cannot be to
   collections add value.
 - A setting with two owners changes on every run. One owner per setting keeps
   a deployment role and a module from writing the same state.
+
+
+## Collection runtime<a id="collection-runtime"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+**You MUST:**
+
+- Keep public collection content working with only `meta/`, `plugins/`,
+  `roles/` and `playbooks/` retained in the installed collection. Internal
+  test and release tooling is exempt.
+- Verify this boundary against the built artifact, following the upstream
+  [directory requirements](https://docs.ansible.com/projects/ansible/devel/community/collection_contributors/collection_requirements.html#other-directories).
+
+
+## Collection releases<a id="collection-releases"></a>
+
+[*⇑ Back to TOC ⇑*](#table-of-contents)
+
+**You MUST:**
+
+- State the collection's versioning and deprecation policy in its README.
+  Follow [Semantic Versioning](https://semver.org/): patch releases contain
+  compatible fixes; minor releases may introduce compatible features and
+  deprecations; incompatible changes require a major release.
+- Treat removal of supported runtimes and changes to public defaults or
+  interfaces as compatibility changes. Protect published interfaces from
+  the first release, as described in the module guide's
+  [Compatibility and releases](./ansible-modules.md#compatibility-releases).
+- Maintain a categorized changelog in the
+  [format supported by `antsibull-changelog`](https://docs.ansible.com/projects/antsibull-changelog/changelog.yaml-format/),
+  and validate both fragments and generated release data as described in the
+  playbook guide's [Linting section](./ansible-playbooks.md#linting).
 
 
 ## Deployment roles<a id="deployment-roles"></a>

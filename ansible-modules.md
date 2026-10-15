@@ -218,9 +218,9 @@ release, Checks and tooling when a session changes.
   1. ansible-core's runtime behavior and the
      [sanity tests](https://docs.ansible.com/ansible/latest/dev_guide/testing_sanity.html),
      which a module cannot opt out of.
-  2. Established Ansible ecosystem practice: the
-     [community collection requirements](https://docs.ansible.com/projects/ansible/latest/community/collection_contributors/collection_requirements.html)
-     and the tooling maintained collections use, described in
+  2. Applicable upstream collection requirements, as defined in the
+     [roles and collections guide](./ansible-roles-collections.md#applicability),
+     and established Ansible ecosystem practice, including the tooling in
      [Checks and tooling](#checks-tooling).
   3. This guide.
   4. The [licensing guide](./licensing-apply.md), for license notices and
@@ -293,14 +293,17 @@ payload interpreter on the execution host selected by the task.
 
 - Declare the minimum ansible-core version as `requires_ansible` in
   `meta/runtime.yml`.
-- Declare the payload Python floor in `tests/config.yml`, `>=3.9` unless a
-  comment beside the declaration justifies another floor:
+- Declare the payload Python floor in `tests/config.yml`. Use `>=3.9` by
+  default and explain departures beside the declaration:
 
   ```yaml
   modules:
     python_requires: ">=3.9"
   ```
 
+- For community package inclusion, apply upstream's
+  [Python support and exception requirements](https://docs.ansible.com/projects/ansible/devel/community/collection_contributors/collection_requirements.html#python-requirements)
+  before choosing this floor.
 - Keep payload code and every module utility it reaches compatible with that
   floor, wherever the module usually runs.
 - Document execution host requirements for Python, Python packages and
@@ -330,6 +333,11 @@ payload interpreter on the execution host selected by the task.
   sections do not configure them.
 - Without `tests/config.yml`, ansible-test tests every Python version the
   core supports on targets, including versions below the payload floor.
+- A collection supporting ansible-core 2.19 must account for its Python 3.8
+  target support in the
+  [core support matrix](https://docs.ansible.com/projects/ansible/devel/reference_appendices/release_and_maintenance.html#ansible-core-support-matrix).
+  The `>=3.9` default alone does not establish eligibility for community
+  package inclusion.
 - Framework behavior changes between core versions, which is why sanity, unit
   and file-only integration tests cover every admitted series.
 - `from __future__ import annotations` postpones annotations only. On Python
@@ -2152,6 +2160,10 @@ documentation lint, and review of the intended semantics.
   overrides.
 - Declare collection dependencies in `galaxy.yml` with the lowest version the
   code actually needs, and test that version and the latest compatible one.
+  For community package inclusion, dependencies MUST be Galaxy-published
+  collections included in Ansible, with stable lower bounds of at least 1.0.0
+  and version ranges permitted by the upstream
+  [dependency requirements](https://docs.ansible.com/projects/ansible/devel/community/collection_contributors/collection_requirements.html#collection-dependencies).
 - Meet a shared helper's safety conditions, such as bounded output, secret
   redaction and a process deadline, before it is published.
 
@@ -2354,11 +2366,10 @@ description:
 
 **Reasoning:**
 
-- We aim to follow the
-  [Ansible community package collection requirements](https://docs.ansible.com/projects/ansible/latest/community/collection_contributors/collection_requirements.html),
-  including passing upstream sanity tests. The module format, GPLv3 header
-  check (which checks the GNU sentence literally), documentation schemas and
-  argument-spec checks are upstream rules.
+- The module format, GPLv3 header check (which checks the GNU sentence
+  literally), documentation schemas and argument-spec checks are upstream
+  rules. Additional community package obligations apply as described in
+  [Applicability](./ansible-roles-collections.md#applicability).
 - ansible-test requires the exact module shebang and rejects executable module
   files; Ansible replaces the interpreter line when it builds the payload.
 - Connection fragments do not document resource-specific options. A role's
@@ -2475,7 +2486,8 @@ review of the tests against the operations the documentation claims.
 [*⇑ Back to TOC ⇑*](#table-of-contents)
 
 A collection release supports a bounded set of ansible-core versions and, for a
-product collection, product series.
+product collection, product series. Follow the shared
+[collection release policy](./ansible-roles-collections.md#collection-releases).
 
 **You MUST:**
 
@@ -2528,9 +2540,11 @@ product collection, product series.
   API versions whose semantics require a consumer choice. Never let the option
   bypass eligibility checks.
 - Drop a product series or an ansible-core version, or change the meaning of an
-  omitted field, in a patch release.
+  omitted field, outside a major release.
 - Add an adapter or a workaround for a series the release does not support.
 - Read the interface inventory or any other development file at runtime.
+  Follow the
+  [collection runtime boundary](./ansible-roles-collections.md#collection-runtime).
 
 **You SHOULD:**
 
