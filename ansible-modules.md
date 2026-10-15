@@ -2039,7 +2039,9 @@ evidence from a real target.
 **You MUST:**
 
 - Support check mode and return `changed: false`.
-- Return the values a `_facts` module collects under `ansible_facts`.
+- Return a `_facts` module's collected data exclusively under
+  `ansible_facts`; do not add separate resource payloads. Standard Ansible
+  status and diagnostic fields remain permitted.
 - Keep a read free of managed product changes, token rotation, refresh actions
   and initialization. Document an unavoidable authentication or audit side
   effect and distinguish it from a resource change.
@@ -2221,6 +2223,12 @@ module-first collection.
 
 **You MUST:**
 
+- Provide `DOCUMENTATION`, applicable `EXAMPLES`, and return documentation
+  for every public module and documentable plugin, using the
+  [format supported by its plugin type](https://docs.ansible.com/projects/ansible/devel/dev_guide/developing_plugins.html).
+  Document paired action plugin behavior through the module. Use adjacent
+  YAML for filters and tests as described in
+  [Filter and test plugins](#filter-test-plugins).
 - Start every module with exactly `#!/usr/bin/python`, followed by the
   [license comment header](./licensing-apply.md#license-comment-headers) with
   the upstream license line that starts with
@@ -2246,8 +2254,10 @@ module-first collection.
   `Name (@handle)`, or to be `!UNKNOWN`; a plain name with an e-mail address
   fails sanity.
 - Keep options, suboptions, defaults, aliases, types, choices and conditional
-  requirements consistent with the argument specification. Use collection
-  versions for `version_added`, never ansible-core versions.
+  requirements consistent with the argument specification.
+- Record `version_added` for newly introduced modules, plugins, options,
+  returns and attributes wherever the schema supports it. Use the collection
+  release that introduced the content, never an ansible-core version.
 - Document every non-standard returned value and the condition under which it
   appears. Follow the upstream
   [`RETURN` schema](https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html#return-block):
@@ -2261,6 +2271,8 @@ module-first collection.
   `O()` for options, `V()` for values, `RV()` for return values, `E()` for
   environment variables, `M()` for module names and `P()` for other plugins.
   Reserve `C()` for literal code and `L()` or `U()` for links.
+- Use fully qualified names in documentation references and examples,
+  including references within the collection and `ansible.builtin` content.
 - Write runnable YAML tasks in `EXAMPLES`, following the
   [Ansible playbook guidelines](./ansible-playbooks.md).
 - State the collection contract in the README or a linked page. Reuse existing
